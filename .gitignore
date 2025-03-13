@@ -1,0 +1,23 @@
+# macOS system files
+.DS_Store
+
+# Node.js dependencies
+node_modules/
+
+# Python virtual environments
+venv/
+__pycache__/
+*.pyc
+
+# Logs & temporary files
+*.log
+*.tmp
+
+# Environment variables (secrets)
+.env
+
+# Compiled files
+*.class
+*.o
+*.so
+
