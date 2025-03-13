@@ -1,0 +1,39 @@
+# SAMPLE TO BE UPDATED
+version: '3'
+services:
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: kong           # Change this to your desired username
+      POSTGRES_PASSWORD: kong       # Change this to your desired password
+      POSTGRES_DB: kong             # Set the default database name
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - kong-net
+    ports:
+      - "5432:5432"  # Expose PostgreSQL to local machine
+
+  kong: 
+    image: kong:3.0
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: postgres      # Connect to the PostgreSQL container
+      KONG_PG_PASSWORD: kong
+      KONG_PORT_MAPS: '80:8000,443:8443'
+      KONG_PORT_LISTEN: "0.0.0.0:8000,0.0.0.0:8443"
+    depends_on:
+      - postgres
+    networks:
+      - kong-net
+    ports:
+      - "8000:8000"
+      - "8443:8443"
+      - "8001:8001"  # Admin API
+
+networks:
+  kong-net:
+    driver: bridge
+
+volumes:
+  postgres-data:
