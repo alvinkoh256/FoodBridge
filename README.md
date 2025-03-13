@@ -1,7 +1,7 @@
 # FoodBridge Project
 
 ## Description
-A platform for managing food donations and collections from various hubs to food banks.
+A platform for managing food donations from donors such as restaurants and individuals to food banks.
 
 ## Installation
 1. Clone the repo
