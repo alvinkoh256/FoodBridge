@@ -40,7 +40,7 @@ async def find_closest_users(input:inputBody):
 
     res = {
         "productId": input.productId,
-        "productClosestCC": closest_cc["display_name"],
+        "productClosestCC": f"{closest_cc["display_name"]}|{closest_cc["address"]}",
         "userList": filtered_closest_list
     }
 
