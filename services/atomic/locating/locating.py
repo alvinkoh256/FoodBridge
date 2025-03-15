@@ -3,9 +3,11 @@ from typing import List, Union
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+import extra_functions
 
 app = FastAPI()
 
+# CORS so front end can access
 app.add_middleware(
     CORSMiddleware,
     allow_origins="*",
@@ -14,19 +16,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-class volunteerItems(BaseModel):
-    userId:str
-    userAddress:str
 
 class inputBody(BaseModel):
     productId: str
     productAddress: str
-    volunteerList: list[volunteerItems]
+    volunteerList: list[dict]
 
-
-# function that convert product address to request
-def convertAddress(product_address):
-    return None
 
 @app.get("/")
 async def my_first_get_api():
@@ -34,18 +29,21 @@ async def my_first_get_api():
 
 @app.post("/closest/")
 async def find_closest_users(input:inputBody):
-    # Retrieve product address from request
-    # Function to convert product address to coords
-    # Function to find the closest community center coords w/ prod coords
-    # Function to find the center point with community center coords & product address coords as input
-    # Function to find the closest users in a 4km radius w/ userList and midpoint
+    res = None
+    product_address = input.productAddress
+    product_coord = extra_functions.convertAddress(product_address)
+    closest_cc = extra_functions.find_closest_cc(product_coord)
+    center_point_coord = extra_functions.get_center_point(product_coord,closest_cc["coordinates"])
 
     volunteer_list = input.volunteerList
-    for volunteer in volunteer_list:
-        print(volunteer.userAddress)
+    filtered_closest_list = extra_functions.find_closest_users(center_point_coord,volunteer_list)
 
+    res = {
+        "productId": input.productId,
+        "productClosestCC": closest_cc["display_name"],
+        "userList": filtered_closest_list
+    }
 
+    return res
 
-    return -1
-
-# python -m uvicorn main:app --reload --port 5001
+# python -m uvicorn locating:app --reload --port 5001
