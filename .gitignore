@@ -27,3 +27,6 @@ virtualenv
 
 # env
 .env
+
+# image folder
+sample_pics
