@@ -1,5 +1,6 @@
 import os
 import base64
+import json
 from dotenv import load_dotenv
 from openai import OpenAI 
 
@@ -29,24 +30,16 @@ reply_schema = {
 
 system_content = open('system_message.txt', 'r').read()
 
+# Cause OpenAI api only accept base64 string in utf-8 format
+def encode_image(image):
+    res = base64.b64encode(image.read()).decode("utf-8")
+    return res
 
-# Function to encode the image
-def encode_image(image_path):
-    with open(image_path, "rb") as image_file:
-        return base64.b64encode(image_file.read()).decode("utf-8")
 
-
-# Function that accepts picture as input
-    # set a user_message
-
-    # function to encode the image to base64
-
-    # start the completion
-        # model
-        # response format
 def call_openai(image, description):
     base64_image = encode_image(image)
-    response = client.chat.completions.create(
+    try:
+        response = client.chat.completions.create(
         model="gpt-4o",
         messages = [
             {
@@ -70,8 +63,19 @@ def call_openai(image, description):
                 ]
             }
         ],
+        temperature = 0.1,
         response_format={"type": "json_object"}
     )
-    return response.choices[0].message.content
-
-print(call_openai("sample_pics/banana.png","tuna"))
+        
+                # Validate the response
+        
+        if not response:
+            raise Exception("Invalid or empty response from OpenAI")
+        
+        return response.choices[0].message.content
+    
+    except Exception as e:
+        # Log the error
+        print(f"Error in call_openai: {str(e)}")
+        # Return a structured error that can be handled by the calling function
+        return json.dumps({"error": f"Failed to process with OpenAI: {str(e)}"})
