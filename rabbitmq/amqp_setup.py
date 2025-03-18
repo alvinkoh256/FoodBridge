@@ -68,8 +68,7 @@ def setup_amqp():
 
     # add create_queue() here
 
-
-    # STEP 3: Add code in your service to interact with RabbitMQ (refer to README for consuming and publishing messages)
+    # STEP 3 & 4: Add code in your service to interact with RabbitMQ (refer to README for consuming and publishing messages)
 
     # Close the connection
     connection.close()
