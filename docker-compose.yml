@@ -1,39 +1,48 @@
-# SAMPLE TO BE UPDATED
 version: '3'
+
 services:
+  # PostgreSQL Service
   postgres:
     image: postgres:13
     environment:
-      POSTGRES_USER: kong           # Change this to your desired username
-      POSTGRES_PASSWORD: kong       # Change this to your desired password
-      POSTGRES_DB: kong             # Set the default database name
+      POSTGRES_USER: postgres         
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres           
     volumes:
       - postgres-data:/var/lib/postgresql/data
     networks:
-      - kong-net
+      - esd-net
     ports:
-      - "5432:5432"  # Expose PostgreSQL to local machine
+      - "5432:5432"
 
-  kong: 
-    image: kong:3.0
-    environment:
-      KONG_DATABASE: postgres
-      KONG_PG_HOST: postgres      # Connect to the PostgreSQL container
-      KONG_PG_PASSWORD: kong
-      KONG_PORT_MAPS: '80:8000,443:8443'
-      KONG_PORT_LISTEN: "0.0.0.0:8000,0.0.0.0:8443"
-    depends_on:
-      - postgres
-    networks:
-      - kong-net
+  # RabbitMQ Service
+  rabbitmq:
+    image: "rabbitmq:3-management"
+    hostname: esd-rabbit
+    restart: always
     ports:
-      - "8000:8000"
-      - "8443:8443"
-      - "8001:8001"  # Admin API
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - esd-net
+
+  # AMQP Setup Service
+  amqp-setup:
+    build: ./services/amqp-setup  # Path to the directory where amqp_setup.py is located
+    depends_on:
+      - rabbitmq  # Ensure RabbitMQ is up before running this service
+    networks:
+      - esd-net  # Connect it to the same network as RabbitMQ
+    restart: "no"  # Run once and then stop the container
 
 networks:
-  kong-net:
+  esd-net:
     driver: bridge
 
 volumes:
   postgres-data:
+    external: false
+  rabbitmq_data:
+    external: false
