@@ -3,13 +3,8 @@
 import pika
 
 # Default AMQP server configuration
-amqp_host = "localhost"  # Change to remote AMQP host if needed
+amqp_host = "localhost"  # Change to the appropriate AMQP host if using a remote server
 amqp_port = 5672
-
-# Exchange configurations
-topic_exchange_name = "topic_exchange"
-fanout_exchange_name = "fanout_exchange"
-direct_exchange_name = "direct_exchange"
 
 def create_exchange(channel, exchange_name, exchange_type):
     """
@@ -25,7 +20,7 @@ def create_queue(channel, exchange_name, queue_name, routing_key):
     Declares a queue and binds it to an exchange using a routing key.
     """
     print(f"Declaring queue: {queue_name}")
-    channel.queue_declare(queue=queue_name, durable=True)  # durable = survive broker restarts
+    channel.queue_declare(queue=queue_name, durable=True)  # durable = survives broker restarts
 
     print(f"Binding queue: {queue_name} to exchange: {exchange_name} with routing key: {routing_key}")
     channel.queue_bind(
@@ -48,22 +43,32 @@ def setup_amqp():
     # Open channel
     channel = connection.channel()
     
-    # Declare multiple exchanges
-    create_exchange(channel, topic_exchange_name, "topic")  # Topic exchange for routing
-    create_exchange(channel, fanout_exchange_name, "fanout")  # Fanout exchange for broadcasting
-    create_exchange(channel, direct_exchange_name, "direct")  # Direct exchange for exact matching
+    # STEP 1: Declare the Exchange
+    # Available exchange types:
+    # - "topic" for pattern-based routing (e.g., "order.*")
+    # - "direct" for exact routing (e.g., "order.created")
+    # - "fanout" for broadcasting (no routing key)
+    #
+    # Example for a topic exchange:
+    # create_exchange(channel, "topic_exchange", "topic")  # Topic exchange for routing
 
-    # PLEASE READ! Update here with the routing key if your service requires. This code supports the 3 types
-    # of exchange. Refer to example below
-
-    # For Topic Exchange: only messages with routing key matching the pattern "order.*" will be sent to the queue
-    # create_queue(channel, topic_exchange_name, "topicexample", "example.*")
-
-    # For Fanout Exchange: This will broadcast messages to all queues bound to the exchange
-    # create_queue(channel, fanout_exchange_name, "fanoutexample", "")
+    # add create_exchange() here
     
-    # For Direct Exchange: This only sends messages to queues with exact routing key match
-    # create_queue(channel, direct_exchange_name, "directexample", "example.created")
+    # STEP 2: Declare the Queue
+    # Choose a queue name and routing key based on your use case:
+    #
+    # Example for Topic Exchange:
+    # create_queue(channel, "topic_exchange", "order_queue", "order.*")
+    #
+    # Example for Fanout Exchange (no routing key):
+    # create_queue(channel, "fanout_exchange", "broadcast_queue", "")
+    #
+    # Example for Direct Exchange:
+    # create_queue(channel, "direct_exchange", "specific_order_queue", "order.created")
+
+    # add create_queue() here
+
+    # STEP 3 & 4: Add code in your service to interact with RabbitMQ (refer to README for consuming and publishing messages)
 
     # Close the connection
     connection.close()
