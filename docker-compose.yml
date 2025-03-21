@@ -1,4 +1,8 @@
-version: '3'
+version: '3.8'
+
+networks:
+  esd-net:
+    driver: bridge
 
 services:
   # PostgreSQL Service
@@ -18,7 +22,6 @@ services:
   # RabbitMQ Service
   rabbitmq:
     image: "rabbitmq:3-management"
-    hostname: esd-rabbit
     restart: always
     ports:
       - "5672:5672"
@@ -27,19 +30,44 @@ services:
       - rabbitmq_data:/var/lib/rabbitmq
     networks:
       - esd-net
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # AMQP Setup Service
   amqp-setup:
-    build: ./services/amqp-setup  # Path to the directory where amqp_setup.py is located
+    build:
+      context: .
+      dockerfile: rabbitmq/Dockerfile
+    container_name: amqp-setup
     depends_on:
-      - rabbitmq  # Ensure RabbitMQ is up before running this service
+      rabbitmq:
+        condition: service_healthy
     networks:
-      - esd-net  # Connect it to the same network as RabbitMQ
-    restart: "no"  # Run once and then stop the container
+      - esd-net
+    restart: "no"
 
-networks:
-  esd-net:
-    driver: bridge
+  publisher:
+    build:
+      context: ./services/atomic/testPublisher
+      dockerfile: Dockerfile
+    container_name: publisher
+    depends_on:
+      - amqp-setup
+    networks:
+      - esd-net
+
+  subscriber:
+    build:
+      context: ./services/atomic/testSubscriber
+      dockerfile: Dockerfile
+    container_name: subscriber
+    depends_on:
+      - amqp-setup
+    networks:
+      - esd-net
 
 volumes:
   postgres-data:
