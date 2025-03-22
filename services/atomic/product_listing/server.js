@@ -7,7 +7,6 @@ dotenv.config()
 const supaUrl = process.env.SUPABASE_PRODUCT_URL
 const supaKey = process.env.SUPABASE_PRODUCT_KEY
 
-// Create a single supabase client for interacting with your database
 const supabase = createClient(supaUrl, supaKey)
 
 
