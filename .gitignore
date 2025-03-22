@@ -23,6 +23,3 @@ __pycache__/
 
 # python virtual env
 virtualenv
-
-# env
-.env
