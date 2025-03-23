@@ -1,13 +1,12 @@
 import { retrieveAll, createProductListing, updateProduct, deleteProduct, uploadPicture } from './server.js'
-
+import { sendToWebsocket } from './send-data-to-websocket.js'
 import express from 'express'
 import multer from 'multer'
 import cors from 'cors'
 
 import { swaggerUi, specs } from './swagger.js'
 
-import { createServer } from 'http'
-import { Server } from 'socketio'
+
 
 const app = express()
 const PORT = 5005
