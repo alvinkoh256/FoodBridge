@@ -78,7 +78,19 @@ services:
     - 5010:5000
     networks:
     - esd-net
-      
+    
+  confirm-delivery:
+    build:
+      context: ./services/composite/confirmDelivery
+      dockerfile: Dockerfile
+    container_name: confirm-delivery
+    ports:
+      - 5009:5000
+    environment:
+      - HUB_SERVICE_URL=http://hub:5000
+      - ACCOUNT_SERVICE_URL=https://personal-tdqpornm.outsystemscloud.com/FoodBridge/rest/AccountInfoAPI
+    networks:
+      - esd-net
 
 volumes:
   rabbitmq_data:
