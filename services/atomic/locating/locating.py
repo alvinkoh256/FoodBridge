@@ -2,6 +2,7 @@ from concurrent import futures #Allow to set no. of workers on server
 import grpc
 import locate_pb2
 import locate_pb2_grpc
+import os
 
 import extra_functions
 
@@ -45,7 +46,8 @@ class LocateService(locate_pb2_grpc.locateServicer):
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     locate_pb2_grpc.add_locateServicer_to_server(LocateService(), server)
-    server.add_insecure_port("0.0.0.0:5006")
+    port = os.getenv('GRPC_PORT', '5006')
+    server.add_insecure_port(f"0.0.0.0:{port}")
     server.start()
     server.wait_for_termination()
 
