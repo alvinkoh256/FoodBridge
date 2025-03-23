@@ -1,5 +1,5 @@
-import { retrieveAll, createProductListing, updateProduct, deleteProduct, uploadPicture } from './server.js'
-import { sendToWebsocket } from './send-data-to-websocket.js'
+import { retrieveAllWhenCCAndUserListExist, createProductListing, updateProduct, deleteProduct, uploadPicture } from './server.js'
+import { sendToWebSocket } from './send-data-to-websocket.js'
 import express from 'express'
 import multer from 'multer'
 import cors from 'cors'
@@ -31,7 +31,7 @@ app.listen(PORT, (error) =>{
     }
 );
 
-app.use(express.json());
+app.use(express.json())
 app.post('/', (req, res)=>{
     const {name} = req.body
     
@@ -71,7 +71,7 @@ app.post('/', (req, res)=>{
  */
 app.get('/products', async (req, res) => {
     try {
-        const products = await retrieveAll()
+        const products = await retrieveAllWhenCCAndUserListExist()
         res.json(products)
     } catch (err) {
         res.status(500).json({ error: err.message })
@@ -152,7 +152,6 @@ app.post('/product', upload.single('productPic'), async (req, res)=>{
     } catch (error) {
         res.status(500).json({ error: error.message })
     }
-
 })
 
 /**
@@ -226,6 +225,7 @@ app.put('/productCCAndUsers', async (req,res)=>{
     } catch (error) {
         res.status(500).json({ error: error.message })
     }
+    await sendToWebSocket()
 })
 
 /**
@@ -292,6 +292,7 @@ app.put('/productStatus', async (req,res)=>{
     } catch (error) {
         res.status(500).json({ error: error.message })
     }
+    await sendToWebSocket()
 })
 
 /**
@@ -354,5 +355,5 @@ app.delete('/product', async (req,res)=>{
     } catch (error) {
         res.status(500).json({ error: error.message })
     }
+    await sendToWebSocket()
 })
-

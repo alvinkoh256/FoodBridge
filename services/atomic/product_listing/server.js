@@ -11,10 +11,12 @@ const supabase = createClient(supaUrl, supaKey)
 
 
 
-async function retrieveAll(){
+async function retrieveAllWhenCCAndUserListExist(){
     const { data, error } = await supabase
         .from('product_listing')
         .select()
+        .not('productClosestCC','is',null)
+        .not('productUserList','is',null)
     
     if (error) {
         throw new Error(`Failed to retrieve products: ${error.message}`)
@@ -89,5 +91,5 @@ async function uploadPicture(image,productId){
 }
 
 
-export {retrieveAll,createProductListing,updateProduct,deleteProduct,uploadPicture}
+export {retrieveAllWhenCCAndUserListExist,createProductListing,updateProduct,deleteProduct,uploadPicture}
 

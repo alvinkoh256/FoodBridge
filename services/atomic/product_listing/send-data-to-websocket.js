@@ -1,24 +1,13 @@
-import { axios } from "axios"
-import { retrieveAll } from "./server"
-import { response } from "express"
+import axios from "axios"
+import { retrieveAllWhenCCAndUserListExist } from "./server.js"
 
+const websocketUrl = "http://localhost:5014"
 
-// set url port
-
-// function to do axios post with url
-    // run the retrieveall 
-    // try
-        // get the data and send it
-    // catch
-        // yuup
-
-const websocketUrl = "http://localhost:5006"
-
-async function sendToWebsocket() {
+async function sendToWebSocket() {
     try {
-        let allProducts = await retrieveAll();
+        let allProducts = await retrieveAllWhenCCAndUserListExist();
 
-        const response = await axios.post(`${websocketUrl}/sendData`, allProducts);
+        const response = await axios.post(`${websocketUrl}/sendProductListing`, allProducts);
         
         console.log("Response Data:", response.data);
 
@@ -31,4 +20,4 @@ async function sendToWebsocket() {
     }
 }
 
-export { sendToWebsocket }
+export { sendToWebSocket }
