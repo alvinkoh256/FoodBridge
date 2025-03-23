@@ -82,25 +82,17 @@ const signIn = async () => {
     return;
   }
 
-  // Step 3: Compare selected role vs stored role
   if (userRole !== role.value) {
     errorMessage.value = `You are registered as a ${userRole}, not a ${role.value}`;
     await signOut(); // Logout user
     return;
   }
-  else{
-    store.dispatch('setUser', user);
+
+  if (userRole === 'donor') {
+    router.push('/home/donor');
+  } else {
     router.push('/home');
   }
-
-  // Step 4: Redirect user based on role
-  // if (userRole === 'donor') {
-  //   router.push('/donor-dashboard');
-  // } else if (userRole === 'volunteer') {
-  //   router.push('/volunteer-dashboard');
-  // } else {
-  //   router.push('/home');
-  // }
 };
 
 const signOut = async () => {
