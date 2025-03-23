@@ -38,6 +38,7 @@
 <script setup>
 import { ref, inject } from 'vue';
 import { useRouter } from 'vue-router';
+import { useStore } from 'vuex';
 import InputText from 'primevue/inputtext';
 import Password from 'primevue/password';
 import Button from 'primevue/button';
@@ -77,17 +78,18 @@ const signIn = async () => {
 
   if (!userRole) {
     errorMessage.value = 'User role not found.';
-    await supabase.auth.signOut();
+    await signOut();
     return;
   }
 
   // Step 3: Compare selected role vs stored role
   if (userRole !== role.value) {
     errorMessage.value = `You are registered as a ${userRole}, not a ${role.value}`;
-    await supabase.auth.signOut(); // Logout user
+    await signOut(); // Logout user
     return;
   }
   else{
+    store.dispatch('saveUser', user);
     router.push('/home');
   }
 
@@ -100,6 +102,13 @@ const signIn = async () => {
   //   router.push('/home');
   // }
 };
+
+const signOut = async () => {
+  await supabase.auth.signOut();
+  store.dispatch('logout'); // Clear user data
+  router.push('/'); // Redirect to login page
+};
+
 </script>
 
   <style scoped>
