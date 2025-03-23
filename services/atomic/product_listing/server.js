@@ -7,6 +7,13 @@ dotenv.config()
 const supaUrl = process.env.SUPABASE_PRODUCT_URL
 const supaKey = process.env.SUPABASE_PRODUCT_KEY
 
+console.log(`Supabase URL configured: ${!!supaUrl}`)
+console.log(`Supabase Key configured: ${!!supaKey}`)
+
+if (!supaUrl || !supaKey) {
+  console.error('Missing required Supabase environment variables')
+}
+
 const supabase = createClient(supaUrl, supaKey)
 
 

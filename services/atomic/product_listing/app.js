@@ -9,21 +9,15 @@ import { swaggerUi, specs } from './swagger.js'
 
 
 const app = express()
-const PORT = 5005
-
-// Enable CORS for all routes
-app.use(cors({
-    origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-}))
+app.use(express.json())
+const PORT = process.env.PORT || 5005
 
 // Swagger UI setup
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
-app.listen(PORT, (error) =>{
+app.listen(PORT,"0.0.0.0", (error) =>{
         if(!error){
-            console.log("Server is Successfully Running, and App is listening on port "+ PORT)
+            console.log(`Server is Successfully Running, and App is listening on port ${PORT}`)
         }
         else{
             console.log("Error occurred, server can't start", error)
@@ -31,7 +25,6 @@ app.listen(PORT, (error) =>{
     }
 );
 
-app.use(express.json())
 app.post('/', (req, res)=>{
     const {name} = req.body
     
