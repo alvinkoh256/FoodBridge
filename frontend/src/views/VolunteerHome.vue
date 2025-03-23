@@ -1,29 +1,65 @@
 <template>
-    <div class="home-container">
-        <div class="header">
-            <div class="section-title">Postings for you</div>
-        </div>
+  <div class="home-container">
 
-        <div class="divider"></div>
-
-        <div class="drop-off-item">
-            <div class="profile-pic">
-                <img src="../assets/logo.jpg" alt="Profile">
-            </div>
-            <div class="drop-off-info">
-                <div class="drop-off-location text-black">Drop-off at (A CC)</div>
-                <div class="drop-off-date">14:30 12-Mar-2025</div>
-            </div>
-        </div>
+    <div class="header">
+      <div class="section-title">Postings for you</div>
     </div>
+    <div class="divider"></div>
+    <div class="drop-off-item" @click="openDialog">
+      <div class="profile-pic">
+        <img src="../assets/logo.jpg" alt="Profile">
+      </div>
+      <div class="drop-off-info">
+        <div class="drop-off-location text-black">Drop-off at (A CC)</div>
+        <div class="drop-off-date">14:30 12-Mar-2025</div>
+      </div>
+    </div>
+
+    <button @click="signOut">Log Out</button>
+    <Dialog v-model:visible="visible" modal header="Drop-off at (A CC)" :style="{ width: '75rem' }">
+      <DialogContent/>
+    </Dialog>
+  </div>
 </template>
 
 <script setup>
-import { inject, onMounted } from 'vue';
+import { ref, inject, onMounted } from 'vue';
 import { useStore } from 'vuex';
+import { useRouter } from 'vue-router';
+import DialogContent from '../components/DialogContent.vue';
+import Dialog from 'primevue/dialog';
 
 const supabase = inject('supabase');
 const store = useStore();
+const router = useRouter();
+const user = ref(null);
+const visible = ref(false);
+
+const { data } = supabase.auth.onAuthStateChange((event, session) => {
+  if (session?.user && session.user?.user_metadata?.role == "volunteer") {
+    // User is logged in
+    user.value = session.user; 
+    console.log("User authenticated:", user.value);
+  } 
+  else {
+    user.value = null;
+    router.push("/"); 
+  }
+});
+
+const signOut = async () =>{
+  store.dispatch('logout');
+  router.push('/')
+};
+
+const openDialog = () => {
+  visible.value = true;
+};
+
+const closeDialog = () => {
+  visible.value = false;
+};
+
 </script>
 
 <style scoped>

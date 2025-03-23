@@ -18,7 +18,6 @@ export default createStore({
     },
     clearUser(state) {
       state.user = null;
-      state.role = null;
     },
   },
   getters: {
