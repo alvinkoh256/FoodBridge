@@ -22,4 +22,11 @@ __pycache__/
 *.so
 
 # python virtual env
+myvenv
 virtualenv
+
+# env
+.env
+
+# image folder
+sample_pics
