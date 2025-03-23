@@ -3,23 +3,33 @@
     <div class="big-screen">
       <div class="login-form">
         <h1 class="text-black text-3xl">Sign in to Your Account</h1>
-        <p>
-          <InputText v-model="email" placeholder="Email" />
+        <div class="mb-5">
+          <SelectButton @selection-changed="handleSelectionChange"/>
+        </div>
+        <p class="flex flex-col gap-2">
+          <label for="email" class="text-black font-bold text-left pl-1">Email</label>
+          <InputText id="email" v-model="email"/>
+        </p>
+        <p class="flex flex-col gap-2">
+          <label for="password" class="text-black font-bold text-left pl-1">Password</label>
+          <Password id="password" v-model="password" toggleMask :feedback="false"/>
         </p>
         <p>
-          <Password v-model="password" toggleMask placeholder="Password" :feedback="false" />
+          <Button label="Login" class="p-button-rounded w-48 md:w-2/3" @click="signIn" severity="success"/>
         </p>
-        <p>
-          <Button label="Login" class="p-button-rounded w-48 md:w-2/3" style="background-color: #00B0C7; outline:none" @click="signIn" />
+        <p v-if="errorMessage" class="text-red-600 font-bold">
+          {{ errorMessage }}
         </p>
         <p class="text-black">
           Don't have an account? 
+          <router-link to="/register" class="register-link">Register Here</router-link>
         </p>
       </div>
       <div class="logo">
         <img src="../assets/logo.jpg" class="logo-img"/>
         <p class="logo-text text-white text-5xl font-bold">Begin today, <br>For tomorrow</p>
       </div>
+
     </div>
   </div>
 </template>
@@ -31,6 +41,7 @@ import { useRouter } from 'vue-router';
 import InputText from 'primevue/inputtext';
 import Password from 'primevue/password';
 import Button from 'primevue/button';
+import SelectButton from '../components/SelectButton.vue';
 
 // Inject the Supabase instance provided globally in main.js
 const supabase = inject('supabase');
@@ -38,21 +49,56 @@ const supabase = inject('supabase');
 const email = ref('');
 const password = ref('');
 const errorMessage = ref('');
-const showPassword = ref(false);
+const role = ref('donor');
 const router = useRouter();
 
-// Sign up method
-const signUp = async () => {
-  const { error } = await supabase.auth.signUp({ email: email.value, password: password.value });
-  if (error) errorMessage.value = error.message;
-  else router.push('/dashboard'); // Redirect to dashboard on successful sign up
+const handleSelectionChange = (selection) => {
+  role.value = selection;
 };
 
 // Sign in method
 const signIn = async () => {
-  const { error } = await supabase.auth.signInWithPassword({ email: email.value, password: password.value });
-  if (error) errorMessage.value = error.message;
-  else router.push('/dashboard'); // Redirect to dashboard on successful sign in
+  errorMessage.value = ''; // Reset error message
+
+  // Step 1: Sign in user with email & password
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: email.value,
+    password: password.value
+  });
+
+  if (error) {
+    errorMessage.value = error.message;
+    return;
+  }
+
+  // Step 2: Fetch the user's role from metadata
+  const user = data.user;
+  const userRole = user?.user_metadata?.role; // Get stored role
+
+  if (!userRole) {
+    errorMessage.value = 'User role not found.';
+    await supabase.auth.signOut();
+    return;
+  }
+
+  // Step 3: Compare selected role vs stored role
+  if (userRole !== role.value) {
+    errorMessage.value = `You are registered as a ${userRole}, not a ${role.value}`;
+    await supabase.auth.signOut(); // Logout user
+    return;
+  }
+  else{
+    router.push('/home');
+  }
+
+  // Step 4: Redirect user based on role
+  // if (userRole === 'donor') {
+  //   router.push('/donor-dashboard');
+  // } else if (userRole === 'volunteer') {
+  //   router.push('/volunteer-dashboard');
+  // } else {
+  //   router.push('/home');
+  // }
 };
 </script>
 
@@ -73,7 +119,7 @@ const signIn = async () => {
   @media (max-width: 1023px) {
   .logo {
     position: absolute;
-    display: hidden;
+    display: none;
     top: 20px;
     left: 20px;
     font-size: 20px;
@@ -93,7 +139,7 @@ const signIn = async () => {
     box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
     border-radius: 8px;
     
-    background: linear-gradient(90deg, #ff7676, #f54ea2, #ffb3b3);
+    background: linear-gradient(90deg, #ff7e5f, #feb47b, #ffd56b);
 
     background-size: 600% 600%;
     animation: gradient-animation 25s ease infinite;
@@ -126,7 +172,10 @@ const signIn = async () => {
     box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
     border-radius: 8px;
     
-    background: linear-gradient(90deg, #ff7676, #f54ea2, #ffb3b3);
+    background: linear-gradient(90deg, #ff7e5f, #feb47b, #ffd56b);
+
+
+
     background-size: 600% 600%;
     animation: gradient-animation 25s ease infinite;
   }
@@ -188,8 +237,8 @@ const signIn = async () => {
 }
   
   h1 {
-    text-align: center;
-    margin-bottom: 2rem;
+    text-align: left;
+    margin-bottom: 1rem;
   }
   
   .login-form p {
@@ -205,6 +254,17 @@ const signIn = async () => {
   :deep .p-password {
     width: 100%;
     max-width: 400px;
+    border: 0 none;
+    border-radius: 0;
+    transition: all 0.2s;
+    background: transparent;
+    color: black;
+    border-bottom: 1px solid black;
+  }
+
+  :deep .p-inputtext:focus,
+  :deep .p-password:focus {
+    outline: 0 none;
   }
 
   </style>
