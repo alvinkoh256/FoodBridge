@@ -46,12 +46,12 @@ import SelectButton from '../components/SelectButton.vue';
 
 // Inject the Supabase instance provided globally in main.js
 const supabase = inject('supabase');
-
 const email = ref('');
 const password = ref('');
 const errorMessage = ref('');
 const role = ref('donor');
 const router = useRouter();
+const store = useStore();
 
 const handleSelectionChange = (selection) => {
   role.value = selection;
@@ -89,7 +89,7 @@ const signIn = async () => {
     return;
   }
   else{
-    store.dispatch('saveUser', user);
+    store.dispatch('setUser', user);
     router.push('/home');
   }
 
@@ -104,8 +104,7 @@ const signIn = async () => {
 };
 
 const signOut = async () => {
-  await supabase.auth.signOut();
-  store.dispatch('logout'); // Clear user data
+  store.dispatch('logout'); // Clear and logout user data
   router.push('/'); // Redirect to login page
 };
 

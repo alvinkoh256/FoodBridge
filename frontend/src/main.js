@@ -3,9 +3,11 @@ import App from './App.vue'
 import router from './router'
 import PrimeVue from 'primevue/config'
 import Aura from '@primeuix/themes/aura';
+import store from './store'; 
 import './style.css'; 
 import { definePreset } from '@primeuix/themes';
 import { createClient } from '@supabase/supabase-js'
+
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
@@ -34,6 +36,7 @@ const app = createApp(App)
 
 app
   .use(router)
+  .use(store)
   .use(PrimeVue, {
     theme: {
       preset: MyPreset
