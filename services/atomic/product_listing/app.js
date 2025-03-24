@@ -6,8 +6,6 @@ import cors from 'cors'
 
 import { swaggerUi, specs } from './swagger.js'
 
-
-
 const app = express()
 app.use(express.json())
 const PORT = process.env.PORT || 5005
@@ -129,21 +127,42 @@ const upload = multer({ storage: multer.memoryStorage() })
  */
 app.post('/product', upload.single('productPic'), async (req, res)=>{
     try {
-        const imageInput = req.file
-        const body = req.body
-    
-        const createResult = await createProductListing(body)
-        console.log(createResult)
-        const productId = createResult[0].productId
-        const filePath = await uploadPicture(imageInput,productId)
-        const updateBody = {
-            productId:productId,
-            productPic:filePath
+        const imageInput = req.file;
+        const body = req.body;
+        
+        if (!imageInput) {
+            return res.status(400).json({ 
+                error: "Missing product image file. Please upload a file with field name 'productPic'." 
+            });
         }
-        const result = await updateProduct(updateBody)
-        res.status(200).json(result[0])
+        
+        if (!body.productAddress) {
+            return res.status(400).json({ 
+                error: "Missing productAddress field" 
+            });
+        }
+        
+        if (!body.productDescription) {
+            return res.status(400).json({ 
+                error: "Missing productDescription field" 
+            });
+        }
+        
+        const createResult = await createProductListing(body);
+        const productId = createResult[0].productId;
+        
+        const filePath = await uploadPicture(imageInput, productId);
+        
+        const updateBody = {
+            productId: productId,
+            productPic: filePath
+        };
+        
+        const result = await updateProduct(updateBody);
+        res.status(200).json(result[0]);
     } catch (error) {
-        res.status(500).json({ error: error.message })
+        console.error("Error in /product endpoint:", error);
+        res.status(500).json({ error: error.message });
     }
 })
 
@@ -212,6 +231,7 @@ app.post('/product', upload.single('productPic'), async (req, res)=>{
  */
 app.put('/productCCAndUsers', async (req,res)=>{
     const body = req.body
+    console.log(`Incoming Body: ${JSON.stringify(body)}`)
     try {
         const result = await updateProduct(body)
         res.status(200).json(result[0])

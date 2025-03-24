@@ -17,7 +17,6 @@ if (!supaUrl || !supaKey) {
 const supabase = createClient(supaUrl, supaKey)
 
 
-
 async function retrieveAllWhenCCAndUserListExist(){
     const { data, error } = await supabase
         .from('product_listing')
@@ -35,12 +34,14 @@ async function retrieveAllWhenCCAndUserListExist(){
 async function createProductListing(body){
     // let productPic = body.productPic
     let productAddress = body.productAddress
+    let productDescription = body.productDescription
     let productStatus = "open"
     // console.log(`${productPic},${productAddress},${productStatus}`)
     const{data,error} = await supabase.from("product_listing").insert({
         // productPic:productPic,
         productAddress:productAddress,
-        productStatus:productStatus
+        productStatus:productStatus,
+        productDescription:productDescription
     })
     .select()
     if (error){

@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+service locate{
+    rpc getFilteredUsers(inputBody) returns (responseBody){};
+}
+
+message volunteerInfo{
+    string userId = 1;
+    string userAddress = 2;
+}
+
+message inputBody{
+    string productId = 1;
+    string productAddress = 2;
+    repeated volunteerInfo volunteerList = 3;
+}
+
+message responseBody{
+    string productId = 1;
+    string productClosestCC = 2;
+    repeated string userList = 3;
+    string error = 4;
+}
