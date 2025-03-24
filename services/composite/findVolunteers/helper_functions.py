@@ -5,10 +5,10 @@ import grpc
 import locate_pb2
 import locate_pb2_grpc
 
-PRODUCT_VALIDATION_URL = "http://localhost:5004"
-PRODUCT_LISTING_URL = "http://localhost:5005"
-LOCATING_URL = "localhost:5006"
-USER_URL = "https://personal-tdqpornm.outsystemscloud.com/FoodBridge/rest/AccountInfoAPI"
+PRODUCT_VALIDATION_URL = os.environ.get('PRODUCT_VALIDATION_URL', "http://localhost:5004")
+PRODUCT_LISTING_URL = os.environ.get('PRODUCT_LISTING_URL', "http://localhost:5005") 
+LOCATING_URL = os.environ.get('LOCATING_SERVICE_URL', "localhost:5006")
+USER_URL = os.environ.get('ACCOUNT_SERVICE_URL', "https://personal-tdqpornm.outsystemscloud.com/FoodBridge/rest/AccountInfoAPI")
 
 # function to call validation service with picture and description as param
 def validate_image(image, description):
@@ -36,8 +36,13 @@ def add_product(body):
     description = body["product_description"]
     address = body["product_address"]
 
+    # Reset the stream pointer to the beginning.
+    image.stream.seek(0)
+
     try:
-        image_file = {'productPic':image}
+        image_file = {
+            'productPic':(image.filename, image.stream, image.mimetype)
+            }
         data = {'productAddress':address,
                 'productDescription': description
                 }

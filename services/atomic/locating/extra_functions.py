@@ -69,7 +69,7 @@ def get_center_point(product_coord,cc_coord):
     }
     return center_point_coordinate
 
-# Function to find the closest users in a 4km radius w/ userList and midpoint
+# Function to find the closest users in a 2km radius w/ userList and midpoint
 def find_closest_users(center_coord, user_list):
     res = []
     for user in user_list:

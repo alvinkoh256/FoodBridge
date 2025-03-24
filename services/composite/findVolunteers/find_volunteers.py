@@ -27,8 +27,8 @@ def find_volunteers():
 
     validate_results = helper_functions.validate_image(image, description)
 
-    if not validate_results["result"]:
-        return "yuup"
+    if (validate_results["result"]!=True):
+        return jsonify(validate_results["result"])
     
     input_body = {
         "product_image":image,
@@ -39,9 +39,9 @@ def find_volunteers():
 
     # volunteer_list = helper_functions.get_all_volunteers()
     volunteer_list = [
-        {"userId":"1111-1111-1111","userAddress":"80 Stamford Rd, Singapore 178902"},
-        {"userId":"2222-2222-2222","userAddress":"501 Margaret Dr, Singapore 149306"},
-        {"userId":"3333-3333-3333","userAddress":"500 Dover Rd, Singapore 139651"}
+        {"userId":"1111-1111-1111","userAddress":"20 Siglap Vw, Singapore 455789"},
+        {"userId":"2222-2222-2222","userAddress":"30 Eunos Cres, Singapore 409423"},
+        {"userId":"3333-3333-3333","userAddress":"81 Lor 25 Geylang, Singapore 388310"}
     ]
 
     # print(product)

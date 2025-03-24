@@ -148,6 +148,7 @@ app.post('/product', upload.single('productPic'), async (req, res)=>{
             });
         }
         
+
         const createResult = await createProductListing(body);
         const productId = createResult[0].productId;
         
@@ -231,7 +232,7 @@ app.post('/product', upload.single('productPic'), async (req, res)=>{
  */
 app.put('/productCCAndUsers', async (req,res)=>{
     const body = req.body
-    console.log(`Incoming Body: ${JSON.stringify(body)}`)
+    // console.log(`Incoming Body: ${JSON.stringify(body)}`)
     try {
         const result = await updateProduct(body)
         res.status(200).json(result[0])
