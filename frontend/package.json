@@ -12,8 +12,10 @@
     "@primeuix/themes": "^1.0.0",
     "@supabase/supabase-js": "^2.49.1",
     "@tailwindcss/vite": "^4.0.15",
+    "axios": "^1.8.4",
     "primevue": "^4.3.2",
     "vue": "^3.5.13",
+    "vue-axios": "^3.5.2",
     "vue-router": "^4.5.0",
     "vuex": "^4.0.2"
   },

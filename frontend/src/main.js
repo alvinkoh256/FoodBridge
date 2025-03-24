@@ -6,7 +6,8 @@ import Aura from '@primeuix/themes/aura';
 import store from './store'; 
 import './style.css'; 
 import { definePreset } from '@primeuix/themes';
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js';
+import axios from "axios";
 
 
 const supabase = createClient(
@@ -44,3 +45,4 @@ app
   })
   .provide('supabase', supabase)
   .mount('#app')
+  
