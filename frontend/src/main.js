@@ -3,15 +3,15 @@ import App from './App.vue'
 import router from './router'
 import PrimeVue from 'primevue/config'
 import Aura from '@primeuix/themes/aura';
-import store from './store'; 
-import './style.css'; 
+import store from './store';
+import './style.css';
 import { definePreset } from '@primeuix/themes';
 import { createClient } from '@supabase/supabase-js';
 import axios from "axios";
 
-
+// Create Supabase client
 const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_URL, 
   import.meta.env.VITE_SUPABASE_ANON_KEY
 )
 
@@ -33,7 +33,9 @@ const MyPreset = definePreset(Aura, {
   }
 })
 
-const app = createApp(App)
+const app = createApp(App);
+
+app.config.globalProperties.$axios = axios;
 
 app
   .use(router)
@@ -44,5 +46,4 @@ app
     }
   })
   .provide('supabase', supabase)
-  .mount('#app')
-  
+  .mount('#app');

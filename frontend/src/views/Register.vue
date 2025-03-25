@@ -18,6 +18,9 @@
             <label for="confirmPassword" class="text-black font-bold text-left pl-1">Confirm Password</label>
             <Password id="confirmPassword" v-model="confirmPassword" :toggleMask="true" :feedback="false" />
           </p>
+          <p>
+            <AutoComplete id="address" ref="locationAutocomplete" @location-selected="updateLocation" />
+          </p>
           <p v-if="errorMessage" class="text-red-600 font-bold">{{ errorMessage }}</p>
           <p>
             <Button label="Register" icon="pi pi-check" class="p-button-rounded w-48 md:w-2/3" @click="validateAndSignUp" severity="success"/>
@@ -43,6 +46,7 @@
   import Password from 'primevue/password';
   import Button from 'primevue/button';
   import SelectButton from '../components/SelectButton.vue';
+  import AutoComplete from '../components/AutoComplete.vue';
   
   // Inject the Supabase instance provided globally in main.js
   const supabase = inject('supabase');
@@ -53,9 +57,14 @@
   const errorMessage = ref('');
   const role = ref('donor');
   const router = useRouter();
+  const location = ref('Current Location');
 
   const handleSelectionChange = (selection) => {
     role.value = selection;
+  };
+
+  const updateLocation = (selectedLocation) => {
+    location.value = selectedLocation;
   };
 
   // Validate passwords match

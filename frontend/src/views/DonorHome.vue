@@ -6,7 +6,7 @@
     <div class="content-area">
       <transition name="fade" mode="out-in">
         <component :is="currentTabComponent" 
-                  :listings="postedListings" 
+                  :listings="postedListing" 
                   @listing-posted="handleListingPosted" 
                   :key="activeTab" />
       </transition>
@@ -84,7 +84,7 @@ const signOut = async () => {
 
 // Handle new listing posted
 const handleListingPosted = (newListing) => {
-  postedListings.value.push(newListing);
+  postedListing.value.push(newListing);
   activeTab.value = 'overview'; // Switch to current listings tab after posting
 };
 </script>
