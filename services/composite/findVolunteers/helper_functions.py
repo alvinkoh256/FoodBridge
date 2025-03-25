@@ -22,14 +22,13 @@ def validate_image(image, description):
     try:
         image_file = {'file':image}
         data = {'productDescription': description}
-
+        print(f"{PRODUCT_VALIDATION_URL}/productValidation")
         response = invoke_http(
             f"{PRODUCT_VALIDATION_URL}/productValidation",
             method="POST",
             files=image_file,
             data=data
         )
-        
         return response
         
     except Exception as e:
@@ -242,3 +241,7 @@ def test_update_product_details():
     print("Update product details result:")
     print(response["productId"])
 
+def test_function():
+    return {
+        "message":"yuup"
+    }

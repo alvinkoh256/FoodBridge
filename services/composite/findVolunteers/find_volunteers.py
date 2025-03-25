@@ -2,6 +2,7 @@ import json
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import helper_functions
+import traceback
 
 app = Flask(__name__)
 CORS(app,origins=["*"])
@@ -115,7 +116,26 @@ def find_volunteers():
 
 
     
-    
+@app.route('/testGRPC',methods=['POST'])
+def test_grpc():
+    volunteer_list = [
+        {"userId":"1111-1111-1111","userAddress":"20 Siglap Vw, Singapore 455789"},
+        {"userId":"2222-2222-2222","userAddress":"30 Eunos Cres, Singapore 409423"},
+        {"userId":"3333-3333-3333","userAddress":"81 Lor 25 Geylang, Singapore 388310"}
+    ]
+    product_id = "be04b877-cbdc-4a48-a408-9818702686e1"
+    address = "11 Maria Ave, Singapore 456743"
+    try:
+        filtered_volunteers_result = helper_functions.find_nearby_volunteers(product_id,address,volunteer_list)
+        if "user_list" not in filtered_volunteers_result:
+            return jsonify({ "yuup":filtered_volunteers_result}), 500
+            raise KeyError("'user_list' key not found in the gRPC response")
+
+        filtered_volunteers_list = filtered_volunteers_result["user_list"]
+        return jsonify(filtered_volunteers_list)
+    except Exception as error:
+        err_trace = traceback.format_exc()
+        return jsonify({"error": str(error), "trace": err_trace}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001,debug=True)
