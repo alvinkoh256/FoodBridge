@@ -45,17 +45,30 @@ def create_queue(channel, exchange_name, queue_name, routing_key):
 
 # test rabbitmq - testConsumer.py & testSubscriber.py
 
-channelExample = create_exchange(
+# channelExample = create_exchange(
+#     hostname=amqp_host,
+#     port=amqp_port,
+#     exchange_name="exampleExchangeName",
+#     exchange_type="topic",
+# )
+
+# create_queue(
+#     channel=channelExample,
+#     exchange_name="exampleExchangeName",
+#     queue_name="Example",
+#     routing_key="*.example"
+# )
+
+scenario12Exchange = create_exchange(
     hostname=amqp_host,
     port=amqp_port,
-    exchange_name="exampleExchangeName",
-    exchange_type="topic",
+    exchange_name="scenario12Exchange",
+    exchange_type="fanout"
 )
 
 create_queue(
-    channel=channelExample,
-    exchange_name="exampleExchangeName",
-    queue_name="Example",
-    routing_key="*.example"
+    channel=scenario12Exchange,
+    exchange_name="scenario12Exchange",
+    queue_name="scenario12",
+    routing_key=""
 )
-

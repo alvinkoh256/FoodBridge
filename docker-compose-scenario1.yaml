@@ -1,4 +1,6 @@
 services:
+
+  
   websocket:
     build:
       context: ./websocket
@@ -61,6 +63,7 @@ services:
       - product_listing
       - product_validation
       - locating
+      # - amqp-setup
     env_file:
       - .env
     environment:
@@ -68,6 +71,7 @@ services:
       - PRODUCT_LISTING_URL=http://product_listing:5005
       - LOCATING_SERVICE_URL=locating:5006
       - ACCOUNT_SERVICE_URL=https://personal-tdqpornm.outsystemscloud.com/FoodBridge/rest/AccountInfoAPI
+      # - AMQP_SERVER_URL=http://rabbitmq:5672
     ports:
       - "5001:5001"
     networks:
