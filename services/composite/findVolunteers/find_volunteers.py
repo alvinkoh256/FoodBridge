@@ -112,7 +112,7 @@ def find_volunteers():
         return jsonify({"error": f"Failed to update product details: {str(e)}"}), 500
 
     helper_functions.print_debug("All Steps done!")
-    return jsonify(updated_product)
+    return jsonify(filtered_volunteers_list)
 
 
     
