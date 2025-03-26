@@ -31,6 +31,19 @@ async function retrieveAllWhenCCAndUserListExist(){
     return data
 }
 
+async function getCCByProductId(productId){
+    const { data, error } = await supabase
+    .from('product_listing')
+    .select('productCCDetails')
+    .eq('productId',productId)
+
+    if (error) {
+        throw new Error(`Failed to retrieve products: ${error.message}`)
+    }
+
+    return data
+}
+
 async function createProductListing(body){
     // let productPic = body.productPic
     let productAddress = body.productAddress
@@ -99,5 +112,5 @@ async function uploadPicture(image,productId){
 }
 
 
-export {retrieveAllWhenCCAndUserListExist,createProductListing,updateProduct,deleteProduct,uploadPicture}
+export {retrieveAllWhenCCAndUserListExist,createProductListing,updateProduct,deleteProduct,uploadPicture,getCCByProductId}
 
