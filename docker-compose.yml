@@ -60,6 +60,8 @@ services:
     environment:
       - HUB_SERVICE_URL=http://hub:5000
       - ACCOUNT_SERVICE_URL=https://personal-tdqpornm.outsystemscloud.com/FoodBridge/rest/AccountInfoAPI
+      - PRODUCT_LISTING_URL=http://product_listing:5005
+
     depends_on:
       hub:
         condition: service_started
