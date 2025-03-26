@@ -5,20 +5,6 @@ networks:
     driver: bridge
 
 services:
-  # # PostgreSQL Service
-  # postgres:
-  #   image: postgres:13
-  #   environment:
-  #     POSTGRES_USER: postgres         
-  #     POSTGRES_PASSWORD: postgres
-  #     POSTGRES_DB: postgres           
-  #   volumes:
-  #     - postgres-data:/var/lib/postgresql/data
-  #   networks:
-  #     - esd-net
-  #   ports:
-  #     - "5432:5432"
-
   # RabbitMQ Service
   rabbitmq:
     image: "rabbitmq:3-management"
@@ -49,7 +35,75 @@ services:
       - esd-net
     restart: "no"
 
-  # publisher:
+  hub:
+    build:
+      context: ./services/atomic/hub
+      dockerfile: Dockerfile
+    container_name: hub
+    ports:
+      - 5010:5000
+    env_file:
+      - .env
+    depends_on:
+      amqp-setup:
+        condition: service_completed_successfully
+    networks:
+      - esd-net
+  
+  confirm-delivery:
+    build:
+      context: ./services/composite/confirmDelivery
+      dockerfile: Dockerfile
+    container_name: confirm-delivery
+    ports:
+      - 5009:5000
+    environment:
+      - HUB_SERVICE_URL=http://hub:5000
+      - ACCOUNT_SERVICE_URL=https://personal-tdqpornm.outsystemscloud.com/FoodBridge/rest/AccountInfoAPI
+    depends_on:
+      hub:
+        condition: service_started
+      amqp-setup:
+        condition: service_completed_successfully
+    networks:
+      - esd-net
+
+  reserve-hub:
+    build:
+      context: ./services/composite/reserveHub
+      dockerfile: Dockerfile
+    container_name: reserve-hub
+    ports:
+      - 5015:5000
+    environment:
+      - HUB_SERVICE_URL=http://hub:5000
+      - ACCOUNT_INFO_API_URL=https://personal-tdqpornm.outsystemscloud.com/FoodBridge/rest/AccountInfoAPI
+      - AMQP_HOST=rabbitmq
+      - AMQP_PORT=5672
+      - AMQP_EXCHANGE=notificationsS3
+      - AMQP_EXCHANGE_TYPE=direct
+      - AMQP_ROUTING_KEY=reservation
+    networks:
+      - esd-net
+    depends_on:
+      - hub
+      - rabbitmq
+
+    # # PostgreSQL Service
+  # postgres:
+  #   image: postgres:13
+  #   environment:
+  #     POSTGRES_USER: postgres         
+  #     POSTGRES_PASSWORD: postgres
+  #     POSTGRES_DB: postgres           
+  #   volumes:
+  #     - postgres-data:/var/lib/postgresql/data
+  #   networks:
+  #     - esd-net
+  #   ports:
+  #     - "5432:5432"
+
+    # publisher:
   #   build:
   #     context: ./services/atomic/testPublisher
   #     dockerfile: Dockerfile
@@ -69,28 +123,7 @@ services:
   #   networks:
   #     - esd-net
 
-  hub:
-    build:
-      context: ./services/atomic/hub
-      dockerfile: Dockerfile
-    container_name: hub
-    ports:
-    - 5010:5000
-    networks:
-    - esd-net
-    
-  confirm-delivery:
-    build:
-      context: ./services/composite/confirmDelivery
-      dockerfile: Dockerfile
-    container_name: confirm-delivery
-    ports:
-      - 5009:5000
-    environment:
-      - HUB_SERVICE_URL=http://hub:5000
-      - ACCOUNT_SERVICE_URL=https://personal-tdqpornm.outsystemscloud.com/FoodBridge/rest/AccountInfoAPI
-    networks:
-      - esd-net
+
 
 volumes:
   rabbitmq_data:
