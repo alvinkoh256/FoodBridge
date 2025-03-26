@@ -1,0 +1,38 @@
+networks:
+  esd-net:
+    driver: bridge
+
+volumes:
+  rabbitmq_data:
+    external: false
+
+services:
+  # RabbitMQ Service
+  rabbitmq:
+    image: "rabbitmq:3-management"
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - esd-net
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # AMQP Setup Service
+  amqp-setup:
+    build:
+      context: .
+      dockerfile: rabbitmq/Dockerfile
+    container_name: amqp-setup
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - esd-net
+    restart: "no"

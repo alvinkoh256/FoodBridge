@@ -1,4 +1,5 @@
 from invokes import invoke_http
+from pydantic import BaseModel
 from dotenv import load_dotenv
 from math import radians, cos, sin, asin, sqrt
 import os
@@ -8,10 +9,10 @@ load_dotenv()
 
 GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
 
-
 # Function to convert product address to coords
 # returns product coordinate dict
 def convertAddress(address):
+    coordinate = None
     encoded_address = urllib.parse.quote(address)
     formatted_url = f"https://maps.googleapis.com/maps/api/geocode/json?address={encoded_address}&key={GOOGLE_MAPS_API_KEY}"
     result = invoke_http(formatted_url)
@@ -68,15 +69,15 @@ def get_center_point(product_coord,cc_coord):
     }
     return center_point_coordinate
 
-# Function to find the closest users in a 4km radius w/ userList and midpoint
+# Function to find the closest users in a 2km radius w/ userList and midpoint
 def find_closest_users(center_coord, user_list):
     res = []
     for user in user_list:
-        user_address = user["userAddress"]
+        user_address = user.userAddress
         user_coords = convertAddress(user_address)
         distance_difference = haversine(center_coord["longitude"],center_coord["latitude"],user_coords["lng"],user_coords["lat"])
         if distance_difference<2:
-            res.append(user["userId"])
+            res.append(user.userId)
     return res
 
 def haversine(lon1, lat1, lon2, lat2):
