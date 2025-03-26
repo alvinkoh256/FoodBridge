@@ -1,4 +1,6 @@
 services:
+
+  
   websocket:
     build:
       context: ./websocket
@@ -51,7 +53,29 @@ services:
       - "5006:5006"
     networks:
       - esd-net
-
+  find_volunteers:
+    build:
+      context: ./services/composite/findVolunteers
+      dockerfile: Dockerfile
+    image: wongyh01/find_volunteers:1.0
+    container_name: find_volunteers
+    depends_on:
+      - product_listing
+      - product_validation
+      - locating
+      # - amqp-setup
+    env_file:
+      - .env
+    environment:
+      - PRODUCT_VALIDATION_URL=http://product_validation:5004
+      - PRODUCT_LISTING_URL=http://product_listing:5005
+      - LOCATING_SERVICE_URL=locating:5006
+      - ACCOUNT_SERVICE_URL=https://personal-tdqpornm.outsystemscloud.com/FoodBridge/rest/AccountInfoAPI
+      # - AMQP_SERVER_URL=http://rabbitmq:5672
+    ports:
+      - "5001:5001"
+    networks:
+      - esd-net
 
 
 networks:

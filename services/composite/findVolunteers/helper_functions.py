@@ -4,25 +4,31 @@ from pathlib import Path
 import grpc
 import locate_pb2
 import locate_pb2_grpc
+from datetime import datetime
 
 PRODUCT_VALIDATION_URL = os.environ.get('PRODUCT_VALIDATION_URL', "http://localhost:5004")
 PRODUCT_LISTING_URL = os.environ.get('PRODUCT_LISTING_URL', "http://localhost:5005") 
 LOCATING_URL = os.environ.get('LOCATING_SERVICE_URL', "localhost:5006")
 USER_URL = os.environ.get('ACCOUNT_SERVICE_URL', "https://personal-tdqpornm.outsystemscloud.com/FoodBridge/rest/AccountInfoAPI")
 
+
+def print_debug(message):
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"[{timestamp}] {message}")
+
+
 # function to call validation service with picture and description as param
 def validate_image(image, description):
     try:
         image_file = {'file':image}
         data = {'productDescription': description}
-
+        print(f"{PRODUCT_VALIDATION_URL}/productValidation")
         response = invoke_http(
             f"{PRODUCT_VALIDATION_URL}/productValidation",
             method="POST",
             files=image_file,
             data=data
         )
-        
         return response
         
     except Exception as e:
@@ -202,9 +208,6 @@ def test_get_all_volunteers():
     print(result)
 
 def test_find_nearby_volunteers():
-    """
-    Test function for find_nearby_volunteers
-    """
     # Example product details
     product_id = "1111-1111-1111"
     product_address = "B1-67 SMU School of Computing and Information Systems 1, Singapore 178902"
@@ -238,4 +241,7 @@ def test_update_product_details():
     print("Update product details result:")
     print(response["productId"])
 
-
+def test_function():
+    return {
+        "message":"yuup"
+    }
