@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import json
-import amqp_lib
+import services.composite.confirmDelivery.amqp_lib as amqp_lib
 import time
 
 rabbit_host = "rabbitmq"
