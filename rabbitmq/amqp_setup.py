@@ -95,19 +95,3 @@ create_queue(
     queue_name="broadcastHubs",
     routing_key="broadcastHubs"
 )
-
-# Hub -> Route
-create_queue(
-    channel=notificationsExchangeS3,
-    exchange_name="notificationsS3",
-    queue_name="reservation",
-    routing_key="reservation"
-)
-
-# Route -> Notification
-create_queue(
-    channel=notificationsExchangeS3,
-    exchange_name="notificationsS3",
-    queue_name="notifyRoute",
-    routing_key="notifyRoute"
-)

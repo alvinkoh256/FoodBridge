@@ -18,7 +18,7 @@ api = Api(app, version='1.0',
 # Environment variables with Docker-friendly defaults
 HUB_SERVICE_URL = os.environ.get("HUB_SERVICE_URL", "http://hub:5000")
 ACCOUNT_INFO_API_URL = os.environ.get("ACCOUNT_INFO_API_URL", "https://personal-tdqpornm.outsystemscloud.com/FoodBridge/rest/AccountInfoAPI")
-PRODUCT_VALIDATION_URL = os.environ.get("PRODUCT_VALIDATION_URL", "http://placeholder/getHubInfo") # change when YH provides
+PRODUCT_VALIDATION_URL = os.environ.get("PRODUCT_LISTING_URL", "http://product_listing:5005") # change when YH provides
 
 # AMQP Configuration
 AMQP_HOST = os.environ.get("AMQP_HOST", "rabbitmq")
@@ -45,7 +45,6 @@ new_item_model = api.model('NewItem', {
 
 # Updated request model to match expected payload
 confirm_delivery_model = api.model('ConfirmDeliveryRequest', {
-    'hubID': fields.Integer(required=False, description='ID of the hub (optional)'),
     'volunteerID': fields.String(required=True, description='ID of the volunteer'),
     'productID': fields.Integer(required=True, description='Product ID for validation'),
     'items': fields.List(fields.Nested(item_model), description='List of existing items being dropped off'),
@@ -79,14 +78,17 @@ class ConfirmDelivery(Resource):
             if not hub_info:
                 return {"error": "Could not retrieve hub information for the product"}, 404
             
-            # Prepare inventory update payload
             inventory_payload = {
-                'hubID': hub_info['hubID'],
-                'hubName': hub_info['hubName'],
-                'hubAddress': hub_info['hubAddress'],
+                'hubID': hub_info.get('hubId'),  # Use .get() to avoid KeyError
+                'hubName': hub_info.get('hubName'),
+                'hubAddress': hub_info.get('hubAddress'),
                 'items': data.get('items', []),
                 'newitems': data.get('newitems', [])
             }
+
+            if not inventory_payload['hubID']:
+                return {"error": "Hub ID is missing in the response from product listing"}, 404
+
             
             # Step 3: Send notification via AMQP
             notification_payload = self.create_notification_payload(
@@ -118,17 +120,41 @@ class ConfirmDelivery(Resource):
     def validate_product(self, product_id):
         """Validate product and retrieve hub information"""
         try:
-            response = requests.post(
-                PRODUCT_VALIDATION_URL, 
-                json={"productID": product_id}
-            )
+            # Construct the URL using the PRODUCT_LISTING_URL environment variable
+            url = f"{PRODUCT_VALIDATION_URL}/ProductCC/{product_id}"
+            
+            # Make a GET request to retrieve hub information
+            response = requests.get(url, timeout=10)
             
             if response.status_code == 200:
-                return response.json()
-            return None
-        except Exception as e:
+                # Log the full response for debugging
+                product_info = response.json()
+                print(f"Product Listing response: {json.dumps(product_info, indent=2)}")  # Pretty-print the response
+                
+                # Check if 'productCCDetails' is in the response
+                hub_info = product_info.get('productCCDetails', {})
+                if not hub_info:
+                    print("Error: No productCCDetails in the response")
+                    return None
+
+                # Access 'hubId' inside 'productCCDetails'
+                hub_id = hub_info.get('hubId')
+                if not hub_id:
+                    print("Error: hubId is missing")
+                    return None
+
+                # You can return the whole hub info or just 'hubId' based on your needs
+                return hub_info  # Or return {'hubId': hub_id, 'hubName': hub_info.get('hubName'), ...}
+
+            else:
+                print(f"Failed to retrieve product info. Status code: {response.status_code}")
+                print(f"Response text: {response.text}")
+                return None
+        
+        except requests.RequestException as e:
             print(f"Error validating product: {e}")
             return None
+
     
     def create_notification_payload(self, delivery_data, volunteer_info, hub_info):
         """Create notification payload for AMQP"""
