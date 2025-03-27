@@ -6,15 +6,11 @@ import locate_pb2
 import locate_pb2_grpc
 from datetime import datetime
 
+
 PRODUCT_VALIDATION_URL = os.environ.get('PRODUCT_VALIDATION_URL', "http://localhost:5004")
 PRODUCT_LISTING_URL = os.environ.get('PRODUCT_LISTING_URL', "http://localhost:5005") 
 LOCATING_URL = os.environ.get('LOCATING_SERVICE_URL', "localhost:5006")
 USER_URL = os.environ.get('ACCOUNT_SERVICE_URL', "https://personal-tdqpornm.outsystemscloud.com/FoodBridge/rest/AccountInfoAPI")
-
-
-def print_debug(message):
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print(f"[{timestamp}] {message}")
 
 
 # function to call validation service with picture and description as param
@@ -91,7 +87,7 @@ def get_all_volunteers():
 
 
 # function to run locating service with list of volunteer ids and address and id, address
-def find_nearby_volunteers(product_id, product_address, volunteer_list):
+def find_nearby_volunteers(product_id, product_address,product_hub_address, volunteer_list):
     try:
         # Create a gRPC channel
         channel = grpc.insecure_channel(LOCATING_URL)
@@ -112,6 +108,7 @@ def find_nearby_volunteers(product_id, product_address, volunteer_list):
         request = locate_pb2.inputBody(
             productId=product_id,
             productAddress=product_address,
+            productHubAddress=product_hub_address,
             volunteerList=volunteer_infos
         )
         
@@ -121,7 +118,6 @@ def find_nearby_volunteers(product_id, product_address, volunteer_list):
         # Process the response
         result = {
             "product_id": response.productId,
-            "product_closest_cc": response.productClosestCC,
             "user_list": list(response.userList),  # Convert from repeated field to list
         }
         
@@ -157,6 +153,8 @@ def update_product_details(input_body):
         print(f"Error in updating product listing: {str(e)}")
         return {"error": f"Validation service error: {str(e)}"}
     
+
+# TEST FUNCTIONS
 
 def test_validate_image():
     # Path to your test image
@@ -210,17 +208,18 @@ def test_get_all_volunteers():
 def test_find_nearby_volunteers():
     # Example product details
     product_id = "1111-1111-1111"
-    product_address = "B1-67 SMU School of Computing and Information Systems 1, Singapore 178902"
-    
+    product_address = "750A Chai Chee Rd, #01-01 ESR BizPark @Chai Chee, Singapore 469001"
+    productHubAddress = "10C Bedok South Ave 2 #01-562, S462010"
+
     # Example volunteer list
     volunteer_list = [
-        {"userId":"1111-1111-1111","userAddress":"80 Stamford Rd, Singapore 178902"},
-        {"userId":"2222-2222-2222","userAddress":"501 Margaret Dr, Singapore 149306"},
-        {"userId":"3333-3333-3333","userAddress":"500 Dover Rd, Singapore 139651"}
+        {"userId":"1111-1111-1111","userAddress":"39 Siglap Hl, Singapore 456092"},
+        {"userId":"2222-2222-2222","userAddress":"31 Jurong West Street 41, Singapore 649412"},
+        {"userId":"3333-3333-3333","userAddress":"73 Jln Tua Kong, Singapore 457264"}
     ]
     
     # Call the function
-    result = find_nearby_volunteers(product_id, product_address, volunteer_list)
+    result = find_nearby_volunteers(product_id, product_address,productHubAddress, volunteer_list)
     
     # Print the result
     print("Nearby volunteers result:")

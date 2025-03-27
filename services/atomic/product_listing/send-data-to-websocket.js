@@ -1,5 +1,5 @@
 import axios from "axios"
-import { retrieveAllWhenCCAndUserListExist } from "./server.js"
+import { retrieveAllWhenUserListExist } from "./server.js"
 
 const websocketUrl = process.env.WEBSOCKET_URL || "http://localhost:5014"
 console.log(`Using WebSocket URL: ${websocketUrl}`)
@@ -7,7 +7,7 @@ console.log(`Using WebSocket URL: ${websocketUrl}`)
 async function sendToWebSocket() {
     try {
         console.log("Retrieving products to send to WebSocket...");
-        let allProducts = await retrieveAllWhenCCAndUserListExist();
+        let allProducts = await retrieveAllWhenUserListExist();
         console.log(`Sending ${allProducts.length} products to WebSocket at ${websocketUrl}`);
 
         const response = await axios.post(`${websocketUrl}/sendProductListing`, allProducts);
