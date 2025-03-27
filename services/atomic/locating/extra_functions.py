@@ -60,8 +60,8 @@ def find_closest_cc(product_coords):
 def get_center_point(product_coord,cc_coord):
     product_lat = product_coord["lat"]
     product_long = product_coord["lng"]
-    cc_lat = cc_coord["latitude"]
-    cc_long = cc_coord["longitude"]
+    cc_lat = cc_coord["lat"]
+    cc_long = cc_coord["lng"]
 
     center_point_coordinate = {
         "latitude":(product_lat+cc_lat)/2,
