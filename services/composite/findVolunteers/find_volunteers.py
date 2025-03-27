@@ -31,47 +31,57 @@ CORS(app, origins=["*"])
 def find_volunteers():
     # Take picture and description out
     data = request.form
-    image = request.files.get('image')
-    description = data.get("productDescription")
-    address = data.get("productAddress")
-    hub_address = data.get("productHubAddress")
+    product_image = request.files.get('image')
+    product_cc_details = data.get("productCCDetails")
+    product_address = data.get("productAddress")
+    product_item_list = data.get("productItemList")
 
-    if not image:
+    if type(product_cc_details) == "string":
+        product_cc_details = json.loads(product_cc_details)
+        
+    if type(product_item_list) == "string":
+        product_item_list = json.loads(product_item_list)
+
+    if not product_image:
         logger.error("Error: No image provided")
         return jsonify({"error": "No image provided"}), 400
-    if not description:
-        logger.error("Error: Product description is required")
-        return jsonify({"error": "Product description is required"}), 400
-    if not address:
+    if not product_cc_details:
+        logger.error("Error: Product CC Details is required")
+        return jsonify({"error": "Product CC Details is required"}), 400
+    if not product_address:
         logger.error("Error: Product address is required")
         return jsonify({"error": "Product address is required"}), 400
+    if not product_item_list:
+        logger.error("Error: Product item list is required")
+        return jsonify({"error": "Product item list is required"}), 400
 
     # Run validate image function
-    try:
-        logger.info("Starting Step 1: Product Validation")
-        validate_results = helper_functions.validate_image(image, description)["result"]
+    # try:
+    #     logger.info("Starting Step 1: Product Validation")
+    #     validate_results = helper_functions.validate_image(image, item_list)["result"]
 
-        if (validate_results!=True):
-            logger.warning(f"Image validation rejected: {validate_results}")
-            return jsonify({"message": validate_results}), 400
+    #     if (validate_results!=True):
+    #         logger.warning(f"Image validation rejected: {validate_results}")
+    #         return jsonify({"message": validate_results}), 400
         
-    except Exception as e:
-        logger.error(f"Error during image validation: {str(e)}")
-        return jsonify({"error": f"Image validation failed: {str(e)}"}), 500
+    # except Exception as e:
+    #     logger.error(f"Error during image validation: {str(e)}")
+    #     return jsonify({"error": f"Image validation failed: {str(e)}"}), 500
 
     # Run adding of products
     input_body = {
-        "product_image":image,
-        "product_description":description,
-        "product_address":address
+        "productPic":product_image,
+        "productCCDetails":product_cc_details,
+        "productAddress":product_address,
+        "productItemList":product_item_list
     }
     try:
         logger.info("Starting Step 2: Adding Products")
         product = helper_functions.add_product(input_body)
         logger.info(f"Product Details: {product["error"]}")
     except Exception as e:
-        logger.error(f"Error adding product: {str(e)}")
-        return jsonify({"error": f"Failed to add product: {str(e)}"}), 500
+        logger.error(f"Error adding product: {str(e["error"])}")
+        return jsonify({"error": f"Failed to add product: {str(e["error"])}"}), 500
 
 
     # Run retrieving volunteers
@@ -96,8 +106,11 @@ def find_volunteers():
     # Run find volunteers in radius
     try:
         logger.info("Starting Step 4: Getting volunteers in 2km radius")
+
+        hub_address = product_cc_details["hubAddress"]
         product_id = product["product_id"]
-        filtered_volunteers_result = helper_functions.find_nearby_volunteers(product_id, address, hub_address, volunteer_list)
+        
+        filtered_volunteers_result = helper_functions.find_nearby_volunteers(product_id, product_address, hub_address, volunteer_list)
         filtered_volunteers_list = filtered_volunteers_result["user_list"]
 
         if len(filtered_volunteers_list)==0:
@@ -111,7 +124,6 @@ def find_volunteers():
         logger.info("Starting Step 5: Updating product CC and userList")
         update_body = {
             "productId":product_id,
-            "productClosestCC":filtered_volunteers_result["product_closest_cc"],
             "productUserList":filtered_volunteers_list
         }
         updated_product = helper_functions.update_product_details(update_body)

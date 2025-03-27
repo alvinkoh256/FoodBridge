@@ -34,38 +34,30 @@ def validate_image(image, description):
 
 # function to call add product from product_listing service
 def add_product(body):
-    image = body["product_image"]
-    description = body["product_description"]
-    address = body["product_address"]
+    image = body["productPic"]
 
     # Reset the stream pointer to the beginning.
     image.stream.seek(0)
 
-    try:
-        image_file = {
-            'productPic':(image.filename, image.stream, image.mimetype)
-            }
-        data = {'productAddress':address,
-                'productDescription': description
-                }
-
-        response = invoke_http(
-            f"{PRODUCT_LISTING_URL}/product",
-            method="POST",
-            files=image_file,
-            data=data
-        )
-        
-        result = {
-            "product_id":response["productId"],
-            "product_address":response["productAddress"]
+    image_file = {
+        'productPic':(image.filename, image.stream, image.mimetype)
         }
 
-        return result
+    del body["productPic"]
+    response = invoke_http(
+        f"{PRODUCT_LISTING_URL}/product",
+        method="POST",
+        files=image_file,
+        data=body
+    )
+    
+    result = {
+        "product_id":response["productId"],
+        "product_address":response["productAddress"]
+    }
+
+    return result
         
-    except Exception as e:
-        print(f"Error in validate_image: {str(e)}")
-        return {"error": f"Validation service error: {str(e)}"}
 
 
 # function to retrieve all volunteers id and address with user service
@@ -179,15 +171,17 @@ def test_validate_image():
 
 def test_add_product():
     # Path to your test image
-    image_path = "sample_pics/tuna.jpg"
+    image_path = "D:/SMU/GitRepos/FoodBridge/services/sample_pics/tuna.jpg"
     
     # Open the image file
     with open(image_path, 'rb') as img_file:
         # Create a simple dictionary with the required data
         product_data = {
-            'product_image': img_file,
-            'product_description': "Canned tuna for donation",
-            'product_address': "123 Main St, Singapore 123456"
+            'productPic': img_file,
+            'productItemList': [{"itemName":"tuna","quantity":10},{"itemName":"beans","quantity":10},{"itemName":"pickled vegetables","quantity":10}],
+            'product_address': "123 Main St, Singapore 123456",
+            'productCCDetails':{ "hubId": 1, "hubName": "Bedok Orchard RC", "hubAddress": "10C Bedok South Ave 2 #01-562, S462010"}
+
         }
         
         # Call the add_product function
@@ -196,6 +190,7 @@ def test_add_product():
     # Print the result
     print("Add product result:")
     print(result)
+test_add_product()
 
 def test_get_all_volunteers():
     # Call the function
