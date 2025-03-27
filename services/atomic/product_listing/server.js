@@ -45,13 +45,10 @@ async function getCCByProductId(productId){
 }
 
 async function createProductListing(body){
-    // let productPic = body.productPic
     let productAddress = body.productAddress
     let productDescription = body.productDescription
     let productStatus = "open"
-    // console.log(`${productPic},${productAddress},${productStatus}`)
     const{data,error} = await supabase.from("product_listing").insert({
-        // productPic:productPic,
         productAddress:productAddress,
         productStatus:productStatus,
         productDescription:productDescription

@@ -148,7 +148,6 @@ app.post('/product', upload.single('productPic'), async (req, res)=>{
             });
         }
         
-
         const createResult = await createProductListing(body);
         const productId = createResult[0].productId;
         
