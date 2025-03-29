@@ -83,14 +83,18 @@ const signIn = async () => {
   }
 
   if (userRole !== role.value) {
-    errorMessage.value = `You are registered as a ${userRole}, not a ${role.value}`;
+    errorMessage.value = `You are not registered as a ${role.value}`;
     await signOut(); // Logout user
     return;
   }
 
   if (userRole === 'donor') {
     router.push('/home/donor');
-  } else {
+  } 
+  else if(userRole === 'bank'){
+    router.push('/home/bank');
+  }
+  else {
     router.push('/home');
   }
 };

@@ -28,8 +28,8 @@
       </div>
     </div>
 
-    <Dialog v-model:visible="visible" modal header="Drop-off at (A CC)" :style="{ width: '75rem' }">
-      <DialogContent/>
+    <Dialog v-model:visible=visible modal header="Drop-off at (A CC)" :style="{ width: '75rem' }">
+      <DialogContentVolunteer/>
     </Dialog>
   </div>
 </template>
@@ -38,7 +38,7 @@
 import { ref, inject, onMounted } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
-import DialogContent from '../components/DialogContent.vue';
+import DialogContentVolunteer from '../components/DialogContentVolunteer.vue';
 import Dialog from 'primevue/dialog';
 
 const supabase = inject('supabase');
@@ -81,9 +81,6 @@ const openDialog = () => {
   visible.value = true;
 };
 
-const closeDialog = () => {
-  visible.value = false;
-};
 
 </script>
 

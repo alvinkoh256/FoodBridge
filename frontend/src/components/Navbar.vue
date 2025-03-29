@@ -10,14 +10,14 @@
           :class="{ 'active': modelValue === 'overview' }"
           @click="updateTab('overview')"
         >
-          Current Listings
+          {{ tabNames.overview }}
         </div>
         <div
           class="nav-tab"
           :class="{ 'active': modelValue === 'listings' }"
           @click="updateTab('listings')"
         >
-          Create Listing
+         {{ tabNames.listings }}
         </div>
       </div>
       <div class="logout-section">
@@ -36,6 +36,14 @@ const props = defineProps({
   modelValue: {
     type: String,
     required: true
+  },
+  tabNames: {
+    type: Object,
+    required: false,
+    default: () => ({
+      overview: 'Current Listings',
+      listings: 'Create Listing'
+    })
   }
 });
 

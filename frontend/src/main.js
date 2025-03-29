@@ -7,6 +7,7 @@ import store from './store';
 import './style.css';
 import { definePreset } from '@primeuix/themes';
 import { createClient } from '@supabase/supabase-js';
+import 'primeicons/primeicons.css'
 import axios from "axios";
 
 // Create Supabase client

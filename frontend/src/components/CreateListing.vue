@@ -7,25 +7,18 @@
             <img v-if="previewImage" :src="previewImage" class="preview-image" alt="Donation preview" />
             <div v-else class="upload-placeholder">
               <i class="upload-icon">Insert Photo</i>
-              <p>Upload Photo</p>
               <input type="file" @change="handleImageUpload" class="file-input" accept="image/*" />
             </div>
           </div>
           
           <div class="form-fields">
-            <div class="form-group">
               <div class="input-with-icon">
-                <i class="icon">+</i>
-                <input type="text" placeholder="Input Description of Goods" class="form-control text-black" v-model="description" />
+                  <ItemDropdown/>
               </div>
-            </div>
-            
-            <div class="form-group">
+
               <div class="input-with-icon">
-                <i class="icon">+</i>
-                <input type="number" placeholder="Quantity" class="form-control text-black" v-model="quantity" />
+                <CreateItem/>
               </div>
-            </div>
             
             <div class="location-indicator">
               <div class="location-icon">📍</div>
@@ -41,8 +34,10 @@
 </template>
 
 <script setup>
-import { ref, provide, onMounted } from 'vue';
+import { ref, provide } from 'vue';
 import AutoComplete from './AutoComplete.vue';
+import ItemDropdown from './ItemDropdown.vue';
+import CreateItem from './CreateItem.vue';
 
 const emit = defineEmits(['listing-posted']);
 
@@ -51,12 +46,6 @@ const quantity = ref('');
 const location = ref('Current Location');
 const previewImage = ref(null);
 const locationAutocomplete = ref(null);
-
-// Provide Google Maps to children components
-// In a real implementation, you would load the Google Maps API
-// and provide it to the components
-provide('googleMaps', window.google?.maps || null);
-provide('googleMapsLoaded', !!window.google?.maps);
 
 // Image upload handling
 const handleImageUpload = (event) => {
@@ -178,7 +167,7 @@ const postListing = () => {
 
 .input-with-icon {
   display: flex;
-  align-items: center;
+  justify-content: center;
   border: 1px solid #ddd;
   border-radius: 4px;
   overflow: hidden;
