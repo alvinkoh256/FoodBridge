@@ -678,11 +678,10 @@ class CheckHub(Resource):
             
             # Return hub information including reservation status
             return {
-                "hubID": hub['hubid'],
                 "hubName": hub['hubname'],
                 "hubAddress": hub['hubaddress'],
                 "totalWeight_kg": hub['totalweight_kg'],
-                "isReserved": hub['reserved'],
+                "reserved": hub['reserved'],
                 "readyToCollect": hub['readytocollect']
             }, 200
         
@@ -1048,6 +1047,76 @@ class HubReservedInventory(Resource):
                 "reservationDate": reservation['reservationdate'],
                 "totalWeight_kg": reservation['totalweight_kg'] or total_weight,
                 "reservedItems": reserved_items
+            }
+            
+            return response, 200
+            
+        except Exception as e:
+            return {"error": str(e)}, 500
+
+@internal_hub_ns.route('/foodbank/<int:foodbank_id>')
+@internal_hub_ns.param('foodbank_id', 'The ID of the foodbank to get information for')
+class GetFoodbankInfo(Resource):
+    @internal_hub_ns.doc('get_foodbank_info', description='Get foodbank information and its reserved hubs')
+    @internal_hub_ns.response(200, 'Success')
+    @internal_hub_ns.response(404, 'Foodbank Not Found')
+    @internal_hub_ns.response(500, 'Internal Server Error')
+    def get(self, foodbank_id):
+        """
+        Service to retrieve foodbank information and its reserved hubs.
+        
+        This endpoint returns:
+        1. Foodbank details (ID, name, address)
+        2. A list of hubs that are currently reserved by this foodbank (ID, name, address)
+        
+        This can be used to display the foodbank profile along with its active reservations.
+        """
+        try:
+            # Check if foodbank exists
+            foodbank_response = supabase.table('foodbank').select('*').eq('foodbankid', foodbank_id).execute()
+            
+            if not foodbank_response.data:
+                return {"error": f"Foodbank with ID {foodbank_id} does not exist"}, 404
+            
+            foodbank = foodbank_response.data[0]
+            
+            # Get all active reservations for this foodbank
+            reservations_response = supabase.table('foodbankreservation').select('*')\
+                .eq('foodbankid', foodbank_id)\
+                .eq('collectioncompleted', False)\
+                .execute()
+            
+            # Prepare the list of reserved hubs
+            reserved_hubs = []
+            
+            if reservations_response.data:
+                # Get hub details for each reservation
+                for reservation in reservations_response.data:
+                    hub_id = reservation['hubid']
+                    
+                    # Get hub details
+                    hub_response = supabase.table('hub').select('hubid, hubname, hubaddress')\
+                        .eq('hubid', hub_id)\
+                        .execute()
+                    
+                    if hub_response.data:
+                        hub = hub_response.data[0]
+                        
+                        # Add to reserved hubs list
+                        reserved_hubs.append({
+                            "hubID": hub['hubid'],
+                            "hubName": hub['hubname'],
+                            "hubAddress": hub['hubaddress'],
+                            "reservationDate": reservation['reservationdate'],
+                            "totalWeight_kg": reservation['totalweight_kg']
+                        })
+            
+            # Format the response
+            response = {
+                "foodbankID": foodbank['foodbankid'],
+                "foodbankName": foodbank['foodbankname'],
+                "foodbankAddress": foodbank['foodbankaddress'],
+                "reservedHubs": reserved_hubs
             }
             
             return response, 200
