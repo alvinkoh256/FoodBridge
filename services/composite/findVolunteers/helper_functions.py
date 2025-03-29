@@ -5,6 +5,7 @@ import grpc
 import locate_pb2
 import locate_pb2_grpc
 from datetime import datetime
+import json
 
 
 PRODUCT_VALIDATION_URL = os.environ.get('PRODUCT_VALIDATION_URL', "http://localhost:5004")
@@ -36,18 +37,21 @@ def validate_image(image, description):
 def add_product(body):
     image = body["productPic"]
 
+    # TEST
+    # files = {'productPic': image}
+    # body['productCCDetails'] = json.dumps(body['productCCDetails'])
+
+    # ORIGINAL
     # Reset the stream pointer to the beginning.
     image.stream.seek(0)
-
-    image_file = {
-        'productPic':(image.filename, image.stream, image.mimetype)
-        }
+    image_file = {'productPic':(image.filename, image.stream, image.mimetype)}
 
     del body["productPic"]
     response = invoke_http(
         f"{PRODUCT_LISTING_URL}/product",
         method="POST",
-        files=image_file,
+        files=image_file, #ORIGINAL
+        # files=files,
         data=body
     )
     
@@ -179,9 +183,8 @@ def test_add_product():
         product_data = {
             'productPic': img_file,
             'productItemList': [{"itemName":"tuna","quantity":10},{"itemName":"beans","quantity":10},{"itemName":"pickled vegetables","quantity":10}],
-            'product_address': "123 Main St, Singapore 123456",
+            'productAddress': "123 Main St, Singapore 123456",
             'productCCDetails':{ "hubId": 1, "hubName": "Bedok Orchard RC", "hubAddress": "10C Bedok South Ave 2 #01-562, S462010"}
-
         }
         
         # Call the add_product function
@@ -190,7 +193,6 @@ def test_add_product():
     # Print the result
     print("Add product result:")
     print(result)
-test_add_product()
 
 def test_get_all_volunteers():
     # Call the function
@@ -219,6 +221,8 @@ def test_find_nearby_volunteers():
     # Print the result
     print("Nearby volunteers result:")
     print(result)
+
+test_find_nearby_volunteers()
 
 def test_update_product_details():
     # Create a mock result from find_nearby_volunteers

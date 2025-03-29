@@ -78,7 +78,6 @@ def find_volunteers():
     try:
         logger.info("Starting Step 2: Adding Products")
         product = helper_functions.add_product(input_body)
-        logger.info(f"Product Details: {product["error"]}")
     except Exception as e:
         logger.error(f"Error adding product: {str(e["error"])}")
         return jsonify({"error": f"Failed to add product: {str(e["error"])}"}), 500
