@@ -17,11 +17,10 @@ if (!supaUrl || !supaKey) {
 const supabase = createClient(supaUrl, supaKey)
 
 
-async function retrieveAllWhenCCAndUserListExist(){
+async function retrieveAllWhenUserListExist(){
     const { data, error } = await supabase
         .from('product_listing')
         .select()
-        .not('productClosestCC','is',null)
         .not('productUserList','is',null)
     
     if (error) {
@@ -45,16 +44,23 @@ async function getCCByProductId(productId){
 }
 
 async function createProductListing(body){
-    // let productPic = body.productPic
     let productAddress = body.productAddress
-    let productDescription = body.productDescription
+    let productItemList = body.productItemList
+    let productCCDetails = body.productCCDetails
+
+    if(typeof productItemList == "string"){
+        productItemList = JSON.parse(body.productItemList)
+    }
+    if(typeof productCCDetails == "string"){
+        productCCDetails = JSON.parse(body.productCCDetails)
+    }
+
     let productStatus = "open"
-    // console.log(`${productPic},${productAddress},${productStatus}`)
     const{data,error} = await supabase.from("product_listing").insert({
-        // productPic:productPic,
         productAddress:productAddress,
         productStatus:productStatus,
-        productDescription:productDescription
+        productItemList:productItemList,
+        productCCDetails:productCCDetails
     })
     .select()
     if (error){
@@ -112,5 +118,5 @@ async function uploadPicture(image,productId){
 }
 
 
-export {retrieveAllWhenCCAndUserListExist,createProductListing,updateProduct,deleteProduct,uploadPicture,getCCByProductId}
+export {retrieveAllWhenUserListExist,createProductListing,updateProduct,deleteProduct,uploadPicture,getCCByProductId}
 

@@ -12,12 +12,12 @@ message volunteerInfo{
 message inputBody{
     string productId = 1;
     string productAddress = 2;
-    repeated volunteerInfo volunteerList = 3;
+    string productHubAddress = 3;
+    repeated volunteerInfo volunteerList = 4;
 }
 
 message responseBody{
     string productId = 1;
-    string productClosestCC = 2;
-    repeated string userList = 3;
-    string error = 4;
+    repeated string userList = 2;
+    string error = 3;
 }

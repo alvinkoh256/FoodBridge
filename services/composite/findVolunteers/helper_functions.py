@@ -5,16 +5,44 @@ import grpc
 import locate_pb2
 import locate_pb2_grpc
 from datetime import datetime
+import json
+import time
+import pika 
+import amqp_lib
 
 PRODUCT_VALIDATION_URL = os.environ.get('PRODUCT_VALIDATION_URL', "http://localhost:5004")
 PRODUCT_LISTING_URL = os.environ.get('PRODUCT_LISTING_URL', "http://localhost:5005") 
 LOCATING_URL = os.environ.get('LOCATING_SERVICE_URL', "localhost:5006")
 USER_URL = os.environ.get('ACCOUNT_SERVICE_URL', "https://personal-tdqpornm.outsystemscloud.com/FoodBridge/rest/AccountInfoAPI")
 
+RABBIT_HOST = os.environ.get('RABBIT_HOST', 'localhost')
+RABBIT_PORT = int(os.environ.get('RABBIT_PORT', 5672))
+RABBIT_EXCHANGE = os.environ.get('RABBIT_EXCHANGE', 'scenario12Exchange')
+EXCHANGE_TYPE = os.environ.get('EXCHANGE_TYPE', 'fanout')
 
-def print_debug(message):
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print(f"[{timestamp}] {message}")
+def connectAMQP():
+    # Use global variables to reduce number of reconnection to RabbitMQ
+    # There are better ways but this suffices for our lab
+    global connection
+    global channel
+
+    print("  Connecting to AMQP broker...")
+    try:
+        connection, channel = amqp_lib.connect(
+                hostname=RABBIT_HOST,
+                port=RABBIT_PORT,
+                exchange_name=RABBIT_EXCHANGE,
+                exchange_type=EXCHANGE_TYPE,
+        )
+    except Exception as exception:
+        print(f"  Unable to connect to RabbitMQ.\n     {exception=}\n")
+        exit(1)
+
+
+def sendToQueue(message):
+    if connection is None or not amqp_lib.is_connection_open(connection):
+        connectAMQP()
+    channel.basic_publish(exchange=RABBIT_EXCHANGE, routing_key="", body=message, properties=pika.BasicProperties(delivery_mode=2))
 
 
 # function to call validation service with picture and description as param
@@ -38,38 +66,33 @@ def validate_image(image, description):
 
 # function to call add product from product_listing service
 def add_product(body):
-    image = body["product_image"]
-    description = body["product_description"]
-    address = body["product_address"]
+    image = body["productPic"]
 
+    # TEST
+    # files = {'productPic': image}
+    # body['productCCDetails'] = json.dumps(body['productCCDetails'])
+
+    # ORIGINAL
     # Reset the stream pointer to the beginning.
     image.stream.seek(0)
+    image_file = {'productPic':(image.filename, image.stream, image.mimetype)}
 
-    try:
-        image_file = {
-            'productPic':(image.filename, image.stream, image.mimetype)
-            }
-        data = {'productAddress':address,
-                'productDescription': description
-                }
+    del body["productPic"]
+    response = invoke_http(
+        f"{PRODUCT_LISTING_URL}/product",
+        method="POST",
+        files=image_file, #ORIGINAL
+        # files=files,
+        data=body
+    )
+    
+    result = {
+        "product_id":response["productId"],
+        "product_address":response["productAddress"]
+    }
 
-        response = invoke_http(
-            f"{PRODUCT_LISTING_URL}/product",
-            method="POST",
-            files=image_file,
-            data=data
-        )
+    return result
         
-        result = {
-            "product_id":response["productId"],
-            "product_address":response["productAddress"]
-        }
-
-        return result
-        
-    except Exception as e:
-        print(f"Error in validate_image: {str(e)}")
-        return {"error": f"Validation service error: {str(e)}"}
 
 
 # function to retrieve all volunteers id and address with user service
@@ -91,7 +114,7 @@ def get_all_volunteers():
 
 
 # function to run locating service with list of volunteer ids and address and id, address
-def find_nearby_volunteers(product_id, product_address, volunteer_list):
+def find_nearby_volunteers(product_id, product_address,product_hub_address, volunteer_list):
     try:
         # Create a gRPC channel
         channel = grpc.insecure_channel(LOCATING_URL)
@@ -112,6 +135,7 @@ def find_nearby_volunteers(product_id, product_address, volunteer_list):
         request = locate_pb2.inputBody(
             productId=product_id,
             productAddress=product_address,
+            productHubAddress=product_hub_address,
             volunteerList=volunteer_infos
         )
         
@@ -121,7 +145,6 @@ def find_nearby_volunteers(product_id, product_address, volunteer_list):
         # Process the response
         result = {
             "product_id": response.productId,
-            "product_closest_cc": response.productClosestCC,
             "user_list": list(response.userList),  # Convert from repeated field to list
         }
         
@@ -147,7 +170,7 @@ def find_nearby_volunteers(product_id, product_address, volunteer_list):
 def update_product_details(input_body):
     try:
         response = invoke_http(
-            f"{PRODUCT_LISTING_URL}/productCCAndUsers",
+            f"{PRODUCT_LISTING_URL}/product",
             method="PUT",
             json=input_body
         )
@@ -157,6 +180,8 @@ def update_product_details(input_body):
         print(f"Error in updating product listing: {str(e)}")
         return {"error": f"Validation service error: {str(e)}"}
     
+
+# TEST FUNCTIONS
 
 def test_validate_image():
     # Path to your test image
@@ -181,15 +206,16 @@ def test_validate_image():
 
 def test_add_product():
     # Path to your test image
-    image_path = "sample_pics/tuna.jpg"
+    image_path = "D:/SMU/GitRepos/FoodBridge/services/sample_pics/tuna.jpg"
     
     # Open the image file
     with open(image_path, 'rb') as img_file:
         # Create a simple dictionary with the required data
         product_data = {
-            'product_image': img_file,
-            'product_description': "Canned tuna for donation",
-            'product_address': "123 Main St, Singapore 123456"
+            'productPic': img_file,
+            'productItemList': [{"itemName":"tuna","quantity":10},{"itemName":"beans","quantity":10},{"itemName":"pickled vegetables","quantity":10}],
+            'productAddress': "123 Main St, Singapore 123456",
+            'productCCDetails':{ "hubId": 1, "hubName": "Bedok Orchard RC", "hubAddress": "10C Bedok South Ave 2 #01-562, S462010"}
         }
         
         # Call the add_product function
@@ -210,17 +236,18 @@ def test_get_all_volunteers():
 def test_find_nearby_volunteers():
     # Example product details
     product_id = "1111-1111-1111"
-    product_address = "B1-67 SMU School of Computing and Information Systems 1, Singapore 178902"
-    
+    product_address = "750A Chai Chee Rd, #01-01 ESR BizPark @Chai Chee, Singapore 469001"
+    productHubAddress = "10C Bedok South Ave 2 #01-562, S462010"
+
     # Example volunteer list
     volunteer_list = [
-        {"userId":"1111-1111-1111","userAddress":"80 Stamford Rd, Singapore 178902"},
-        {"userId":"2222-2222-2222","userAddress":"501 Margaret Dr, Singapore 149306"},
-        {"userId":"3333-3333-3333","userAddress":"500 Dover Rd, Singapore 139651"}
+        {"userId":"1111-1111-1111","userAddress":"39 Siglap Hl, Singapore 456092"},
+        {"userId":"2222-2222-2222","userAddress":"31 Jurong West Street 41, Singapore 649412"},
+        {"userId":"3333-3333-3333","userAddress":"73 Jln Tua Kong, Singapore 457264"}
     ]
     
     # Call the function
-    result = find_nearby_volunteers(product_id, product_address, volunteer_list)
+    result = find_nearby_volunteers(product_id, product_address,productHubAddress, volunteer_list)
     
     # Print the result
     print("Nearby volunteers result:")

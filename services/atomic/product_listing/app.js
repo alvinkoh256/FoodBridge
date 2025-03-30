@@ -1,4 +1,4 @@
-import { retrieveAllWhenCCAndUserListExist, createProductListing, updateProduct, deleteProduct, uploadPicture, getCCByProductId } from './server.js'
+import { retrieveAllWhenUserListExist, createProductListing, updateProduct, deleteProduct, uploadPicture, getCCByProductId } from './server.js'
 import { sendToWebSocket } from './send-data-to-websocket.js'
 import express from 'express'
 import multer from 'multer'
@@ -62,7 +62,7 @@ app.post('/', (req, res)=>{
  */
 app.get('/products', async (req, res) => {
     try {
-        const products = await retrieveAllWhenCCAndUserListExist()
+        const products = await retrieveAllWhenUserListExist()
         res.json(products)
     } catch (err) {
         res.status(500).json({ error: err.message })
@@ -142,13 +142,18 @@ app.post('/product', upload.single('productPic'), async (req, res)=>{
             });
         }
         
-        if (!body.productDescription) {
+        if (!body.productCCDetails) {
             return res.status(400).json({ 
-                error: "Missing productDescription field" 
+                error: "Missing productHubAddress field" 
             });
         }
         
-
+        if (!body.productItemList) {
+            return res.status(400).json({ 
+                error: "Missing productItemList field" 
+            });
+        }
+        
         const createResult = await createProductListing(body);
         const productId = createResult[0].productId;
         
@@ -160,6 +165,7 @@ app.post('/product', upload.single('productPic'), async (req, res)=>{
         };
         
         const result = await updateProduct(updateBody);
+        await sendToWebSocket() 
         res.status(200).json(result[0]);
     } catch (error) {
         console.error("Error in /product endpoint:", error);
@@ -230,9 +236,8 @@ app.post('/product', upload.single('productPic'), async (req, res)=>{
  *                     - "2222-2222-2222"
  *                     - "3333-3333-3333"
  */
-app.put('/productCCAndUsers', async (req,res)=>{
+app.put('/product', async (req,res)=>{
     const body = req.body
-    // console.log(`Incoming Body: ${JSON.stringify(body)}`)
     try {
         const result = await updateProduct(body)
         res.status(200).json(result[0])
@@ -242,72 +247,6 @@ app.put('/productCCAndUsers', async (req,res)=>{
     await sendToWebSocket()
 })
 
-/**
- * @swagger
- * /productStatus:
- *   put:
- *     summary: Update product status
- *     description: Updates the status of a product listing.
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               productId:
- *                 type: string
- *                 example: "190038b4-2911-4e43-956d-9f31cb55a869"
- *               productStatus:
- *                 type: string
- *                 enum: [open, assigned, picked, delivered, on-going]
- *                 example: "on-going"
- *     responses:
- *       200:
- *         description: Product status updated successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 productId:
- *                   type: string
- *                   example: "190038b4-2911-4e43-956d-9f31cb55a869"
- *                 productTimeStamp:
- *                   type: string
- *                   format: date-time
- *                   example: "2025-03-19T16:06:13.121895+00:00"
- *                 productPic:
- *                   type: string
- *                   example: "https://vdiqdxayroxnapzbyhzi.supabase.co/storage/v1/object/public/esd-products/products/190038b4-2911-4e43-956d-9f31cb55a869"
- *                 productAddress:
- *                   type: string
- *                   example: "123 Sunshine Plaza, Singapore 30495893"
- *                 productStatus:
- *                   type: string
- *                   example: "on-going"
- *                 productClosestCC:
- *                   type: string
- *                   example: "ABC Community Centre"
- *                 productUserList:
- *                   type: array
- *                   items:
- *                     type: string
- *                   example:
- *                     - "1111-1111-1111"
- *                     - "2222-2222-2222"
- *                     - "3333-3333-3333"
- */
-app.put('/productStatus', async (req,res)=>{
-    const body = req.body
-    try {
-        const result = await updateProduct(body)
-        res.status(200).json(result[0])
-    } catch (error) {
-        res.status(500).json({ error: error.message })
-    }
-    await sendToWebSocket()
-})
 
 app.get('/productCC/:productId',async(req,res)=>{
     const productId = req.params["productId"]
