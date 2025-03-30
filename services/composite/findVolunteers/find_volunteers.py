@@ -132,12 +132,19 @@ def find_volunteers():
         }
         updated_product = helper_functions.update_product_details(update_body)
 
+        if updated_product['error']:
+            return jsonify({"error": f"Failed to update product details: {updated_product["error"]}"}), 500
+
     except Exception as e:
         logger.error(f"Error updating product details: {str(e)}")
         return jsonify({"error": f"Failed to update product details: {str(e)}"}), 500
 
+    # Send the userList to the queue
+
+
     logger.info("All Steps completed successfully!")
-    return jsonify(updated_product)
+
+    return jsonify(updated_product), 200
 
 
 if __name__ == '__main__':
