@@ -15,18 +15,6 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 CORS(app, origins=["*"])
 
-# function to execute composite microservice
-    # take the picture & product description out
-    # run the validate_image function
-    # check if the !result["check"]
-        # return an error
-    # make a body with product_image, product_description, product_address
-    # send body into add_product function and store in product dict
-    # run the get_all_volunteers function and store in volunteer_list
-    # run the find_nearby_volunteers to get the response
-    # run the update_product_address function with the response body
-
-    # Send filtered_volunteer_list into kafka queue
 @app.route('/findVolunteers', methods=["POST"])
 def find_volunteers():
     # Take picture and description out
@@ -39,8 +27,6 @@ def find_volunteers():
     if isinstance(product_cc_details,str):
         product_cc_details = json.loads(product_cc_details)
         
-    # if isinstance(product_item_list, str):
-    #     product_item_list = json.loads(product_item_list)
 
     if not product_image:
         logger.error("Error: No image provided")
@@ -79,8 +65,8 @@ def find_volunteers():
         logger.info("Starting Step 2: Adding Products")
         product = helper_functions.add_product(input_body)
     except Exception as e:
-        logger.error(f"Error adding product: {str(e["error"])}")
-        return jsonify({"error": f"Failed to add product: {str(e["error"])}"}), 500
+        logger.error(f"Error adding product: {str(e['error'])}")
+        return jsonify({"error": f"Failed to add product: {str(e['error'])}"}), 500
 
 
     # Run retrieving volunteers
@@ -133,7 +119,7 @@ def find_volunteers():
         updated_product = helper_functions.update_product_details(update_body)
 
         if updated_product['error']:
-            return jsonify({"error": f"Failed to update product details: {updated_product["error"]}"}), 500
+            return jsonify({"error": f"Failed to update product details: {updated_product['error']}"}), 500
 
     except Exception as e:
         logger.error(f"Error updating product details: {str(e)}")
@@ -147,6 +133,12 @@ def find_volunteers():
     return jsonify(updated_product), 200
 
 
+@app.route('/testAMQP', methods=["POST"])
+def yuup():
+    helper_functions.sendToQueue("yuup")
+    return "yuup",200
+
 if __name__ == '__main__':
     logger.info("Starting findVolunteers service on port 5001")
+    helper_functions.connectAMQP()
     app.run(host='0.0.0.0', port=5001, debug=True)

@@ -6,12 +6,43 @@ import locate_pb2
 import locate_pb2_grpc
 from datetime import datetime
 import json
-
+import time
+import pika 
+import amqp_lib
 
 PRODUCT_VALIDATION_URL = os.environ.get('PRODUCT_VALIDATION_URL', "http://localhost:5004")
 PRODUCT_LISTING_URL = os.environ.get('PRODUCT_LISTING_URL', "http://localhost:5005") 
 LOCATING_URL = os.environ.get('LOCATING_SERVICE_URL', "localhost:5006")
 USER_URL = os.environ.get('ACCOUNT_SERVICE_URL', "https://personal-tdqpornm.outsystemscloud.com/FoodBridge/rest/AccountInfoAPI")
+
+RABBIT_HOST = os.environ.get('RABBIT_HOST', 'localhost')
+RABBIT_PORT = int(os.environ.get('RABBIT_PORT', 5672))
+RABBIT_EXCHANGE = os.environ.get('RABBIT_EXCHANGE', 'scenario12Exchange')
+EXCHANGE_TYPE = os.environ.get('EXCHANGE_TYPE', 'fanout')
+
+def connectAMQP():
+    # Use global variables to reduce number of reconnection to RabbitMQ
+    # There are better ways but this suffices for our lab
+    global connection
+    global channel
+
+    print("  Connecting to AMQP broker...")
+    try:
+        connection, channel = amqp_lib.connect(
+                hostname=RABBIT_HOST,
+                port=RABBIT_PORT,
+                exchange_name=RABBIT_EXCHANGE,
+                exchange_type=EXCHANGE_TYPE,
+        )
+    except Exception as exception:
+        print(f"  Unable to connect to RabbitMQ.\n     {exception=}\n")
+        exit(1)
+
+
+def sendToQueue(message):
+    if connection is None or not amqp_lib.is_connection_open(connection):
+        connectAMQP()
+    channel.basic_publish(exchange=RABBIT_EXCHANGE, routing_key="", body=message, properties=pika.BasicProperties(delivery_mode=2))
 
 
 # function to call validation service with picture and description as param
