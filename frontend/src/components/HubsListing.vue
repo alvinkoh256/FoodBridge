@@ -19,21 +19,31 @@
       <DialogContentBank 
         :hub="selectedHub" 
         :isReserved="isReserved"
+        :foodbankId="props.userId" 
         @close="visible = false"
+        @update:isReserved="updateHubStatus"
       />
     </Dialog>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, defineProps } from 'vue';
+import { useStore } from 'vuex';
 import DialogContentBank from '../components/DialogContentBank.vue';
 import Dialog from 'primevue/dialog';
 
+const store = useStore();
 const visible = ref(false);
 const dialogHeader = ref('');
 const selectedHub = ref(null);
 const isReserved = ref(false);
+const reshubs = ref([]);
+const hubs = ref([]);
+
+const props = defineProps({
+  userId: String
+});
 
 const reservedHubs = ref([
   { 
@@ -49,6 +59,28 @@ const reservedHubs = ref([
   { name: 'Tengah CC', weight: 7.275 },
 ]);
 
+onMounted(async () => {
+  try {
+    // Fetch reserved inventories
+    const resHubsResponse = await store.dispatch('apiRequest', { 
+      method: 'get', 
+      endpoint: `/public/hub/${props.userId}/reservedInventories`
+    });
+
+    // Fetch hubs data
+    const hubsResponse = await store.dispatch('apiRequest', { 
+      method: 'get', 
+      endpoint: `/public/hub/hubsData`
+    });
+
+    reshubs.value = resHubsResponse;
+    hubs.value = hubsResponse;
+
+  } catch (error) {
+    console.error('Failed to fetch items:', error);
+  }
+});
+
 const unreservedHubs = ref([
   { name: 'Everspring RN', weight: 54.875 },
   { name: "Chong Pang Zone '8' RC", weight: 22.72 },
@@ -59,6 +91,20 @@ const openDialog = (hub, reservedStatus) => {
   isReserved.value = reservedStatus;
   dialogHeader.value = `Drop-off at ${hub.name}`;
   visible.value = true;
+};
+
+const updateHubStatus = (updatedStatus) => {
+  isReserved.value = updatedStatus;
+
+  if (updatedStatus) {
+    reservedHubs.value.push(selectedHub.value);
+    unreservedHubs.value = unreservedHubs.value.filter(hub => hub.name !== selectedHub.value.name);
+  } else {
+    unreservedHubs.value.push(selectedHub.value);
+    reservedHubs.value = reservedHubs.value.filter(hub => hub.name !== selectedHub.value.name);
+  }
+  
+  visible.value = false;
 };
 </script>
 

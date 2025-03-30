@@ -50,7 +50,7 @@
   </template>
   
   <script setup>
-  import { ref } from 'vue';
+  import { ref, onMounted } from 'vue';
   import { useStore } from 'vuex';
   import Dropdown from 'primevue/dropdown';
   import InputNumber from 'primevue/inputnumber';

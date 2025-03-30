@@ -26,20 +26,21 @@
       class="p-button-rounded w-full" 
       severity="warn" 
       :disabled="isReserved"
-      @click="$emit('close')"
+      @click="handleReserve"
     />
     <Button 
       label="Unreserve" 
       class="p-button-rounded w-full" 
       severity="danger" 
       :disabled="!isReserved"
-      @click="$emit('close')"
+      @click="handleUnreserve"
     />
   </div>
 </template>
 
 <script setup>
 import { defineProps } from 'vue';
+import { useStore } from 'vuex';
 import Button from 'primevue/button';
 
 const props = defineProps({
@@ -50,8 +51,48 @@ const props = defineProps({
   isReserved: {
     type: Boolean,
     required: true
-  }
+  },
+  foodbankId: String
 });
+
+const store = useStore();
+const emit = defineEmits(["close", "update:isReserved"]);
+
+const handleReserve = async () => {
+  try {
+    await store.dispatch("apiRequest", {
+      method: "POST",
+      endpoint: "/reserveHub/reserve",
+      data: {
+        hubId: props.hub.id,
+        foodbankId: props.foodbankId,
+      }
+    });
+
+    emit("update:isReserved", true);
+    emit("close"); 
+  } catch (error) {
+    console.error("Reserve failed:", error);
+  }
+};
+
+const handleUnreserve = async () => {
+  try {
+    await store.dispatch("apiRequest", {
+      method: "POST",
+      endpoint: "/reserveHub/unreserve",
+      data: {
+        hubId: props.hub.id,
+        foodbankId: props.foodbankId,
+      }
+    });
+
+    emit("update:isReserved", false); // Update the reserved state
+    emit("close"); // Close the dialog
+  } catch (error) {
+    console.error("Unreserve failed:", error);
+  }
+};
 </script>
 
 <style scoped>

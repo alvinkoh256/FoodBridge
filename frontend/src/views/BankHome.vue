@@ -12,6 +12,7 @@
           <component :is="currentTabComponent" 
                     :listings="postedListing" 
                     @listing-posted="handleListingPosted" 
+                    :userId="user?.id" 
                     :key="activeTab" />
         </transition>
       </div>
@@ -49,6 +50,7 @@
   const checkAuth = async () => {
     // First check the current session
     const { data: { session }, error } = await supabase.auth.getSession();
+    
     if (error) {
       console.error("Error checking session:", error);
       router.push("/");

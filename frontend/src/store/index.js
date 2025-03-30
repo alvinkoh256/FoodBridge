@@ -1,5 +1,6 @@
 import { createStore } from 'vuex';
 import { createClient } from '@supabase/supabase-js';
+import axios from "axios";
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
@@ -37,7 +38,7 @@ export default createStore({
       await supabase.auth.signOut(); 
       commit('clearUser');
     },
-    async apiRequest({ state }, { method, endpoint, data = null }) {
+    async apiRequest({ state }, { method, endpoint, data = null },) {
       try {
         const url = `${state.apiBaseUrl}${endpoint}`;
         const config = { method, url, data };

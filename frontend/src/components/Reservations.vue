@@ -33,7 +33,8 @@
   </template>
   
   <script setup>
-  import { ref } from 'vue';
+  import { ref, onMounted, defineProps } from 'vue';
+  import { useStore } from 'vuex';
   import Button from 'primevue/button';
   
   const reservedHubs = ref([
@@ -41,9 +42,47 @@
     { name: 'Ah Hood Gardens RN', isCollected: false },
     { name: 'Tengah CC', isCollected: false },
   ]);
+
+  const resHubs = ref([]);
+  const store = useStore();
   
-  const toggleCollected = (hub) => {
+  const props = defineProps({
+    userId: String
+  });
+  
+  onMounted(async () => {
+    try {
+      const reservedHubsResponse = await store.dispatch('apiRequest', { 
+        method: 'get', 
+        endpoint: `/public/hub/${props.userId}/reservedInventories` 
+      });
+
+      resHubs.value = reservedHubsResponse;
+    } catch (error) {
+      console.error('Failed to fetch reserved hubs:', error);
+    }
+  });
+
+  const toggleCollected = async (hub) => {
     hub.isCollected = !hub.isCollected;
+
+    try {
+      const payload = {
+        hubId: hub.name,
+        userId: props.userId,
+      };
+
+      await store.dispatch('apiRequest', { 
+        method: 'post', 
+        endpoint: '/public/hub/collectionComplete', 
+        data: payload 
+      });
+
+      console.log(`Collection status for ${hub.name} updated successfully.`);
+    } catch (error) {
+      console.error('Failed to update collection status:', error);
+      hub.isCollected = !hub.isCollected;
+    }
   };
   </script>
   
