@@ -139,7 +139,7 @@ def find_nearby_volunteers(product_id, product_address,product_hub_address, volu
 def update_product_details(input_body):
     try:
         response = invoke_http(
-            f"{PRODUCT_LISTING_URL}/productCCAndUsers",
+            f"{PRODUCT_LISTING_URL}/product",
             method="PUT",
             json=input_body
         )
@@ -221,8 +221,6 @@ def test_find_nearby_volunteers():
     # Print the result
     print("Nearby volunteers result:")
     print(result)
-
-test_find_nearby_volunteers()
 
 def test_update_product_details():
     # Create a mock result from find_nearby_volunteers

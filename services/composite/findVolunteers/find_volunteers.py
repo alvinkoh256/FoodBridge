@@ -36,11 +36,11 @@ def find_volunteers():
     product_address = data.get("productAddress")
     product_item_list = data.get("productItemList")
 
-    if type(product_cc_details) == "string":
+    if isinstance(product_cc_details,str):
         product_cc_details = json.loads(product_cc_details)
         
-    if type(product_item_list) == "string":
-        product_item_list = json.loads(product_item_list)
+    # if isinstance(product_item_list, str):
+    #     product_item_list = json.loads(product_item_list)
 
     if not product_image:
         logger.error("Error: No image provided")
@@ -106,9 +106,14 @@ def find_volunteers():
     try:
         logger.info("Starting Step 4: Getting volunteers in 2km radius")
 
+        logger.info(f"{type(product_cc_details)}")
+        logger.info(f"{type(product)}")
+
         hub_address = product_cc_details["hubAddress"]
         product_id = product["product_id"]
         
+        logger.info(f"Inserted Address: {hub_address} || Inserted Product ID: {product_id}")
+
         filtered_volunteers_result = helper_functions.find_nearby_volunteers(product_id, product_address, hub_address, volunteer_list)
         filtered_volunteers_list = filtered_volunteers_result["user_list"]
 
@@ -132,7 +137,7 @@ def find_volunteers():
         return jsonify({"error": f"Failed to update product details: {str(e)}"}), 500
 
     logger.info("All Steps completed successfully!")
-    return jsonify(filtered_volunteers_list)
+    return jsonify(updated_product)
 
 
 if __name__ == '__main__':
