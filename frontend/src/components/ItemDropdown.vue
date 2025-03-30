@@ -51,9 +51,13 @@
   
   <script setup>
   import { ref } from 'vue';
+  import { useStore } from 'vuex';
   import Dropdown from 'primevue/dropdown';
   import InputNumber from 'primevue/inputnumber';
   import Button from 'primevue/button';
+
+  const store = useStore();
+  const items = ref([]);
   
   const inputItems = ref([
     { 
@@ -62,8 +66,19 @@
       value: null 
     }
   ]);
+
+  onMounted(async () => {
+    try {
+      const response = await store.dispatch('apiRequest', { 
+        method: 'get', 
+        endpoint: '/public/hub/existingItems' 
+      });
+      items.value = response; 
+    } catch (error) {
+      console.error('Failed to fetch items:', error);
+    }
+  });
   
-  // Item options (previously misnamed as "cities")
   const itemOptions = ref([
     { name: 'Clothing', code: 'CLT' },
     { name: 'Books', code: 'BKS' },
