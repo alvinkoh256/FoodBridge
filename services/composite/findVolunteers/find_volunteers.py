@@ -117,8 +117,8 @@ def find_volunteers():
             "productUserList":filtered_volunteers_list
         }
         updated_product = helper_functions.update_product_details(update_body)
-
-        if updated_product['error']:
+        logger.info(updated_product)
+        if "error" in updated_product:
             return jsonify({"error": f"Failed to update product details: {updated_product['error']}"}), 500
 
     except Exception as e:

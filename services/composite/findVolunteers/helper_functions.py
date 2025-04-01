@@ -17,8 +17,8 @@ USER_URL = os.environ.get('ACCOUNT_SERVICE_URL', "https://personal-tdqpornm.outs
 
 RABBIT_HOST = os.environ.get('RABBIT_HOST', 'localhost')
 RABBIT_PORT = int(os.environ.get('RABBIT_PORT', 5672))
-RABBIT_EXCHANGE = os.environ.get('RABBIT_EXCHANGE', 'scenario12Exchange')
-EXCHANGE_TYPE = os.environ.get('EXCHANGE_TYPE', 'fanout')
+RABBIT_EXCHANGE = os.environ.get('SCENARIO12_RABBIT_EXCHANGE', 'scenario12Exchange')
+EXCHANGE_TYPE = os.environ.get('SCENARIO12_EXCHANGE_TYPE', 'fanout')
 
 def connectAMQP():
     # Use global variables to reduce number of reconnection to RabbitMQ
