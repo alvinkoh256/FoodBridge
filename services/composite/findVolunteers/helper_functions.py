@@ -9,6 +9,14 @@ import json
 import time
 import pika 
 import amqp_lib
+import logging
+
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 PRODUCT_VALIDATION_URL = os.environ.get('PRODUCT_VALIDATION_URL', "http://localhost:5004")
 PRODUCT_LISTING_URL = os.environ.get('PRODUCT_LISTING_URL', "http://localhost:5005") 
@@ -46,54 +54,70 @@ def sendToQueue(message):
 
 
 # function to call validation service with picture and description as param
-def validate_image(image, description):
+def validate_image(image, item_object):
+    item_list = [item["itemName"] for item in item_object]
     try:
         image_file = {'file':image}
-        data = {'productDescription': description}
-        print(f"{PRODUCT_VALIDATION_URL}/productValidation")
+        
+        # Convert the list to a JSON string
+        json_str = json.dumps(item_list)
+        data = {'productDescription': json_str}
+
+        logger.info(f"Image file: {image_file}")
+        logger.info(f"Data being sent: {data}")
+
         response = invoke_http(
             f"{PRODUCT_VALIDATION_URL}/productValidation",
             method="POST",
             files=image_file,
             data=data
         )
+        
+        # Log the raw response for debugging
+        logger.info(f"Raw validation response: {response}")
+        
         return response
         
     except Exception as e:
-        print(f"Error in validate_image: {str(e)}")
-        return {"error": f"Validation service error: {str(e)}"}
+        logger.error(f"Error in validate_image: {str(e)}")
+        return {"error": f"Validation service error: {str(e)}", "result": False}
 
 
 # function to call add product from product_listing service
 def add_product(body):
     image = body["productPic"]
-
-    # TEST
-    # files = {'productPic': image}
-    # body['productCCDetails'] = json.dumps(body['productCCDetails'])
-
-    # ORIGINAL
-    # Reset the stream pointer to the beginning.
+    
+    # Create a copy of the body data for modification
+    body_copy = body.copy()
+    
+    # Reset the stream pointer to the beginning
     image.stream.seek(0)
-    image_file = {'productPic':(image.filename, image.stream, image.mimetype)}
-
-    del body["productPic"]
+    image_file = {'productPic': (image.filename, image.stream, image.mimetype)}
+    
+    # Remove the image from the body
+    del body_copy["productPic"]
+    
+    # Convert the complex objects to JSON strings
+    body_copy["productCCDetails"] = json.dumps(body_copy["productCCDetails"])
+    body_copy["productItemList"] = json.dumps(body_copy["productItemList"])
+    
+    logger.info(f"Sending productCCDetails: {body_copy['productCCDetails']}")
+    logger.info(f"Sending productItemList: {body_copy['productItemList']}")
+    
     response = invoke_http(
         f"{PRODUCT_LISTING_URL}/product",
         method="POST",
-        files=image_file, #ORIGINAL
-        # files=files,
-        data=body
+        files=image_file,
+        data=body_copy  # Use the modified copy with JSON strings
     )
     
     result = {
-        "product_id":response["productId"],
-        "product_address":response["productAddress"]
+        "product_id": response["productId"],
+        "product_address": response["productAddress"]
     }
-
+    
     return result
         
-
 
 # function to retrieve all volunteers id and address with user service
 def get_all_volunteers():

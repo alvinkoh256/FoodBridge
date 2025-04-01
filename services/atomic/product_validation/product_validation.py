@@ -76,7 +76,8 @@ def generate_response():
         image = request.files.get('file')
         description = data.get("productDescription")
 
-        description = json.loads(description)
+        if isinstance(description, str):
+            description = json.loads(description)
 
         result = call_openai(image, description)
 

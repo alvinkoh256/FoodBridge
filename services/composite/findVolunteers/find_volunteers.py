@@ -18,60 +18,60 @@ CORS(app, origins=["*"])
 @app.route('/findVolunteers', methods=["POST"])
 def find_volunteers():
     # Take picture and description out
-    data = request.form
-    product_image = request.files.get('image')
-    product_cc_details = data.get("productCCDetails")
-    product_address = data.get("productAddress")
-    product_item_list = data.get("productItemList")
-
-    if isinstance(product_cc_details,str):
-        product_cc_details = json.loads(product_cc_details)
-        
-
-    if not product_image:
-        logger.error("Error: No image provided")
-        return jsonify({"error": "No image provided"}), 400
-    if not product_cc_details:
-        logger.error("Error: Product CC Details is required")
-        return jsonify({"error": "Product CC Details is required"}), 400
-    if not product_address:
-        logger.error("Error: Product address is required")
-        return jsonify({"error": "Product address is required"}), 400
-    if not product_item_list:
-        logger.error("Error: Product item list is required")
-        return jsonify({"error": "Product item list is required"}), 400
-
-    # Run validate image function
-    # try:
-    #     logger.info("Starting Step 1: Product Validation")
-    #     validate_results = helper_functions.validate_image(image, item_list)["result"]
-
-    #     if (validate_results!=True):
-    #         logger.warning(f"Image validation rejected: {validate_results}")
-    #         return jsonify({"message": validate_results}), 400
-        
-    # except Exception as e:
-    #     logger.error(f"Error during image validation: {str(e)}")
-    #     return jsonify({"error": f"Image validation failed: {str(e)}"}), 500
-
-    # Run adding of products
-    input_body = {
-        "productPic":product_image,
-        "productCCDetails":product_cc_details,
-        "productAddress":product_address,
-        "productItemList":product_item_list
-    }
     try:
+        data = request.form
+        product_image = request.files.get('image')
+        product_cc_details = data.get("productCCDetails")
+        product_address = data.get("productAddress")
+        product_item_list = data.get("productItemList")
+
+        if isinstance(product_cc_details,str):
+            product_cc_details = json.loads(product_cc_details)
+
+        if isinstance(product_item_list,str):
+            product_item_list = json.loads(product_item_list)
+            
+
+        if not product_image:
+            logger.error("Error: No image provided")
+            return jsonify({"error": "No image provided"}), 400
+        if not product_cc_details:
+            logger.error("Error: Product CC Details is required")
+            return jsonify({"error": "Product CC Details is required"}), 400
+        if not product_address:
+            logger.error("Error: Product address is required")
+            return jsonify({"error": "Product address is required"}), 400
+        if not product_item_list:
+            logger.error("Error: Product item list is required")
+            return jsonify({"error": "Product item list is required"}), 400
+
+        # Run validate image function
+        logger.info("Starting Step 1: Product Validation")
+        validate_results = helper_functions.validate_image(product_image, product_item_list)["result"]
+
+        if (validate_results!=True):
+            logger.warning(f"Image validation rejected: {validate_results}")
+            return jsonify({"message": validate_results}), 400
+        
+        # Run adding of products
+        input_body = {
+            "productPic":product_image,
+            "productCCDetails":product_cc_details,
+            "productAddress":product_address,
+            "productItemList":product_item_list
+        }
+
+
+
+
         logger.info("Starting Step 2: Adding Products")
         product = helper_functions.add_product(input_body)
-    except Exception as e:
-        logger.error(f"Error adding product: {str(e['error'])}")
-        return jsonify({"error": f"Failed to add product: {str(e['error'])}"}), 500
 
 
-    # Run retrieving volunteers
-    # HARDCODED FOR NOW
-    try:
+
+
+        # Run retrieving volunteers
+        # HARDCODED FOR NOW
         logger.info("Starting Step 3: Getting all volunteers")
         # volunteer_list = helper_functions.get_all_volunteers()
         volunteer_list = [
@@ -83,13 +83,10 @@ def find_volunteers():
             logger.error("Error: No volunteers available")
             return jsonify({"error": "No volunteers available"}), 404
 
-    except Exception as e:
-        logger.error(f"Error retrieving volunteers: {str(e)}")
-        return jsonify({"error": f"Failed to retrieve volunteers: {str(e)}"}), 500
 
 
-    # Run find volunteers in radius
-    try:
+
+        # Run find volunteers in radius
         logger.info("Starting Step 4: Getting volunteers in 2km radius")
 
         logger.info(f"{type(product_cc_details)}")
@@ -105,12 +102,11 @@ def find_volunteers():
 
         if len(filtered_volunteers_list)==0:
             logger.warning(f"Warning: No nearby volunteers found for product {product_id}")
-    except Exception as e:
-        logger.error(f"Error finding nearby volunteers: {str(e)}")
-        return jsonify({"error": f"Failed to find nearby volunteers: {str(e)}"}), 500
+    
 
-    # Run update product listing CC and userList
-    try:
+
+
+        # Run update product listing CC and userList
         logger.info("Starting Step 5: Updating product CC and userList")
         update_body = {
             "productId":product_id,
@@ -121,17 +117,16 @@ def find_volunteers():
         if "error" in updated_product:
             return jsonify({"error": f"Failed to update product details: {updated_product['error']}"}), 500
 
+        # Send the userList to the queue
+
+        logger.info("All Steps completed successfully!")
+
+        return jsonify(updated_product), 200
+    
     except Exception as e:
-        logger.error(f"Error updating product details: {str(e)}")
-        return jsonify({"error": f"Failed to update product details: {str(e)}"}), 500
-
-    # Send the userList to the queue
-
-
-    logger.info("All Steps completed successfully!")
-
-    return jsonify(updated_product), 200
-
+        error_traceback = traceback.format_exc()
+        logger.error(f"Error in find_volunteers: {str(e)}\n{error_traceback}")
+        return jsonify({"error": str(e), "traceback": error_traceback}), 500
 
 @app.route('/testAMQP', methods=["POST"])
 def yuup():
