@@ -37,7 +37,14 @@ def encode_image(image):
 
 
 def call_openai(image, description):
+
     base64_image = encode_image(image)
+
+    image_format = "jpeg"
+
+    all_items = ",".join(description)
+    print(all_items)
+
     try:
         response = client.chat.completions.create(
         model="gpt-4o",
@@ -45,11 +52,11 @@ def call_openai(image, description):
             {
                 "role":"user",
                 "content":[
-                    { "type": "text", "text": description },
+                    { "type": "text", "text": f"Check that the image contains ALL of the following: {all_items}" },
                     {
                         "type": "image_url",
                         "image_url": {
-                            "url":f"data:image/jpeg;base64,{base64_image}"
+                            "url":f"data:image/{image_format};base64,{base64_image}"
                         },
                     },
                 ]
@@ -57,7 +64,7 @@ def call_openai(image, description):
             {
                 "role":"system",
                 "content": [
-                    {"type":"text", "text":system_content},
+                    {"type":"text", "text":f"ONLY follow the rules here: {system_content}"},
                     {"type":"text", "text":f"Follow the following schema: {reply_schema}"}
                     
                 ]
