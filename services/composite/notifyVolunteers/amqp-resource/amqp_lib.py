@@ -8,7 +8,7 @@ https://pika.readthedocs.io/en/stable/_modules/pika/exceptions.html#ConnectionCl
 import time
 import pika
 
-# Connects to AMQP
+
 def connect(hostname, port, exchange_name, exchange_type, max_retries=12, retry_interval=5,):
      retries = 0
 
@@ -56,6 +56,7 @@ def connect(hostname, port, exchange_name, exchange_type, max_retries=12, retry_
 
      raise Exception(f"Max {max_retries} retries exceeded...")
 
+
 def close(connection, channel):
      channel.close()
      connection.close()
@@ -70,7 +71,7 @@ def is_connection_open(connection):
 
 
 def start_consuming(
-     hostname, port, exchange_name, exchange_type, queue_name, callback, auto_ack_status=True
+     hostname, port, exchange_name, exchange_type, queue_name, callback
 ):
      while True:
           try:
@@ -83,7 +84,7 @@ def start_consuming(
 
                 print(f"Consuming from queue: {queue_name}")
                 channel.basic_consume(
-                     queue=queue_name, on_message_callback=callback, auto_ack=auto_ack_status
+                     queue=queue_name, on_message_callback=callback, auto_ack=True
                 )
                 channel.start_consuming()
 

@@ -2,21 +2,29 @@
 import json
 import amqp_lib
 import time
+import os
 
-rabbit_host = "rabbitmq"
-rabbit_port = 5672
-exchange_name = "exampleExchangeName"
-exchange_type = "topic"
-routing_key = "test.example"
+# rabbit_host = "rabbitmq"
+# rabbit_port = 5672
+# exchange_name = "exampleExchangeName"
+# exchange_type = "topic"
+# routing_key = "test.example"
+
+RABBIT_HOST = os.environ.get('RABBIT_HOST', 'localhost')
+RABBIT_PORT = int(os.environ.get('RABBIT_PORT', 5672))
+RABBIT_SUBSCRIBER_EXCHANGE = os.environ.get('SCENARIO12_RABBIT_EXCHANGE', 'scenario12Exchange')
+RABBIT_SUBSCRIBER_EXCHANGE_TYPE = os.environ.get('SCENARIO12_EXCHANGE_TYPE', 'fanout')
+RABBIT_SUBSCRIBER_QUEUE = "scenario12"
 
 def publish_message():
     message = {"message": "Hello from Publisher!"}
+    message = ["1111-1111-1111","1111-1111-1111","2222-2222-2222"]
     amqp_lib.publish_message(
-        hostname=rabbit_host,
-        port=rabbit_port,
-        exchange_name=exchange_name,
-        exchange_type=exchange_type,
-        routing_key=routing_key,
+        hostname=RABBIT_HOST,
+        port=RABBIT_PORT,
+        exchange_name=RABBIT_SUBSCRIBER_EXCHANGE,
+        exchange_type=RABBIT_SUBSCRIBER_EXCHANGE_TYPE,
+        routing_key="",
         message=message,
     )
 

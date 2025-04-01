@@ -102,9 +102,9 @@ def find_volunteers():
 
         if len(filtered_volunteers_list)==0:
             logger.warning(f"Warning: No nearby volunteers found for product {product_id}")
+            return jsonify({"error": "No nearby volunteers found for product"}), 432
+            
     
-
-
 
         # Run update product listing CC and userList
         logger.info("Starting Step 5: Updating product CC and userList")
@@ -117,11 +117,15 @@ def find_volunteers():
         if "error" in updated_product:
             return jsonify({"error": f"Failed to update product details: {updated_product['error']}"}), 500
 
-        # Send the userList to the queue
+        # retrieve userList
+        # send to queue
+        logger.info("Starting Step 6: Sending filtered list into queue")
+        retrievedUserList = updated_product["productUserList"]
+        helper_functions.sendToQueue(retrievedUserList)
 
         logger.info("All Steps completed successfully!")
 
-        return jsonify(updated_product), 200
+        return jsonify({"result":True}), 200
     
     except Exception as e:
         error_traceback = traceback.format_exc()

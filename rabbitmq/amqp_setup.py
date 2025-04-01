@@ -72,3 +72,17 @@ create_queue(
     queue_name="scenario12",
     routing_key=""
 )
+
+scenario2NotifyExchange = create_exchange(
+    hostname=amqp_host,
+    port=amqp_port,
+    exchange_name="scenario2NotifyExchange",
+    exchange_type="fanout"
+)
+
+create_queue(
+    channel=scenario2NotifyExchange,
+    exchange_name="scenario2NotifyExchange",
+    queue_name="scenario2Notify",
+    routing_key=""
+)

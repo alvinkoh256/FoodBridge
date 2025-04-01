@@ -50,7 +50,18 @@ def connectAMQP():
 def sendToQueue(message):
     if connection is None or not amqp_lib.is_connection_open(connection):
         connectAMQP()
+    
+    # Convert non-string data types (like lists) to JSON strings
+    if not isinstance(message, str):
+        message = json.dumps(message)
+        logger.info(f"Converted message to JSON string: {message}")
+    
+    # Ensure message is bytes for RabbitMQ
+    if isinstance(message, str):
+        message = message.encode('utf-8')
+    
     channel.basic_publish(exchange=RABBIT_EXCHANGE, routing_key="", body=message, properties=pika.BasicProperties(delivery_mode=2))
+    logger.info("Message sent to queue successfully")
 
 
 # function to call validation service with picture and description as param
