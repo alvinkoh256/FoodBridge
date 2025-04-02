@@ -36,54 +36,91 @@ def generate_response():
         in: formData
         type: string
         required: true
-        description: Textual description of the product
+        description: JSON array containing the list of product items to be validated
+        example: '["canned beans", "rice", "pasta"]'
     responses:
-        200:
-            description: Successful validation
-            schema:
-            type: object
-            properties:
-                isValid:
-                type: boolean
-                description: Whether the product is valid
-                suggestions:
-                type: array
-                description: List of improvement suggestions if product is invalid
-                items:
-                    type: string
-                confidence:
-                type: number
-                format: float
-                description: Confidence score of the validation (0-1)
-        400:
-            description: Bad request - missing parameters
-            schema:
-            type: object
-            properties:
-                error:
-                type: string
-        500:
-            description: Server error during processing
-            schema:
-            type: object
-            properties:
-                error:
-                type: string
+      200:
+        description: Successful validation - all items are non-perishable and present
+        schema:
+          type: object
+          properties:
+            result:
+              type: boolean
+              description: True if all products are non-perishable and present
+              example: true
+        examples:
+          application/json:
+            result: true
+      400:
+        description: Validation failed - items perishable, missing, or unclear image
+        schema:
+          type: object
+          properties:
+            result:
+              type: string
+              description: Error message explaining why validation failed
+              example: "Some items shown are perishable. Please ensure all are non-perishable."
+        examples:
+          application/json:
+            result: "The image doesn't contain all items specified. Missing: rice, pasta. Please ensure all items in the description are visible in the image."
+      422:
+        description: Request processing error - malformed request
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "Missing product image file or product description"
+        examples:
+          application/json:
+            error: "Missing product description"
+      500:
+        description: Server error during processing
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "Invalid response format from AI service"
+        examples:
+          application/json:
+            error: "Failed to process with OpenAI: Rate limit exceeded"
     """
+    
     try:
         data = request.form
         
         image = request.files.get('file')
+        if not image:
+            return jsonify({"error": "Missing product image file"}), 422
+            
         description = data.get("productDescription")
+        if not description:
+            return jsonify({"error": "Missing product description"}), 422
 
         if isinstance(description, str):
-            description = json.loads(description)
+            try:
+                description = json.loads(description)
+            except json.JSONDecodeError:
+                return jsonify({"error": "Invalid JSON format for product description"}), 422
 
         result = call_openai(image, description)
 
         try:
             result_obj = json.loads(result)
-            return result_obj
+            
+            # Check if there's an error from OpenAI
+            if "error" in result_obj:
+                return jsonify({"error": result_obj["error"]}), 500
+                
+            # Check if result is not true (boolean) but a string message
+            if isinstance(result_obj.get("result"), str):
+                # Return a 400 status code for validation failures
+                return jsonify({"result": result_obj["result"]}), 400
+                
+            # If we reach here, result should be true
+            return result_obj, 200
+            
         except json.JSONDecodeError as e:
             print(f"JSON parsing error: {str(e)}")
             return jsonify({"error": "Invalid response format from AI service"}), 500
@@ -96,4 +133,3 @@ def generate_response():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5004,debug=True)
-
