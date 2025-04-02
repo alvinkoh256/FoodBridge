@@ -63,7 +63,6 @@ This is an example output returned by the service:
 {
   "productId": "123",
   "userList": ["vol1", "vol2"],
-  "productClosestCC": "Community Center XYZ",
   "error": ""
 }
 
