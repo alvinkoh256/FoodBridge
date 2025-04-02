@@ -11,19 +11,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# accept a gateway for put
-    # run update function
-
-# Subscribe to exchange and do something upon receiving the stuff
-
-# Connect to a exchange name called scenario2NotifyExchange 
 
 RABBIT_HOST = os.environ.get('RABBIT_HOST', 'localhost')
 RABBIT_PORT = int(os.environ.get('RABBIT_PORT', 5672))
 RABBIT_SUBSCRIBER_EXCHANGE = os.environ.get('SCENARIO12_RABBIT_EXCHANGE', 'scenario12Exchange')
 RABBIT_SUBSCRIBER_EXCHANGE_TYPE = os.environ.get('SCENARIO12_EXCHANGE_TYPE', 'fanout')
 RABBIT_SUBSCRIBER_QUEUE = "scenario12"
-
 RABBIT_SENDER_EXCHANGE = "scenario2NotifyExchange"
 RABBIT_SENDER_EXCHANGE_TYPE = "fanout"
 RABBIT_SENDER_QUEUE = "scenario2Notify"
@@ -39,20 +32,20 @@ def callback(channel, method, properties, body):
         logger.info(f"Parsed message (JSON): {user_list}")
         
         # Process the data (you can uncomment and use the process_user_list function if needed)
-        # processed_data = helper_functions.process_user_list(user_list)
+        processed_data = helper_functions.process_user_list(user_list)
         
         # HARDCODED test data for now
-        test_body = {"userList":[
-            {
-                "userId":"1111-1111-1111",
-                "userName":"Yao Hui",
-                "userPhoneNumber":"+6583234885"
-            }
-        ]}
+        # test_body = {"userList":[
+        #     {
+        #         "userId":"1111-1111-1111",
+        #         "userName":"Yao Hui",
+        #         "userPhoneNumber":"+6583234885"
+        #     }
+        # ]}
         
         # Send to the other exchange
-        logger.info(f"Sending to queue: {test_body}")
-        helper_functions.sendToQueue(test_body)
+        logger.info(f"Sending to queue: {processed_data}")
+        helper_functions.sendToQueue(processed_data)
         logger.info("Message sent to second exchange")
         
         # Acknowledge message only after processing is complete

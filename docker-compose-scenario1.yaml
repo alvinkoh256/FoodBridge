@@ -120,14 +120,14 @@ services:
     container_name: notify_volunteers
     restart: always
     depends_on:
-      - amqp-setup
+      rabbitmq:
+        condition: service_healthy
     environment:
       - RABBIT_HOST=rabbitmq
       - RABBIT_PORT=5672
-      # - SCENARIO12_RABBIT_EXCHANGE=scenario12Exchange
-      # - SCENARIO12_EXCHANGE_TYPE=fanout
-      # - SCENARIO2_RABBIT_EXCHANGE=scenario2NotifyExchange
-      # - NOTIFICATION_URL=http://notification:5007
+      - SCENARIO12_RABBIT_EXCHANGE=scenario12Exchange
+      - SCENARIO12_EXCHANGE_TYPE=fanout
+      - SCENARIO2_RABBIT_EXCHANGE=scenario2NotifyExchange
     networks:
       - esd-net
 networks:

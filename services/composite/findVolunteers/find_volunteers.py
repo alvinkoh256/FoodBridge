@@ -73,12 +73,12 @@ def find_volunteers():
         # Run retrieving volunteers
         # HARDCODED FOR NOW
         logger.info("Starting Step 3: Getting all volunteers")
-        # volunteer_list = helper_functions.get_all_volunteers()
-        volunteer_list = [
-            {"userId":"1111-1111-1111","userAddress":"39 Siglap Hl, Singapore 456092"},
-            {"userId":"2222-2222-2222","userAddress":"31 Jurong West Street 41, Singapore 649412"},
-            {"userId":"3333-3333-3333","userAddress":"73 Jln Tua Kong, Singapore 457264"}
-        ]
+        volunteer_list = helper_functions.get_all_volunteers()
+        # volunteer_list = [
+        #     {"userId":"1111-1111-1111","userAddress":"39 Siglap Hl, Singapore 456092"},
+        #     {"userId":"2222-2222-2222","userAddress":"31 Jurong West Street 41, Singapore 649412"},
+        #     {"userId":"3333-3333-3333","userAddress":"73 Jln Tua Kong, Singapore 457264"}
+        # ]
         if not volunteer_list:
             logger.error("Error: No volunteers available")
             return jsonify({"error": "No volunteers available"}), 404
