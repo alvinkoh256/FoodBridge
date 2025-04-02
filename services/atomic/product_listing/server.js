@@ -47,12 +47,27 @@ async function createProductListing(body){
     let productAddress = body.productAddress
     let productItemList = body.productItemList
     let productCCDetails = body.productCCDetails
+    
+    // Log the incoming data to see what's happening
+    console.log("Received productCCDetails:", productCCDetails);
+    console.log("Type:", typeof productCCDetails);
 
-    if(typeof productItemList == "string"){
-        productItemList = JSON.parse(body.productItemList)
+    // Fix the parsing - use the local variable, not body.productCCDetails
+    if(typeof productItemList === "string"){
+        try {
+            productItemList = JSON.parse(productItemList)
+        } catch (err) {
+            console.error("Error parsing productItemList:", err);
+        }
     }
-    if(typeof productCCDetails == "string"){
-        productCCDetails = JSON.parse(body.productCCDetails)
+    
+    if(typeof productCCDetails === "string"){
+        try {
+            productCCDetails = JSON.parse(productCCDetails)
+            console.log("Parsed productCCDetails:", productCCDetails);
+        } catch (err) {
+            console.error("Error parsing productCCDetails:", err);
+        }
     }
 
     let productStatus = "open"

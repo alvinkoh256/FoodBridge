@@ -4,38 +4,65 @@ A gRPC service that helps match volunteers with food donation pickups based on p
 
 ## Overview
 
-This service finds the closest community center to a food donation and then identifies volunteers 
-who are geographically positioned to efficiently pick up the donation.
+This service finds the closest community center to a food donation and then identifies volunteers who are geographically positioned to efficiently pick up the donation.
 
-## API
+## Protocol Buffer Definition
 
-### getFilteredUsers
+```proto
+syntax = "proto3";
 
-Filters a list of volunteer users based on their proximity to a center point between a product 
-location and the nearest community center.
+service locate {
+    rpc getFilteredUsers(inputBody) returns (responseBody){};
+}
 
-**Request**:
-- `productId`: Unique identifier for the product/donation
-- `productAddress`: Physical address of the product
-- `volunteerList`: List of potential volunteers with their locations
+message volunteerInfo {
+    string userId = 1;
+    string userAddress = 2;
+}
 
-**Response**:
-- `productId`: Echo of the product ID
-- `productClosestCC`: Information about the closest community center
-- `userList`: Filtered list of volunteers sorted by proximity
-- `error`: Error message if any occurred
+message inputBody {
+    string productId = 1;
+    string productAddress = 2;
+    string productHubAddress = 3;
+    repeated volunteerInfo volunteerList = 4;
+}
 
-## Environment Variables
+message responseBody {
+    string productId = 1;
+    repeated string userList = 2;
+    string productClosestCC = 3;
+    string error = 4;
+}
+```
+## Example Input
 
-- `GRPC_PORT`: (Optional) Port on which the gRPC server listens (default: 5006)
+Below is an example JSON message sent to the `getFilteredUsers` RPC method:
 
-## Building and Running
+```json
+{
+  "productId": "123",
+  "productAddress": "123 Main St, Singapore",
+  "productHubAddress": "456 Hub Ave, Singapore",
+  "volunteerList": [
+    {
+      "userId": "vol1",
+      "userAddress": "789 Side St, Singapore"
+    },
+    {
+      "userId": "vol2",
+      "userAddress": "321 Far Rd, Singapore"
+    }
+  ]
+}
+```
+## Example Output
 
-### Local Development
+This is an example output returned by the service:
 
-```bash
-# Install dependencies
-pip install -r requirements.txt
+```json
+{
+  "productId": "123",
+  "userList": ["vol1", "vol2"],
+  "error": ""
+}
 
-# Run the service
-python locating.py

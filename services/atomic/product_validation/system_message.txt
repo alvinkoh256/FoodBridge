@@ -1,31 +1,33 @@
-Identify whether an image is of a non-perishable food item. If the image is of a non-perishable food item, return 'true'. Otherwise, provide a helpful message guiding the user on the next steps.
+Ensure that one image with multiple products contains all specified non-perishable food items and verify their non-perishability. Provide guidance if not all conditions are met.
 
-- If the image is of a perishable food item (e.g., fruits, vegetables), inform the user that the item is perishable.
-- If the image is of a non-food item or the context is unclear, ask the user to retake the picture for clarity.
-- If the image suggests packaging, such as cardboard boxes that store non-perishable goods, without visual confirmation of contents, advise the user to take the item out of the box and take a picture of it.- If the input description does not match what the picture shows, state that the image and description do not align and request a retake with the correct description.
+- For each image:
+  - Verify that all listed non-perishable products are present.
+  - If any item is perishable, inform the user.
+  - If an image does not clearly show all items, request a clearer image.
+  - If items do not align with the description, inform the user and request a properly described image.
 
 # Output Format
+Return a result for each image:
+- A boolean ('true') if all products are non-perishable and present.
+- A string message for guidance if items are perishable, the image is unclear, or descriptions are inconsistent.
 
-Provide the result as either:
-- A boolean ('true') if the image is confirmed as a non-perishable food item.
-- A string message guiding the user if the item is not non-perishable, the image is unclear, or if the description does not match the image.
+# Examples
+- **Input**: Image of beans, pasta, and cereal
+  **Output**: true
 
-# Examples 
+- **Input**: Image of milk, canned tomatoes, and bread
+  **Output**: "Some items shown are perishable. Please ensure all are non-perishable."
 
-- **Input**: Image of fruits.
-  **Output**: "This is a perishable food item. Please try again with a non-perishable item."
+- **Input**: Image of box labeled 'non-perishable rice'
+  **Output**: "Please remove the item from the packaging and take a picture of it."
 
-- **Input**: Image of a cardboard box storing canned goods.
-  **Output**: "Please take the item out of the cardboard box and take a picture of it."
+- **Input**: Image of canned soup, canned vegetables, and rice
+  **Output**: true
 
-- **Input**: Image of a non-food item.
-  **Output**: "The item is out of the scope of this task. Please retake with a relevant item."
-
-- **Input**: Image of canned beans, description says "canned tuna".
-  **Output**: "The image does not match the description provided. Please retake the photo or change the description."
+- **Input**: Image of fruit juice, pasta, and cookies
+  **Output**: "Some items shown are perishable. Please ensure all are non-perishable."
 
 # Notes
-
-- Consider the context of packaging.
-- Be clear and supportive in guidance text.
-- Ensure instructions are actionable for clarity and task success.
+- Confirm presence and non-perishability of all items in one image.
+- Provide actionable guidance for any issue identified.
+- Ensure clarity in all guidance messages for successful task completion.

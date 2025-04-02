@@ -1,5 +1,33 @@
 services:
+  # RabbitMQ Service
+  rabbitmq:
+    image: "rabbitmq:3-management"
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - esd-net
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
+  # AMQP Setup Service
+  amqp-setup:
+    build:
+      context: .
+      dockerfile: rabbitmq/Dockerfile
+    container_name: amqp-setup
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - esd-net
+    restart: "no"
   
   websocket:
     build:
@@ -11,6 +39,7 @@ services:
       - "5014:5014"
     networks:
       - esd-net
+      
   product_listing:
     build:
       context: ./services/atomic/product_listing
@@ -27,6 +56,7 @@ services:
       - "5005:5005"
     networks:
       - esd-net
+      
   product_validation:
     build:
       context: ./services/atomic/product_validation
@@ -39,6 +69,7 @@ services:
       - "5004:5004"
     networks:
       - esd-net
+      
   locating:
     build:
       context: ./services/atomic/locating
@@ -53,6 +84,7 @@ services:
       - "5006:5006"
     networks:
       - esd-net
+      
   find_volunteers:
     build:
       context: ./services/composite/findVolunteers
@@ -63,7 +95,7 @@ services:
       - product_listing
       - product_validation
       - locating
-      # - amqp-setup
+      - amqp-setup
     env_file:
       - .env
     environment:
@@ -71,12 +103,36 @@ services:
       - PRODUCT_LISTING_URL=http://product_listing:5005
       - LOCATING_SERVICE_URL=locating:5006
       - ACCOUNT_SERVICE_URL=https://personal-tdqpornm.outsystemscloud.com/FoodBridge/rest/AccountInfoAPI
-      # - AMQP_SERVER_URL=http://rabbitmq:5672
+      - RABBIT_HOST=rabbitmq
+      - RABBIT_PORT=5672
+      - SCENARIO12_RABBIT_EXCHANGE=scenario12Exchange
+      - SCENARIO12_EXCHANGE_TYPE=fanout
     ports:
       - "5001:5001"
     networks:
       - esd-net
 
 
+  notify_volunteers:
+    build:
+      context: ./services/composite/notifyVolunteers
+      dockerfile: Dockerfile
+    container_name: notify_volunteers
+    restart: always
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      - RABBIT_HOST=rabbitmq
+      - RABBIT_PORT=5672
+      - SCENARIO12_RABBIT_EXCHANGE=scenario12Exchange
+      - SCENARIO12_EXCHANGE_TYPE=fanout
+      - SCENARIO2_RABBIT_EXCHANGE=scenario2NotifyExchange
+    networks:
+      - esd-net
 networks:
   esd-net:
+
+volumes:
+  rabbitmq_data:
+    external: false
