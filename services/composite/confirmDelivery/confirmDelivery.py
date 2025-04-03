@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import os
 import requests
 import json
@@ -8,6 +9,8 @@ from datetime import datetime
 
 # Initialize Flask app
 app = Flask(__name__)
+
+CORS(app)
 
 # Initialize Flask-RESTX API
 api = Api(app, version='1.0', 

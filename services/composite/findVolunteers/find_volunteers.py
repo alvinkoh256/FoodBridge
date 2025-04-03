@@ -123,7 +123,7 @@ def find_volunteers():
             }
             product = helper_functions.add_product(input_body)
         except Exception as e:
-            tb = traceback.format_exc()
+            tb = traceback.format_exc() 
             return jsonify({
                 "step": "Add Product",
                 "error": str(e),
