@@ -41,7 +41,7 @@ services:
       dockerfile: Dockerfile
     container_name: hub
     ports:
-      - 5010:5000
+      - 5010:5010
     env_file:
       - .env
     depends_on:
@@ -56,9 +56,9 @@ services:
       dockerfile: Dockerfile
     container_name: confirm-delivery
     ports:
-      - 5009:5000
+      - 5009:5009
     environment:
-      - HUB_SERVICE_URL=http://hub:5000
+      - HUB_SERVICE_URL=http://hub:5010
       - ACCOUNT_SERVICE_URL=https://personal-tdqpornm.outsystemscloud.com/FoodBridge/rest/AccountInfoAPI
       - PRODUCT_LISTING_URL=http://product_listing:5005
 
@@ -76,9 +76,9 @@ services:
       dockerfile: Dockerfile
     container_name: reserve-hub
     ports:
-      - 5015:5000
+      - 5015:5015
     environment:
-      - HUB_SERVICE_URL=http://hub:5000
+      - HUB_SERVICE_URL=http://hub:5010
       - ACCOUNT_INFO_API_URL=https://personal-tdqpornm.outsystemscloud.com/FoodBridge/rest/AccountInfoAPI
       - AMQP_HOST=rabbitmq
       - AMQP_PORT=5672
