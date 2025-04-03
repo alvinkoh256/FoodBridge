@@ -9,6 +9,7 @@ import time
 from datetime import datetime
 from amqp_lib import publish_message
 import json
+import requests
 
 # Load environment variables
 load_dotenv()
@@ -103,7 +104,7 @@ reserved_hub_model = api.model('ReservedHub', {
 # Reserve hub request model
 reserve_hub_model = api.model('ReserveHubRequest', {
     'hubID': fields.Integer(required=True, description='ID of the hub to reserve'),
-    'foodbankID': fields.Integer(required=True, description='ID of the foodbank making the reservation'),
+    'foodbankID': fields.String(required=True, description='ID of the foodbank making the reservation'),
     'foodbankName': fields.String(required=True, description='Name of the foodbank making the reservation'),
     'foodbankAddress': fields.String(required=True, description='Address of the foodbank making the reservation')
 })
@@ -111,7 +112,7 @@ reserve_hub_model = api.model('ReserveHubRequest', {
 # for hub-food bank validation
 hub_foodbank_model = api.model('HubFoodbankRequest', {
     'hubID': fields.Integer(required=True, description='ID of the hub'),
-    'foodbankID': fields.Integer(required=True, description='ID of the foodbank')
+    'foodbankID': fields.String(required=True, description='ID of the foodbank')
 })
 
 #define rabbitmq variables for publishing messages
@@ -119,118 +120,6 @@ RABBITMQ_HOST = os.environ.get("RABBITMQ_HOST", "rabbitmq")
 RABBITMQ_PORT = int(os.environ.get("RABBITMQ_PORT", 5672))
 EXCHANGE_NAME = "notificationsS3"
 EXCHANGE_TYPE = "direct"
-
-# time variables for weekly broadcast
-BROADCAST_INTERVAL_SECONDS = int(os.environ.get("BROADCAST_INTERVAL_SECONDS", 604800))  # Default to 1 week (604800 seconds)
-BROADCAST_DAY_OF_WEEK = int(os.environ.get("BROADCAST_DAY_OF_WEEK", 0))  # Default to Monday (0)
-BROADCAST_ROUTING_KEY = os.environ.get("BROADCAST_ROUTING_KEY", "broadcastHubs")
-
-def publish_ready_hubs_event():
-    """Publish a message with all hubs that are ready for collection (simplified version)"""
-    try:
-        # Get all ready hubs from the database 
-        hubs_response = supabase.table('hub').select('*')\
-            .eq('readytocollect', True)\
-            .eq('reserved', False)\
-            .execute()
-        
-        if not hubs_response.data:
-            print("No hubs ready for collection to broadcast.")
-            return False  # No hubs to broadcast
-        
-        # Process hub data with only the needed fields
-        hubs_data = []
-        
-        for hub in hubs_response.data:
-            # Format the hub data with only name, address, and total weight
-            hub_data = {
-                'hubID': hub['hubid'],
-                'hubName': hub['hubname'],
-                'hubAddress': hub['hubaddress'],
-                'totalWeight_kg': hub['totalweight_kg']
-            }
-            
-            hubs_data.append(hub_data)
-        
-        # Create message with all ready hubs
-        message = {
-            "event": "ready_hubs_broadcast",
-            "timestamp": datetime.now().isoformat(),
-            "hubs": hubs_data
-        }
-        
-        # Publish message to notification service
-        publish_message(
-            hostname=RABBITMQ_HOST,
-            port=RABBITMQ_PORT, 
-            exchange_name=EXCHANGE_NAME,
-            exchange_type=EXCHANGE_TYPE,
-            routing_key=BROADCAST_ROUTING_KEY,
-            message=message
-        )
-        
-        print(f"Broadcast sent with {len(hubs_data)} ready hubs at {datetime.now().isoformat()}")
-        return True
-    except Exception as e:
-        error_msg = f"Failed to publish ready hubs broadcast: {str(e)}"
-        print(f"*** ERROR: {error_msg} ***")
-        return False
-
-def is_broadcast_day():
-    """Check if today is the configured broadcast day"""
-    current_day = datetime.now().weekday()  # 0 is Monday, 6 is Sunday
-    return current_day == BROADCAST_DAY_OF_WEEK
-
-def broadcast_scheduler():
-    """Background thread function to periodically broadcast ready hubs"""
-    # Broadcast immediately on startup for testing
-    print("Starting initial broadcast on service startup...")
-    publish_ready_hubs_event()
-    
-    while True:
-        # Sleep until next check interval (1 hour)
-        time.sleep(3600)  # Check every hour
-        
-        # Check if it's the right day for broadcasting
-        if is_broadcast_day():
-            current_hour = datetime.now().hour
-            
-            # Broadcast at 9 AM on the designated day
-            if current_hour == 9:
-                print("Starting scheduled weekly broadcast...")
-                publish_ready_hubs_event()
-
-# Manually trigger the broadcast (testing only)
-@internal_hub_ns.route('/triggerBroadcast')
-class TriggerBroadcast(Resource):
-    @internal_hub_ns.doc('trigger_broadcast', description='Manually trigger broadcast of ready hubs to notification service')
-    @internal_hub_ns.response(200, 'Success')
-    @internal_hub_ns.response(500, 'Internal Server Error')
-    def post(self):
-        """
-        Service to manually trigger a broadcast of ready hubs.
-        
-        This endpoint allows administrators to trigger an immediate broadcast
-        of all hubs that are ready for collection to the notification service.
-        This is useful for testing or when a broadcast needs to happen outside
-        the regular schedule.
-        """
-        try:
-            result = publish_ready_hubs_event()
-            
-            if result:
-                return {
-                    "message": "Broadcast successfully triggered",
-                    "timestamp": datetime.now().isoformat()
-                }, 200
-            else:
-                return {
-                    "message": "No ready hubs to broadcast",
-                    "timestamp": datetime.now().isoformat()
-                }, 200
-        
-        except Exception as e:
-            return {"error": str(e)}, 500
 
 # To populate item dropdown in Volunteer UI
 @public_hub_ns.route('/existingItems')
@@ -1056,7 +945,7 @@ class HubReservedInventory(Resource):
         except Exception as e:
             return {"error": str(e)}, 500
 
-@internal_hub_ns.route('/foodbank/<int:foodbank_id>')
+@internal_hub_ns.route('/foodbank/<string:foodbank_id>')
 @internal_hub_ns.param('foodbank_id', 'The ID of the foodbank to get information for')
 class GetFoodbankInfo(Resource):
     @internal_hub_ns.doc('get_foodbank_info', description='Get foodbank information and its reserved hubs')
@@ -1128,7 +1017,7 @@ class GetFoodbankInfo(Resource):
 
 # Alternative endpoint to get all reservations for a specific foodbank with their reserved inventory
 # this is to populate the modal for reserved food banks
-@public_hub_ns.route('/<int:foodbank_id>/reservedInventories')
+@public_hub_ns.route('/<string:foodbank_id>/reservedInventories')
 @public_hub_ns.param('foodbank_id', 'The ID of the foodbank')
 class FoodbankReservedInventories(Resource):
     @public_hub_ns.doc('get_foodbank_reserved_inventories', 
