@@ -55,7 +55,7 @@ onMounted(() => {
 // Authentication management
 const checkAuth = () => {
   const authListener = supabase.auth.onAuthStateChange((event, session) => {
-    if (session?.user && session.user?.user_metadata?.role === "volunteer") {
+    if (session?.user && session.user?.user_metadata?.role === "V") {
       user.value = session.user;
       console.log("User authenticated:", user.value);
     } else {

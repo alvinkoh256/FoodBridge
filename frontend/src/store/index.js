@@ -11,7 +11,7 @@ export default createStore({
   state: {
     user: null,
     role: null,
-    apiBaseUrl: 'http://localhost:8080', 
+    apiBaseUrl: '', 
   },
   mutations: {
     setUser(state, user) {

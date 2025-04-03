@@ -18,7 +18,8 @@
             <label for="confirmPassword" class="text-black font-bold text-left pl-1">Confirm Password</label>
             <Password id="confirmPassword" v-model="confirmPassword" :toggleMask="true" :feedback="false" />
           </p>
-          <p>
+          <p class="flex flex-col gap-2">
+            <label for="address" class="text-black font-bold text-left pl-1">Address</label>
             <AutoComplete id="address" ref="locationAutocomplete" @location-selected="updateLocation" />
           </p>
           <p v-if="errorMessage" class="text-red-600 font-bold">{{ errorMessage }}</p>
@@ -55,7 +56,7 @@
   const password = ref('');
   const confirmPassword = ref('');
   const errorMessage = ref('');
-  const role = ref('donor');
+  const role = ref('D');
   const router = useRouter();
   const location = ref('Current Location');
 
@@ -85,24 +86,58 @@
   };
   
   // Sign up method
-  const signUp = async () => {
-    const { data, error } = await supabase.auth.signUp({
-      email: email.value,
-      password: password.value,
-      options: {
-        data: { role: role.value } // Store role in metadata
-      }
-    });
-
-    if (error) {
-      errorMessage.value = error.message;
-    } else {
-      await supabase.from('profiles').insert([
-        { id: data.user.id, email: email.value, role: role.value }
-      ]);
-
-      router.push('/'); 
+  // Sign up method
+const signUp = async () => {
+  const { data, error } = await supabase.auth.signUp({
+    email: email.value,
+    password: password.value,
+    options: {
+      data: { role: role.value, address: location.value }
     }
+  });
+
+  if (error) {
+    errorMessage.value = error.message;
+  } else {
+    // Create the user data object for the OutSystems API
+    const userData = {
+      userName: email.value.split('@')[0], 
+      userEmail: email.value,
+      userPhoneNumber: "", 
+      userAddress: location.value,
+      userRole: role.value,
+      userId: data.user.id
+    };
+
+    try {
+      // Send the user data to the OutSystems API
+      const response = await fetch('https://personal-tdqpornm.outsystemscloud.com/FoodBridge/rest/AccountInfoAPI/user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(userData)
+      });
+      
+      if (!response.ok) {
+        throw new Error('API request failed');
+      }
+      
+      const responseData = await response.json();
+      console.log('API response:', responseData);
+      
+    } catch (error) {
+      console.error('Failed to send user data to API:', error);
+      // Consider handling this error in the UI
+    }
+
+    // Save to Supabase profiles table
+    await supabase.from('profiles').insert([
+      { id: data.user.id, email: email.value, role: role.value, address: location.value }
+    ]);
+
+    router.push('/');
+  }
 };
   
   </script>

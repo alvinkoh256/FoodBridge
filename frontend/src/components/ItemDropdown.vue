@@ -71,9 +71,10 @@
     try {
       const response = await store.dispatch('apiRequest', { 
         method: 'get', 
-        endpoint: '/public/hub/existingItems' 
+        endpoint: 'http://localhost:5010/public/hub/existingItems' 
       });
       items.value = response; 
+      console.log(items.value);
     } catch (error) {
       console.error('Failed to fetch items:', error);
     }
