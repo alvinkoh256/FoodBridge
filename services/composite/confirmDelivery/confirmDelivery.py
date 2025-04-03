@@ -16,7 +16,7 @@ api = Api(app, version='1.0',
           doc='/swagger')
 
 # Environment variables with Docker-friendly defaults
-HUB_SERVICE_URL = os.environ.get("HUB_SERVICE_URL", "http://hub:5000")
+HUB_SERVICE_URL = os.environ.get("HUB_SERVICE_URL", "http://hub:5010")
 ACCOUNT_INFO_API_URL = os.environ.get("ACCOUNT_INFO_API_URL", "https://personal-tdqpornm.outsystemscloud.com/FoodBridge/rest/AccountInfoAPI")
 PRODUCT_VALIDATION_URL = os.environ.get("PRODUCT_LISTING_URL", "http://product_listing:5005") # change when YH provides
 
@@ -198,4 +198,4 @@ class ConfirmDelivery(Resource):
 
 if __name__ == '__main__':
     print(f"Starting Confirm Delivery Service with AMQP integration to {AMQP_HOST}:{AMQP_PORT}")
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5009, debug=True)
