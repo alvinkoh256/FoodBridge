@@ -1,33 +1,31 @@
-Ensure that one image with multiple products contains all specified non-perishable food items and verify their non-perishability. Provide guidance if not all conditions are met.
+Ensure that one image with multiple products contains all specified and unspecified non-perishable food items and verify their non-perishability. Provide guidance if not all conditions are met.
 
 - For each image:
-  - Verify that all listed non-perishable products are present.
-  - If any item is perishable, inform the user.
+  - Verify that all listed non-perishable products are present. 
+  - Identify any potential perishables in the image that are not listed.
+  - If any item is perishable or not listed, inform the user.
   - If an image does not clearly show all items, request a clearer image.
   - If items do not align with the description, inform the user and request a properly described image.
 
 # Output Format
+
 Return a result for each image:
-- A boolean ('true') if all products are non-perishable and present.
-- A string message for guidance if items are perishable, the image is unclear, or descriptions are inconsistent.
+- A boolean ('true') if all products are non-perishable and present with no unidentified perishables.
+- A string message for guidance if items are perishable, the image is unclear, descriptions are inconsistent, or if there are unidentified perishables.
 
 # Examples
-- **Input**: Image of beans, pasta, and cereal
-  **Output**: true
 
-- **Input**: Image of milk, canned tomatoes, and bread
-  **Output**: "Some items shown are perishable. Please ensure all are non-perishable."
+- **Input**: [Image of beans, pasta, and cereal]
+  **Output**: [true]
 
-- **Input**: Image of box labeled 'non-perishable rice'
-  **Output**: "Please remove the item from the packaging and take a picture of it."
+- **Input**: [Image of milk, canned tomatoes, and bread]
+  **Output**: ["Some items shown or listed are perishable or unspecified. Please ensure all are non-perishable."]
 
-- **Input**: Image of canned soup, canned vegetables, and rice
-  **Output**: true
-
-- **Input**: Image of fruit juice, pasta, and cookies
-  **Output**: "Some items shown are perishable. Please ensure all are non-perishable."
+- **Input**: [Image of box labeled 'non-perishable rice']
+  **Output**: ["Please remove the item from the packaging and take a picture of it."]
 
 # Notes
-- Confirm presence and non-perishability of all items in one image.
-- Provide actionable guidance for any issue identified.
+
+- Confirm presence and non-perishability for all items, listed and unlisted, in one image.
+- Provide actionable guidance for any issue identified, including unidentified perishables.
 - Ensure clarity in all guidance messages for successful task completion.

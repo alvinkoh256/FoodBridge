@@ -1,6 +1,6 @@
 import json
 from flask import Flask, request, jsonify
-from jibiti import call_openai
+from jibiti import newcall_openai
 from flasgger import Swagger
 
 
@@ -104,7 +104,7 @@ def generate_response():
             except json.JSONDecodeError:
                 return jsonify({"error": "Invalid JSON format for product description"}), 422
 
-        result = call_openai(image, description)
+        result = newcall_openai(image, description)
 
         try:
             result_obj = json.loads(result)
@@ -115,10 +115,8 @@ def generate_response():
                 
             # Check if result is not true (boolean) but a string message
             if isinstance(result_obj.get("result"), str):
-                # Return a 400 status code for validation failures
                 return jsonify({"result": result_obj["result"]}), 400
                 
-            # If we reach here, result should be true
             return result_obj, 200
             
         except json.JSONDecodeError as e:
