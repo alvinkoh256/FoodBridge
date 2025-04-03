@@ -8,6 +8,7 @@ import { swaggerUi, specs } from './swagger.js'
 
 const app = express()
 app.use(express.json())
+app.use(cors({ origin: '*' }))
 const PORT = process.env.PORT || 5005
 
 // Swagger UI setup
