@@ -2,15 +2,15 @@
   <div class="hubs-listing-container">
     <h3 class="font-bold">Reserved Hubs</h3>
     <div class="flex flex-col mb-10 items-center">
-      <div v-for="hub in reservedHubs" :key="hub.name" class="hub reserved" @click="openDialog(hub, true)">
-        {{ hub.name }} - {{ hub.weight }}kg
+      <div v-for="hub in reservedHubs" :key="hub.hubName" class="hub reserved" @click="openDialog(hub, true)">
+        {{ hub.hubName }} - {{ hub.totalWeight_kg }}kg
       </div>
     </div>
 
     <h3 class="font-bold">Unreserved Hubs</h3>
     <div class="flex flex-col mb-10 items-center">
-      <div v-for="hub in unreservedHubs" :key="hub.name" class="hub unreserved" @click="openDialog(hub, false)">
-        {{ hub.name }} - {{ hub.weight }}kg
+      <div v-for="hub in unreservedHubs" :key="hub.hubName" class="hub unreserved" @click="openDialog(hub, false)">
+        {{ hub.hubName }} - {{ hub.totalWeight_kg }}kg
       </div>
     </div>
 
@@ -38,53 +38,34 @@ const visible = ref(false);
 const dialogHeader = ref('');
 const selectedHub = ref(null);
 const isReserved = ref(false);
-const reshubs = ref([]);
-const hubs = ref([]);
+const reservedHubs = ref([]);
+const unreservedHubs = ref([]);
 
 const props = defineProps({
   userId: String
 });
-
-const reservedHubs = ref([
-  { 
-    name: 'Kampong Chai Chee', 
-    weight: 110.335,
-    address: '123 Victoria Street',
-    items: [
-      { name: 'Sardines', quantity: 20 },
-      { name: 'Beans', quantity: 10 }
-    ]
-  },
-  { name: 'Ah Hood Gardens RN', weight: 65.235 },
-  { name: 'Tengah CC', weight: 7.275 },
-]);
 
 onMounted(async () => {
   try {
     // Fetch reserved inventories
     const resHubsResponse = await store.dispatch('apiRequest', { 
       method: 'get', 
-      endpoint: `/public/hub/${props.userId}/reservedInventories`
+      endpoint: `5010/public/hub/${props.userId}/reservedInventories`
     });
 
     // Fetch hubs data
     const hubsResponse = await store.dispatch('apiRequest', { 
       method: 'get', 
-      endpoint: `/public/hub/hubsData`
+      endpoint: `5010/public/hub/hubsData`
     });
 
-    reshubs.value = resHubsResponse;
-    hubs.value = hubsResponse;
+    reservedHubs.value = resHubsResponse?.data || [];
+    unreservedHubs.value = hubsResponse?.data || [];
 
   } catch (error) {
     console.error('Failed to fetch items:', error);
   }
 });
-
-const unreservedHubs = ref([
-  { name: 'Everspring RN', weight: 54.875 },
-  { name: "Chong Pang Zone '8' RC", weight: 22.72 },
-]);
 
 const openDialog = (hub, reservedStatus) => {
   selectedHub.value = hub;

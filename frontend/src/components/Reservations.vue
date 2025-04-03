@@ -10,11 +10,10 @@
           v-for="hub in reservedHubs" 
           :key="hub.name" 
           class="reservation-card" 
-          :class="{ collected: hub.isCollected }"
           @click="toggleCollected(hub)"
         >
           <div class="hub-info">
-            <h3 class="hub-name">{{ hub.name }}</h3>
+            <h3 class="hub-name">{{ hub.hubName }}</h3>
             <p class="status">
               Status: 
               <span :class="{ uncollected: !hub.isCollected, collectedText: hub.isCollected }">
@@ -36,14 +35,8 @@
   import { ref, onMounted, defineProps } from 'vue';
   import { useStore } from 'vuex';
   import Button from 'primevue/button';
-  
-  const reservedHubs = ref([
-    { name: 'Kampong Chai Chee', isCollected: false },
-    { name: 'Ah Hood Gardens RN', isCollected: false },
-    { name: 'Tengah CC', isCollected: false },
-  ]);
 
-  const resHubs = ref([]);
+  const reservedHubs = ref([]);
   const store = useStore();
   
   const props = defineProps({
@@ -54,10 +47,10 @@
     try {
       const reservedHubsResponse = await store.dispatch('apiRequest', { 
         method: 'get', 
-        endpoint: `/public/hub/${props.userId}/reservedInventories` 
+        endpoint: `5010/public/hub/${props.userId}/reservedInventories` 
       });
 
-      resHubs.value = reservedHubsResponse;
+      reservedHubs.value = reservedHubsResponse.data || [];
     } catch (error) {
       console.error('Failed to fetch reserved hubs:', error);
     }
@@ -122,14 +115,15 @@
     box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
     cursor: pointer;
     transition: background-color 0.3s ease-in-out;
+    font-weight: bold;
+    color: red;
   }
   
   .reservation-card:hover {
     opacity: 0.9;
-  }
-  
-  .collected {
-    background-color: #d4edda !important; 
+    background-color: #d4edda !important;
+    font-weight: bold;
+    color: green;
   }
   
   .hub-info {
@@ -145,16 +139,6 @@
   .status {
     font-size: 0.9rem;
     color: #555;
-  }
-  
-  .uncollected {
-    font-weight: bold;
-    color: red;
-  }
-  
-  .collectedText {
-    font-weight: bold;
-    color: green;
   }
   
   .route-section {
