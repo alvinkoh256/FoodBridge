@@ -1017,7 +1017,7 @@ class GetFoodbankInfo(Resource):
 
 # Alternative endpoint to get all reservations for a specific foodbank with their reserved inventory
 # this is to populate the modal for reserved food banks
-@public_hub_ns.route('/<int:foodbank_id>/reservedInventories')
+@public_hub_ns.route('/<string:foodbank_id>/reservedInventories')
 @public_hub_ns.param('foodbank_id', 'The ID of the foodbank')
 class FoodbankReservedInventories(Resource):
     @public_hub_ns.doc('get_foodbank_reserved_inventories', 
