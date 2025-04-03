@@ -5,7 +5,7 @@
         <div 
             v-for="(item, index) in inputItems" 
             :key="item.id" 
-            class="card flex justify-content-center items-center space-x-4"
+            class="flex justify-content-center items-center space-x-4"
         >
             <div class="text-left">
               <label for="item" class="text-black font-bold pl-1">Item</label>
