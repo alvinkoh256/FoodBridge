@@ -3,11 +3,8 @@ import os
 import requests
 import json
 from flask_restx import Api, Resource, Namespace, fields
-
-# TO-DOs:
-# retrieve volunteer info from accountInfo
-# AMQP message to notification service to inform volunteer
-# call /hub/updateInventory (done)
+from amqp_lib import publish_message
+from datetime import datetime
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -20,6 +17,15 @@ api = Api(app, version='1.0',
 
 # Environment variables with Docker-friendly defaults
 HUB_SERVICE_URL = os.environ.get("HUB_SERVICE_URL", "http://hub:5000")
+ACCOUNT_INFO_API_URL = os.environ.get("ACCOUNT_INFO_API_URL", "https://personal-tdqpornm.outsystemscloud.com/FoodBridge/rest/AccountInfoAPI")
+PRODUCT_VALIDATION_URL = os.environ.get("PRODUCT_LISTING_URL", "http://product_listing:5005") # change when YH provides
+
+# AMQP Configuration
+AMQP_HOST = os.environ.get("AMQP_HOST", "rabbitmq")
+AMQP_PORT = int(os.environ.get("AMQP_PORT", "5672"))
+AMQP_EXCHANGE = os.environ.get("AMQP_EXCHANGE", "notificationsS3")
+AMQP_EXCHANGE_TYPE = os.environ.get("AMQP_EXCHANGE_TYPE", "direct")
+AMQP_ROUTING_KEY = os.environ.get("AMQP_ROUTING_KEY", "dropoff")
 
 # Create namespace
 ns = api.namespace('confirmDelivery', description='Confirm Delivery operations')
@@ -37,121 +43,159 @@ new_item_model = api.model('NewItem', {
     'description': fields.String(description='Description of the new item')
 })
 
-drop_off_request_model = api.model('DropOffRequest', {
-    'hubID': fields.Integer(required=True, description='ID of the hub'),
-    'volunteerID': fields.Integer(required=True, description='ID of the volunteer'),
-    'dropOffTime': fields.String(description='Time of drop-off, defaults to current time if not provided'),
+# Updated request model to match expected payload
+confirm_delivery_model = api.model('ConfirmDeliveryRequest', {
+    'volunteerID': fields.String(required=True, description='ID of the volunteer'),
+    'productID': fields.Integer(required=True, description='Product ID for validation'),
     'items': fields.List(fields.Nested(item_model), description='List of existing items being dropped off'),
     'newitems': fields.List(fields.Nested(new_item_model), description='List of new items being dropped off')
 })
 
-drop_off_response_model = api.model('DropOffResponse', {
-    'message': fields.String(description='Status message'),
-    'hubUpdated': fields.Boolean(description='Whether the hub was successfully updated'),
-    'hubServiceError': fields.String(description='Error message from hub service if any')
-})
-
 @ns.route('/drop-off')
-class ConfirmDropOff(Resource):
-    @ns.doc('confirm_drop_off')
-    @ns.expect(drop_off_request_model)
-    @ns.response(200, 'Success', drop_off_response_model)
-    @ns.response(400, 'Validation Error')
-    @ns.response(500, 'Internal Server Error')
+class ConfirmDelivery(Resource):
+    @ns.expect(confirm_delivery_model)
     def post(self):
         """
-        Handle drop-off confirmation from volunteer UI
+        Confirm delivery of items to a hub
         
-        This endpoint orchestrates the drop-off process by:
-        1. Retrieving volunteer information from Account Info API
-           - Gets volunteer name and phone from /userPhone/{volunteerID}
-           - Falls back to "Unknown" if account service is unavailable
-        
-        2. Updating hub inventory via Hub Service
-           - Transforms and forwards data to /hub/updateInventory
-           - Includes both existing items and new items
-           - Implements retry mechanism for reliability
-        
-        Returns a success response with volunteer name and hub update status.
+        Workflow:
+        1. Retrieve volunteer phone number from Account Info API
+        2. Validate product and get hub information
+        3. Send notification via AMQP
+        4. Update hub inventory
         """
         try:
             data = request.json
-            print(f"Received drop-off confirmation request: {json.dumps(data)}")
+            print(f"Received delivery confirmation request: {json.dumps(data)}")
             
-            # Validate required fields
-            if not data or 'hubID' not in data or 'volunteerID' not in data:
-                return jsonify({
-                    "error": "Invalid request data. Required fields: hubID, volunteerID"
-                }), 400
+            # Step 1: Retrieve volunteer phone number
+            volunteer_info = self.get_volunteer_info(data['volunteerID'])
+            if not volunteer_info:
+                return {"error": "Could not retrieve volunteer information"}, 404
             
-            if ('items' not in data or not data['items']) and ('newitems' not in data or not data['newitems']):
-                return jsonify({
-                    "error": "At least one item must be provided in either 'items' or 'newitems'"
-                }), 400
+            # Step 2: Validate product and get hub information
+            hub_info = self.validate_product(data['productID'])
+            if not hub_info:
+                return {"error": "Could not retrieve hub information for the product"}, 404
             
-            # Prepare request for Hub Service - this is the key transformation
-            hub_request = {
-                "hubID": data['hubID'],
-                "items": data.get('items', []),
-                "newitems": data.get('newitems', [])
+            inventory_payload = {
+                'hubID': hub_info.get('hubId'),  # Use .get() to avoid KeyError
+                'hubName': hub_info.get('hubName'),
+                'hubAddress': hub_info.get('hubAddress'),
+                'items': data.get('items', []),
+                'newitems': data.get('newitems', [])
             }
-            
-            # Call Hub Service to update inventory
-            hub_response = call_hub_service(hub_request)
-            
-            # Return success response
-            response_data = {
-                "message": "Drop-off confirmed successfully",
-                "hubUpdated": True if hub_response.status_code == 200 else False
-            }
-            
-            if hub_response.status_code != 200:
-                response_data["hubServiceError"] = hub_response.text
-            
-            return response_data, 200 if hub_response.status_code == 200 else 500
-            
-        except Exception as e:
-            print(f"Error processing drop-off confirmation: {str(e)}")
-            return jsonify({
-                "error": f"Error processing drop-off confirmation: {str(e)}"
-            }), 500
 
-def call_hub_service(hub_request):
-    """Call the Hub Service to update inventory with retry mechanism."""
-    # Setup session with retry
-    session = requests.Session()
-    adapter = requests.adapters.HTTPAdapter(
-        max_retries=requests.packages.urllib3.util.retry.Retry(
-            total=3,
-            backoff_factor=0.5,
-            status_forcelist=[500, 502, 503, 504],
-        )
-    )
-    session.mount('http://', adapter)
+            if not inventory_payload['hubID']:
+                return {"error": "Hub ID is missing in the response from product listing"}, 404
+
+            
+            # Step 3: Send notification via AMQP
+            notification_payload = self.create_notification_payload(
+                data, volunteer_info, hub_info
+            )
+            self.send_notification(notification_payload)
+            
+            # Step 4: Update hub inventory
+            self.update_hub_inventory(inventory_payload)
+            
+            return {"message": "Delivery confirmed successfully"}, 200
+        
+        except Exception as e:
+            return {"error": str(e)}, 500
     
-    try:
-        print(f"Sending inventory update to Hub Service: {json.dumps(hub_request)}")
+    def get_volunteer_info(self, volunteer_id):
+        """Retrieve volunteer information from Account Info API"""
+        try:
+            url = f"{ACCOUNT_INFO_API_URL}/userPhone/{volunteer_id}"
+            response = requests.get(url)
+            
+            if response.status_code == 200:
+                return response.json()
+            return None
+        except Exception as e:
+            print(f"Error retrieving volunteer info: {e}")
+            return None
+    
+    def validate_product(self, product_id):
+        """Validate product and retrieve hub information"""
+        try:
+            # Construct the URL using the PRODUCT_LISTING_URL environment variable
+            url = f"{PRODUCT_VALIDATION_URL}/ProductCC/{product_id}"
+            
+            # Make a GET request to retrieve hub information
+            response = requests.get(url, timeout=10)
+            
+            if response.status_code == 200:
+                # Log the full response for debugging
+                product_info = response.json()
+                print(f"Product Listing response: {json.dumps(product_info, indent=2)}")  # Pretty-print the response
+                
+                # Check if 'productCCDetails' is in the response
+                hub_info = product_info.get('productCCDetails', {})
+                if not hub_info:
+                    print("Error: No productCCDetails in the response")
+                    return None
+
+                # Access 'hubId' inside 'productCCDetails'
+                hub_id = hub_info.get('hubId')
+                if not hub_id:
+                    print("Error: hubId is missing")
+                    return None
+
+                # You can return the whole hub info or just 'hubId' based on your needs
+                return hub_info  # Or return {'hubId': hub_id, 'hubName': hub_info.get('hubName'), ...}
+
+            else:
+                print(f"Failed to retrieve product info. Status code: {response.status_code}")
+                print(f"Response text: {response.text}")
+                return None
         
-        # Make request to Hub Service
-        response = session.post(
-            f"{HUB_SERVICE_URL}/hub/updateInventory",
-            json=hub_request,
-            timeout=10
-        )
-        
-        print(f"Hub Service response status: {response.status_code}")
-        if response.status_code != 200:
-            print(f"Hub Service error: {response.text}")
-        
-        return response
-    except Exception as e:
-        print(f"Error calling Hub Service: {str(e)}")
-        # Create a mock response for error case
-        class MockResponse:
-            def __init__(self):
-                self.status_code = 500
-                self.text = str(e)
-        return MockResponse()
+        except requests.RequestException as e:
+            print(f"Error validating product: {e}")
+            return None
+
+    
+    def create_notification_payload(self, delivery_data, volunteer_info, hub_info):
+        """Create notification payload for AMQP"""
+        return {
+            "eventType": "delivery_confirmation",
+            "volunteerName": volunteer_info.get('userName', 'Unknown Volunteer'),
+            "volunteerPhone": volunteer_info.get('userPhoneNumber', 'N/A'),
+            "hubName": hub_info['hubName'],
+            "hubAddress": hub_info['hubAddress'],
+            "items": delivery_data.get('items', []),
+            "newitems": delivery_data.get('newitems', []),
+            "timestamp": datetime.now().isoformat()
+        }
+    
+    def send_notification(self, payload):
+        """Send notification via AMQP"""
+        try:
+            publish_message(
+                hostname=AMQP_HOST,
+                port=AMQP_PORT,
+                exchange_name=AMQP_EXCHANGE,
+                exchange_type=AMQP_EXCHANGE_TYPE,
+                routing_key=AMQP_ROUTING_KEY,
+                message=payload
+            )
+        except Exception as e:
+            print(f"Error sending notification: {e}")
+    
+    def update_hub_inventory(self, payload):
+        """Update hub inventory via internal hub service"""
+        try:
+            response = requests.post(
+                f"{HUB_SERVICE_URL}/internal/hub/updateInventory",
+                json=payload
+            )
+            
+            if response.status_code != 200:
+                print(f"Error updating hub inventory: {response.text}")
+        except Exception as e:
+            print(f"Error updating hub inventory: {e}")
 
 if __name__ == '__main__':
+    print(f"Starting Confirm Delivery Service with AMQP integration to {AMQP_HOST}:{AMQP_PORT}")
     app.run(host='0.0.0.0', port=5000, debug=True)

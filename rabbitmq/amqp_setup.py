@@ -43,7 +43,7 @@ def create_queue(channel, exchange_name, queue_name, routing_key):
         exchange=exchange_name, queue=queue_name, routing_key=routing_key
     )
 
-# test rabbitmq - testConsumer.py & testSubscriber.py
+# Example exchange & queue for testConsumer.py & testSubscriber.py
 
 # channelExample = create_exchange(
 #     hostname=amqp_host,
@@ -72,7 +72,6 @@ create_queue(
     queue_name="scenario12",
     routing_key=""
 )
-
 scenario2NotifyExchange = create_exchange(
     hostname=amqp_host,
     port=amqp_port,
@@ -85,4 +84,28 @@ create_queue(
     exchange_name="scenario2NotifyExchange",
     queue_name="scenario2Notify",
     routing_key=""
+)
+
+# This exchange is for confirmDelivery, Hub and Route in Scenario 3.
+notificationsExchangeS3 = create_exchange(
+    hostname=amqp_host,
+    port=amqp_port,
+    exchange_name="notificationsS3",
+    exchange_type="direct",
+)
+
+# confirmDelivery -> Notification
+create_queue(
+    channel=notificationsExchangeS3,
+    exchange_name="notificationsS3",
+    queue_name="dropoff",
+    routing_key="dropoff"
+)
+
+# Hub -> Notification
+create_queue(
+    channel=notificationsExchangeS3,
+    exchange_name="notificationsS3",
+    queue_name="broadcastHubs",
+    routing_key="broadcastHubs"
 )

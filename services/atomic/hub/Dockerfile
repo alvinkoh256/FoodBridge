@@ -2,9 +2,9 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY . . 
-# copies everything in the hub directory
-
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
 
 CMD ["python", "hub.py"]
