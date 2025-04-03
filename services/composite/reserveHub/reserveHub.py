@@ -1,11 +1,14 @@
 from flask import Flask, request, jsonify
 import os
+from flask_cors import CORS
 import requests
 import json
 from flask_restx import Api, Resource, Namespace, fields
 
 # Initialize Flask app
 app = Flask(__name__)
+
+CORS(app)
 
 # Initialize Flask-RESTX API
 api = Api(app, version='1.0', 

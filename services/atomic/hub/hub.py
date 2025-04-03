@@ -3,6 +3,7 @@ import os
 from supabase import create_client, Client
 from dotenv import load_dotenv
 from flask_restx import Api, Resource, Namespace, fields
+from flask_cors import CORS
 import threading
 import time
 from datetime import datetime
@@ -14,6 +15,7 @@ load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__)
+CORS(app)
 # initialise flask-restx api for documentation
 api = Api(app, 
           version='1.0', 
