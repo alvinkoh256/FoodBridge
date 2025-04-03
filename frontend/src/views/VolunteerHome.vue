@@ -1,35 +1,38 @@
 <template>
   <div class="home-container">
-
     <div class="header">
       <div class="navbar">
-      <div class="logo-section">
-        <img src="../assets/Foodbridge.png" alt="Profile" class="logo-image">
+        <div class="logo-section">
+          <img src="../assets/Foodbridge.png" alt="Profile" class="logo-image">
+        </div>
+        <div class="tabs-section">
+          <div class="nav-tab">Food Bridge</div>
+        </div>
+        <div class="logout-section">
+          <button class="logout-button" @click="signOut">
+            Log Out
+          </button>
+        </div>
       </div>
-      <div class="tabs-section">
-        <div class="nav-tab">Food Bridge</div>
-      </div>
-      <div class="logout-section">
-        <button class="logout-button" @click="signOut">
-          Log Out
-        </button>
-      </div>
-    </div>
     </div>
     <div class="title">For You</div>
     <div class="divider"></div>
-    <div class="drop-off-item" @click="openDialog">
+    <div v-for="(product, index) in products" :key="product.productId" class="drop-off-item" @click="openDialog(product)">
       <div class="profile-pic">
-        <img src="../assets/logo.jpg" alt="Profile">
+        <img :src="product.productPic" alt="Product Image">
       </div>
       <div class="drop-off-info">
-        <div class="drop-off-location text-black">Drop-off at (A CC)</div>
-        <div class="drop-off-date">14:30 12-Mar-2025</div>
+        <div class="drop-off-location text-black">
+          Drop-off at {{ product.productCCDetails.hubName }}
+        </div>
+        <div class="drop-off-address">
+          {{ product.productAddress }}
+        </div>
       </div>
     </div>
 
-    <Dialog v-model:visible=visible modal header="Drop-off at (A CC)" :style="{ width: '75rem' }">
-      <DialogContentVolunteer/>
+    <Dialog v-model:visible="visible" modal header="Drop-off Details" :style="{ width: '75rem' }">
+      <DialogContentVolunteer :product="selectedProduct"/>
     </Dialog>
   </div>
 </template>
@@ -46,10 +49,23 @@ const store = useStore();
 const router = useRouter();
 const user = ref(null);
 const visible = ref(false);
+const products = ref([]);
+const selectedProduct = ref(null);
 
 // Check authentication on component mount
-onMounted(() => {
+onMounted(async () => {
   checkAuth();
+
+  try {
+    const response = await store.dispatch('apiRequest', { 
+      method: 'get', 
+      endpoint: 'http://localhost:5005/products' 
+    });
+    products.value = response; 
+    console.log(products.value);
+  } catch (error) {
+    console.error('Failed to fetch items:', error);
+  }
 });
 
 // Authentication management
@@ -72,16 +88,15 @@ const checkAuth = () => {
   };
 };
 
-const signOut = async () =>{
-  store.dispatch('logout');
-  router.push('/')
+const signOut = async () => {
+  await store.dispatch('logout');
+  router.push('/');
 };
 
-const openDialog = () => {
+const openDialog = (product) => { // Fixed: Added the product parameter
+  selectedProduct.value = product;
   visible.value = true;
 };
-
-
 </script>
 
 <style scoped>
@@ -150,6 +165,7 @@ const openDialog = () => {
   border-radius: 5px;
   margin-bottom: 10px;
   border: 3px solid #f44336;
+  cursor: pointer; /* Added to indicate clickable */
 }
 
 .profile-pic {
@@ -180,8 +196,10 @@ const openDialog = () => {
   color: white;
 }
 
-img{
+img {
   object-fit: cover; 
+  width: 100%;
+  height: 100%;
 }
 
 .drop-off-info {
@@ -193,12 +211,12 @@ img{
   margin-bottom: 5px;
 }
 
-.drop-off-date {
+.drop-off-address {
   font-size: 12px;
   color: #666;
 }
 
-.title{
+.title {
   text-align: left;
   padding-top: 10px;
   font-weight: bold;

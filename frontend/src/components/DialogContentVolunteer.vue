@@ -1,49 +1,44 @@
 <template>
   <div class="drop-off-details-container">
     <div class="drop-off-image-container">
-      <img src="../assets/logo.jpg" alt="Drop-off items" class="drop-off-image">
+      <img :src="product?.productPic || '../assets/logo.jpg'" alt="Drop-off items" class="drop-off-image">
     </div>
     <div class="drop-off-info-panel">
       <h2 class="section-header">Details</h2>
       <div class="donation-items">
-        <div v-for="(item, index) in dropOffData.items" :key="index" class="donation-item">
-          <div class="item-name text-black">{{ item.name }}</div>
+        <div v-for="(item, index) in product?.productItemList || []" :key="index" class="donation-item">
+          <div class="item-name text-black">{{ item.itemName }}</div>
           <div class="item-quantity text-black">x{{ item.quantity }}</div>
         </div>
-        
         <div class="donation-notes">
-          I wanna die !!
+          <strong>Drop-off Location:</strong> {{ product?.productCCDetails?.hubName }}
+          <br>
+          <strong>Address:</strong> {{ product?.productAddress }}
         </div>
       </div>
     </div>
   </div>
   <div class="action-button-container">
-    <Button label="Accept" class="p-button-rounded w-full" severity="success" />
+    <Button label="Accept" class="p-button-rounded w-full" severity="success" @click="acceptDropOff" />
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { defineProps, defineEmits } from 'vue';
 import Button from 'primevue/button';
+
 const props = defineProps({
-  visible: {
-    type: Boolean,
-    required: true
-  },
-  dropOffData: {
+  product: {
     type: Object,
-    default: () => ({
-      id: '',
-      location: 'A CC',
-      fullAddress: 'Actual address w/ Postal & det',
-      imageUrl: '../assets/placeholder.jpg',
-      items: [
-        { name: 'Sardines', quantity: 20 },
-        { name: 'Beans', quantity: 10 }
-      ]
-    })
+    default: () => ({})
   }
 });
+
+const emit = defineEmits(['accept']);
+
+const acceptDropOff = () => {
+  emit('accept', props.product?.productId);
+};
 </script>
 
 <style scoped>

@@ -11,7 +11,6 @@ export default createStore({
   state: {
     user: null,
     role: null,
-    apiBaseUrl: '', 
   },
   mutations: {
     setUser(state, user) {
@@ -40,7 +39,7 @@ export default createStore({
     },
     async apiRequest({ state }, { method, endpoint, data = null },) {
       try {
-        const url = `${state.apiBaseUrl}${endpoint}`;
+        const url = `${endpoint}`;
         const config = { method, url, data };
 
         const response = await axios(config);
