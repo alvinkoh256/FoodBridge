@@ -53,9 +53,11 @@
       </div>
       <div class="flex justify-center mt-4 mb-4">
         <Button
-          label="Add More"
-          severity="warn"
+          severity="danger"
           icon="pi pi-plus"
+          variant="text"
+          raised 
+          rounded
           @click="addItem"
         />
       </div>

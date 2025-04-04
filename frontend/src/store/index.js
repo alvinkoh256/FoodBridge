@@ -11,6 +11,7 @@ export default createStore({
   state: {
     user: null,
     role: null,
+    product: null
   },
   mutations: {
     setUser(state, user) {
@@ -20,6 +21,9 @@ export default createStore({
     clearUser(state) {
       state.user = null;
     },
+    setProduct(state, product) {
+      state.product = product;
+    }
   },
   getters: {
     isAuthenticated(state) {

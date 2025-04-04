@@ -29,6 +29,11 @@
       </div>
     </div>
 
+    <div class="route-section">
+      <p class="route-text">Ready to collect your reservations? Request the best route here!</p>
+      <Button label="Show me the best route!" @click="showRoute" severity="warn"/>
+    </div>
+
     <Dialog v-model:visible="visible" :style="{ width: '50rem' }" header="Confirm Collection">
       <div class="confirmation-dialog">
         <p class="confirmation-message">Are you sure you want to mark this hub as collected?</p>
@@ -50,10 +55,6 @@
       </div>
     </Dialog>
 
-    <div class="route-section">
-      <p class="route-text">Ready to collect your reservations? Request the best route here!</p>
-      <Button label="Show me the best route!" severity="warning"/>
-    </div>
   </div>
 </template>
 
@@ -146,6 +147,21 @@ const confirmCollection = async () => {
     closeDialog();
   }
 };
+
+const showRoute = async () => {
+    try {
+      // Call the API to get the optimal route
+      const response = await store.dispatch('apiRequest', {
+        method: 'get',
+        endpoint: `5016/getOptimalRoute/${props.userId}/getRoute`
+      });
+      
+      window.open(response.data);
+
+    } catch (error) {
+      console.error('Failed to fetch optimal route:', error);
+    }
+  }
 </script>
 
 <style scoped>

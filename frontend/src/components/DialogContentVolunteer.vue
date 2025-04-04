@@ -72,6 +72,11 @@ const acceptDropOff = async () => {
     if (props.product) {
       props.product.productStatus = 'on-going';
     }
+
+    //Store product in store
+    const updatedProduct = { ...props.product, productStatus: 'on-going' };
+    store.commit('setProduct', updatedProduct);
+    router.push('/home/delivery');
     
   } catch (error) {
     console.error('Failed to update product status:', error);

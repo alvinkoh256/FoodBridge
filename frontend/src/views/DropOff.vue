@@ -14,12 +14,13 @@
       </div>
     </div>
     <div class="container">
+      <div class="title">What have you delivered ?</div>
       <ItemDropdown @items-selected="updateSelectedItems" />
       <CreateItem @new-items-added="updateNewItems" />
       <Button 
         label="Confirm Items" 
         class="confirm-button" 
-        severity="success" 
+        severity="warn" 
         @click="confirmDropOff" 
       />
     </div>
@@ -42,6 +43,9 @@ const router = useRouter();
 const selectedItems = ref([]);
 const newCreatedItems = ref([]);
 
+//Retrieve selected product
+const product = computed(() => store.state.product);
+
 // Update functions to receive data from child components
 const updateSelectedItems = (items) => {
   selectedItems.value = items;
@@ -63,9 +67,9 @@ const signOut = async () => {
 const confirmDropOff = async () => {
   try {
     // Get user information from store or use fallback
-    const user = store.state.user || {};
-    const volunteerID = user?.user_metadata?.uid || "123"; // fallback to "123" for testing
-    const productID = "100"; // You might want to get this from somewhere else
+    const user = store.state.user;
+    const volunteerID = user?.user_metadata?.uid 
+    const productID = product.productId;
     
     // Format the payload according to the expected API structure
     const payload = {
@@ -84,11 +88,9 @@ const confirmDropOff = async () => {
     });
     
     console.log('Drop-off confirmed:', response);
-    // You could add a success notification here
     
   } catch (error) {
     console.error('Failed to confirm drop-off:', error);
-    // You could add an error notification here
   }
 };
 </script>
@@ -155,5 +157,13 @@ const confirmDropOff = async () => {
   border-radius: 12px;
   padding: 10px;
   font-size: 1rem;
+}
+
+.title {
+  text-align: left;
+  padding-top: 10px;
+  font-weight: bold;
+  font-size: 30px;
+  color: black;
 }
 </style>
