@@ -6,7 +6,10 @@
        <div class="mb-5">
          <SelectButton @selection-changed="handleSelectionChange"/>
        </div>
-       <!-- Email and Phone side by side -->
+       <p class="flex flex-col gap-2">
+          <label for="username" class="text-black font-bold text-left pl-1">Username</label>
+          <InputText id="username" v-model="username"/>
+       </p>
        <p class="flex flex-col md:flex-row gap-4 w-full">
          <div class="flex flex-col gap-2 flex-1">
            <label for="email" class="text-black font-bold text-left pl-1">Email</label>
@@ -58,6 +61,8 @@
  
  // Inject the Supabase instance provided globally in main.js
  const supabase = inject('supabase');
+
+ const username = ref('');
  const email = ref('');
  const password = ref('');
  const confirmPassword = ref('');
@@ -98,7 +103,7 @@
      email: email.value,
      password: password.value,
      options: {
-       data: { role: role.value, address: location.value, phoneNumber: phoneNumber.value }
+       data: {  username: username.value, role: role.value, address: location.value, phoneNumber: phoneNumber.value }
      }
    });
  
@@ -107,7 +112,7 @@
    } else {
      // Create the user data object for the OutSystems API
      const userData = {
-       userName: email.value.split('@')[0],
+       userName: username.value,
        userEmail: email.value,
        userPhoneNumber: phoneNumber.value,  
        userAddress: location.value,
@@ -133,7 +138,6 @@
        console.log('API response:', responseData);
      } catch (error) {
        console.error('Failed to send user data to API:', error);
-       // Consider handling this error in the UI
      }
  
      // Save to Supabase profiles table

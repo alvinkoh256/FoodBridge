@@ -17,7 +17,12 @@
     </div>
     <div class="title">For You</div>
     <div class="divider"></div>
-    <div v-for="(product, index) in products" :key="product.productId" class="drop-off-item" @click="openDialog(product)">
+    <div 
+      v-for="(product, index) in products" 
+      :key="product.productId" 
+      :class="['drop-off-item', {'ongoing-status': product.productStatus === 'on-going'}]" 
+      @click="openDialog(product)"
+    >
       <div class="profile-pic">
         <img :src="product.productPic" alt="Product Image">
       </div>
@@ -38,34 +43,58 @@
 </template>
 
 <script setup>
-import { ref, inject, onMounted } from 'vue';
-import { useStore } from 'vuex';
-import { useRouter } from 'vue-router';
-import DialogContentVolunteer from '../components/DialogContentVolunteer.vue';
-import Dialog from 'primevue/dialog';
+import { ref, inject, onMounted, onUnmounted } from "vue";
+import { useStore } from "vuex";
+import { useRouter } from "vue-router";
+import DialogContentVolunteer from "../components/DialogContentVolunteer.vue";
+import Dialog from "primevue/dialog";
 
-const supabase = inject('supabase');
+const supabase = inject("supabase");
 const store = useStore();
 const router = useRouter();
+const socket = inject("socket"); 
+
 const user = ref(null);
 const visible = ref(false);
 const products = ref([]);
 const selectedProduct = ref(null);
+
 
 // Check authentication on component mount
 onMounted(async () => {
   checkAuth();
 
   try {
-    const response = await store.dispatch('apiRequest', { 
-      method: 'get', 
-      endpoint: 'http://localhost:5005/products' 
+    const response = await store.dispatch("apiRequest", {
+      method: "get",
+      endpoint: "http://localhost:5005/products",
     });
-    products.value = response; 
-    console.log(products.value);
+
+    filterProducts(response);
   } catch (error) {
-    console.error('Failed to fetch items:', error);
+    console.error("Failed to fetch items:", error);
   }
+
+  // Listen for product updates from socket
+  socket.on("productUpdated", (updatedProduct) => {
+    console.log("New product update received:", updatedProduct);
+
+    // Only show products that include the user's ID
+    if (user.value?.id && updatedProduct.UserList?.includes(user.value.id)) {
+      // Check if the product already exists in the list
+      const index = products.value.findIndex(
+        (p) => p.productId === updatedProduct.productId
+      );
+
+      if (index !== -1) {
+        // Update existing product
+        products.value[index] = updatedProduct;
+      } else {
+        // Add new product
+        products.value.push(updatedProduct);
+      }
+    }
+  });
 });
 
 // Authentication management
@@ -80,23 +109,39 @@ const checkAuth = () => {
     }
   });
 
-  // Return cleanup function
   return () => {
-    if (authListener && authListener.data) {
+    if (authListener?.data) {
       authListener.data.unsubscribe();
     }
   };
 };
 
-const signOut = async () => {
-  await store.dispatch('logout');
-  router.push('/');
+// Function to filter products by user ID
+const filterProducts = (productList) => {
+  if (user.value?.id) {
+    products.value = productList.filter(
+      (product) => product.UserList?.includes(user.value.id)
+    );
+  } else {
+    products.value = [];
+  }
 };
 
-const openDialog = (product) => { // Fixed: Added the product parameter
+const signOut = async () => {
+  await store.dispatch("logout");
+  router.push("/");
+};
+
+const openDialog = (product) => {
   selectedProduct.value = product;
   visible.value = true;
 };
+
+// Cleanup socket listeners when component unmounts
+onUnmounted(() => {
+  socket.off("productUpdated");
+});
+
 </script>
 
 <style scoped>
@@ -165,7 +210,12 @@ const openDialog = (product) => { // Fixed: Added the product parameter
   border-radius: 5px;
   margin-bottom: 10px;
   border: 3px solid #f44336;
-  cursor: pointer; /* Added to indicate clickable */
+  cursor: pointer; 
+}
+
+.ongoing-status {
+  background-color: #ffecec;
+  border: 3px solid #ff0000;
 }
 
 .profile-pic {

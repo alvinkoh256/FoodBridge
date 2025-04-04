@@ -48,8 +48,7 @@ const loading = ref(false);
 
 // Computed property to determine if the button should be disabled
 const isButtonDisabled = computed(() => {
-  return props.product?.productStatus === 'on-going' || 
-         props.product?.productStatus === 'completed';
+  return props.product?.productStatus === 'on-going';
 });
 
 const acceptDropOff = async () => {

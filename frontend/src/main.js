@@ -9,6 +9,7 @@ import { definePreset } from '@primeuix/themes';
 import { createClient } from '@supabase/supabase-js';
 import 'primeicons/primeicons.css'
 import axios from "axios";
+import socket from "./socket";
 
 // Create Supabase client
 const supabase = createClient(
@@ -47,4 +48,5 @@ app
     }
   })
   .provide('supabase', supabase)
+  .provide("socket", socket)
   .mount('#app');
