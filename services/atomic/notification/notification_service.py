@@ -10,12 +10,14 @@ import pika
 import json
 import amqp_lib
 import sys
+from dotenv import load_dotenv
 
 
 #Twilio Credentials
-account_sid = "AC3e0e1ffa3a1cac1ae67dd057498adff4"
-auth_token = "67107697e2d86c8b3d684cd94437e4ba"    
-twilio_number = "+12513254270"  
+load_dotenv()
+account_sid = os.getenv("TWILIO_ACCOUNT_ID")
+auth_token = os.getenv("TWILIO_ACCOUNT_TOKEN")
+twilio_number = os.getenv("TWILIO_NUMBER")  
 
 client = Client(account_sid, auth_token)
 
@@ -137,11 +139,14 @@ client = Client(account_sid, auth_token)
 
 def gen_message(userObject):
     user_name = userObject.get("volunteerName")
-    phone_number = userObject.get("volunteerMobile")
+    # unformatted_phone_number = userObject.get("volunteerMobile")
+    # temp_format_phone_number = unformatted_phone_number.replace(" ", "")
+    ### Currently hardcoded, will get Ferrell's inputs on mobile formatting.
+    phone_number = "+6590603108"
 
     # Send SMS via Twilio
     message = client.messages.create(
-        body=f"Hello {user_name}! A new food donation is available near you, check FoodBridge for more details",
+        body=f"Hello {user_name}! Dropoff successful! Thank you for delivering.",
         from_=twilio_number,
         to=phone_number
     )

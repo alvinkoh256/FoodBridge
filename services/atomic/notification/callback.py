@@ -30,6 +30,8 @@ def callback(ch, method, properties, body):
         volunteer_name = message["volunteerName"]
         print(f"Volunteer name is: {volunteer_name}")
         notification_service.gen_message(message)
+        volunteer_phone_number = message["volunteerPhone"]
+        print(f"Volunteer Phone Number is {volunteer_phone_number}")
     except Exception as e:
         print(f"Error processing message: {str(e)}")
     sys.stdout.flush()  # Force print to log
