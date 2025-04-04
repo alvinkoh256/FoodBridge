@@ -119,6 +119,14 @@ services:
       - hub
       - route
 
+  redis:
+    image: redis:6
+    restart: always
+    ports:
+      - 6379:6379
+    networks:
+      - esd-net
+
     # # PostgreSQL Service
   # postgres:
   #   image: postgres:13
