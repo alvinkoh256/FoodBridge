@@ -1,24 +1,36 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
+from dotenv import load_dotenv
 import requests
 import redis
+import os
 
 app = Flask(__name__)
 
 CORS(app)
 
 # Redis cache setup
-redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
+redis_client = redis.Redis(host='redis', port=6379, db=0, decode_responses=True)
 
-# Hub and Route microservices URLs
-HUB_SERVICE_URL = "http://localhost:5010/internal/hub/foodbank/123"
-ROUTE_SERVICE_URL = "http://localhost:5011/route/routing"
+# Get absolute path to project root
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../'))
+env_path = os.path.join(project_root, '.env')
+
+# Load the .env from project root
+load_dotenv(env_path)
+
+# Environment variables
+HUB_SERVICE_URL = os.getenv("HUB_SERVICE_URL", "http://hub:5010")
+ROUTE_SERVICE_URL = os.getenv("ROUTE_SERVICE_URL", "http://route:5011")
+FOODBANK_ID = "1921634f-92f9-4ef5-af7a-23daa634e4cd"   # <-- your constant foodbank ID
 
 @app.route('/get-optimal-route', methods=['GET'])
 def get_optimal_route():
     try:
         # Step 1: Retrieve food bank data from Hub microservice
-        hub_response = requests.get(HUB_SERVICE_URL)
+        hub_url = f"{HUB_SERVICE_URL}/internal/hub/foodbank/{FOODBANK_ID}"
+        hub_response = requests.get(hub_url)
+        
         if hub_response.status_code != 200:
             return jsonify({"error": "Failed to retrieve food bank data"}), 500
 
@@ -36,9 +48,11 @@ def get_optimal_route():
         # Step 3: Send data to Route service for planning
         route_request_payload = {
             "foodbankName": foodbank_name,
-            "foodbankAddress": foodbank_address
+            "foodbankAddress": foodbank_address,
+            "reservedHubs": foodbank_data.get("reservedHubs", [])
         }
-        route_response = requests.post(ROUTE_SERVICE_URL, json=route_request_payload)
+        route_url = f"{ROUTE_SERVICE_URL}/routing"
+        route_response = requests.post(route_url, json=route_request_payload)
         if route_response.status_code != 200:
             return jsonify({"error": "Failed to retrieve route data"}), 500
 
@@ -65,4 +79,4 @@ def format_address(address):
 
 
 if __name__ == '__main__':
-    app.run(port=5016)
+    app.run(host='0.0.0.0', port=5016)
