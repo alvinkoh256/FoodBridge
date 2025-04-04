@@ -59,7 +59,7 @@ def get_optimal_route():
         route_data = route_response.json()
 
         # Step 4: Generate Google Maps route link for the UI
-        waypoints = "/".join([hub["hubAddress"] for hub in route_data["route"]])
+        waypoints = "/".join([hub["hubAddress"].replace("#", "") for hub in route_data["route"]])
         google_maps_url = f"https://www.google.com/maps/dir/{format_address(foodbank_address)}/{format_address(waypoints)}/{format_address(foodbank_address)}"
 
         # Step 5: Return the data to UI
