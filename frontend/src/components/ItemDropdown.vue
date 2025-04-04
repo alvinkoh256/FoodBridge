@@ -12,9 +12,9 @@
           :id="`item-${index}`"
           :options="foodItems"
           optionLabel="itemName"
-          optionValue="itemID"
           placeholder="Select a Food Item"
           class="w-full md:w-14rem"
+          @change="updateSelection"
         />
       </div>
       <div class="text-left">
@@ -27,7 +27,9 @@
           showButtons
           :min="0"
           :max="100"
-        fluid/>
+          class="w-full"
+          @input="updateSelection"
+        />
       </div>
       <Button
         icon="pi pi-trash"
@@ -49,21 +51,19 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useStore } from 'vuex';
 import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';
 import Button from 'primevue/button';
 
+const emit = defineEmits(['items-selected']);
 const store = useStore();
 const foodItems = ref([]);
-const inputItems = ref([
-  {
-    id: Date.now(),
-    selectedItem: null,
-    quantity: 0
-  }
-]);
+const inputItems = ref([{
+  selectedItem: null,
+  quantity: 0
+}]);
 
 onMounted(async () => {
   try {
@@ -71,29 +71,43 @@ onMounted(async () => {
       method: 'get',
       endpoint: 'http://localhost:5010/public/hub/existingItems'
     });
-    
     foodItems.value = response.items || [];
-    console.log('Food items loaded:', foodItems.value);
   } catch (error) {
     console.error('Failed to fetch items:', error);
   }
 });
 
-// Method to add a new input item
 const addItem = () => {
   inputItems.value.push({
     id: Date.now(),
     selectedItem: null,
     quantity: 0
   });
+  updateSelection();
 };
 
-// Method to remove an item
 const removeItem = (index) => {
   if (inputItems.value.length > 1) {
     inputItems.value.splice(index, 1);
+    updateSelection();
   }
 };
+
+const updateSelection = () => {
+  const validItems = inputItems.value.filter(item =>
+    item.selectedItem && item.quantity > 0
+  ).map(item => ({
+    itemName: item.selectedItem.itemName,
+    quantity: item.quantity
+  }));
+  
+  emit('items-selected', validItems);
+};
+
+// Watch for changes in the input items
+watch(inputItems, () => {
+  updateSelection();
+}, { deep: true });
 </script>
 
 <style scoped>
@@ -102,35 +116,27 @@ const removeItem = (index) => {
   padding: 1rem;
   border-radius: 0.5rem;
 }
-
 .flex {
   display: flex;
 }
-
 .justify-content-center {
   justify-content: center;
 }
-
 .items-center {
   align-items: center;
 }
-
 .space-x-4 > * + * {
   margin-left: 1rem;
 }
-
 .text-left {
   text-align: left;
 }
-
 .justify-center {
   justify-content: center;
 }
-
 .mt-4 {
   margin-top: 1rem;
 }
-
 .mb-4 {
   margin-bottom: 1rem;
 }

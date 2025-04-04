@@ -14,17 +14,26 @@
           <strong>Drop-off Location:</strong> {{ product?.productCCDetails?.hubName }}
           <br>
           <strong>Address:</strong> {{ product?.productAddress }}
+          <br>
         </div>
       </div>
     </div>
   </div>
   <div class="action-button-container">
-    <Button label="Accept" class="p-button-rounded w-full" severity="success" @click="acceptDropOff" />
+    <Button 
+      label="Accept" 
+      class="p-button-rounded w-full" 
+      severity="success" 
+      @click="acceptDropOff" 
+      :disabled="isButtonDisabled"
+      :loading="loading"
+    />
   </div>
 </template>
 
 <script setup>
-import { defineProps, defineEmits } from 'vue';
+import { defineProps, inject, computed, ref } from 'vue';
+import { useStore } from 'vuex';
 import Button from 'primevue/button';
 
 const props = defineProps({
@@ -34,10 +43,42 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['accept']);
+const store = useStore();
+const loading = ref(false);
 
-const acceptDropOff = () => {
-  emit('accept', props.product?.productId);
+// Computed property to determine if the button should be disabled
+const isButtonDisabled = computed(() => {
+  return props.product?.productStatus === 'on-going' || 
+         props.product?.productStatus === 'completed';
+});
+
+const acceptDropOff = async () => {
+  if (!props.product?.productId) {
+    console.error('Product ID is missing');
+    return;
+  }
+
+  loading.value = true;
+  
+  try {
+    await store.dispatch('apiRequest', {
+      method: 'put',
+      endpoint: 'http://localhost:5005/product',
+      data: {
+        productId: props.product.productId,
+        productStatus: 'on-going'
+      }
+    });
+    
+    if (props.product) {
+      props.product.productStatus = 'on-going';
+    }
+    
+  } catch (error) {
+    console.error('Failed to update product status:', error);
+  } finally {
+    loading.value = false;
+  }
 };
 </script>
 
