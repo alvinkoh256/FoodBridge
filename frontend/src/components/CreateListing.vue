@@ -13,11 +13,11 @@
           
           <div class="form-fields">
               <div class="input-with-icon">
-                  <ItemDropdown/>
+                <ItemDropdown @items-selected="updateSelectedItems" />
               </div>
 
               <div class="input-with-icon">
-                <CreateItem/>
+                <CreateItem @new-items-added="updateNewItems" />
               </div>
             
             <div class="location-indicator">
@@ -34,18 +34,22 @@
 </template>
 
 <script setup>
-import { ref, provide } from 'vue';
+import { ref, defineProps } from 'vue';
 import AutoComplete from './AutoComplete.vue';
 import ItemDropdown from './ItemDropdown.vue';
 import CreateItem from './CreateItem.vue';
 
+const props = defineProps({
+  user: Object
+});
+
 const emit = defineEmits(['listing-posted']);
 
-const description = ref('');
-const quantity = ref('');
 const location = ref('Current Location');
 const previewImage = ref(null);
 const locationAutocomplete = ref(null);
+const selectedItems = ref([]);
+const newCreatedItems = ref([]);
 
 // Image upload handling
 const handleImageUpload = (event) => {
@@ -59,6 +63,17 @@ const handleImageUpload = (event) => {
   }
 };
 
+// Update functions to receive data from child components
+const updateSelectedItems = (items) => {
+  selectedItems.value = items;
+  console.log('Selected items updated:', items);
+};
+
+const updateNewItems = (items) => {
+  newCreatedItems.value = items;
+  console.log('New items updated:', items);
+};
+
 // Update location from AutoComplete component
 const updateLocation = (selectedLocation) => {
   location.value = selectedLocation;
@@ -69,24 +84,33 @@ const postListing = () => {
   // Get the current location from the autocomplete component
   const currentLocation = locationAutocomplete.value?.getCurrentLocation() || location.value;
   
-  if (description.value && quantity.value && previewImage.value) {
+  if (previewImage.value && selectedItems.value.length > 0) {
+    // Create the submission object with the required structure
     const newListing = {
-      description: description.value,
-      quantity: quantity.value,
-      location: currentLocation,
-      image: previewImage.value
+      image: previewImage.value, 
+      productAddress: currentLocation,
+      productCCDetails: {
+        hubId: props.user?.id, 
+        hubName: props.user?.username, 
+        hubAddress: props.user?.user_metadata?.address 
+      },
+      productItemList: selectedItems.value, 
+      newItems: newCreatedItems.value 
     };
+    
+    // Log the data for debugging
+    console.log('Posting new listing:', newListing);
     
     // Emit event to parent component
     emit('listing-posted', newListing);
     
     // Reset form
-    description.value = '';
-    quantity.value = '';
     previewImage.value = null;
-    // Don't reset location as user might want to post multiple items from same location
+    selectedItems.value = [];
+    newCreatedItems.value = [];
+
   } else {
-    alert('Please fill all fields and upload an image');
+    alert('Please upload an image and select at least one item');
   }
 };
 </script>

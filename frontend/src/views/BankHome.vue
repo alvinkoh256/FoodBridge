@@ -57,7 +57,7 @@
       return;
     }
     
-    if (session?.user && session.user?.user_metadata?.role === "bank") {
+    if (session?.user && session.user?.user_metadata?.role === "B") {
       user.value = session.user;
       console.log("User authenticated:", user.value);
     } else {
@@ -67,7 +67,7 @@
     
     // Then set up the listener for future changes
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user && session.user?.user_metadata?.role === "bank") {
+      if (session?.user && session.user?.user_metadata?.role === "B") {
         user.value = session.user;
         console.log("Auth state changed - user authenticated:", user.value);
       } else {

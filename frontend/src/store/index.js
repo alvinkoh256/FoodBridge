@@ -11,7 +11,7 @@ export default createStore({
   state: {
     user: null,
     role: null,
-    apiBaseUrl: 'http://localhost:8080', 
+    product: null
   },
   mutations: {
     setUser(state, user) {
@@ -21,6 +21,9 @@ export default createStore({
     clearUser(state) {
       state.user = null;
     },
+    setProduct(state, product) {
+      state.product = product;
+    }
   },
   getters: {
     isAuthenticated(state) {
@@ -40,7 +43,7 @@ export default createStore({
     },
     async apiRequest({ state }, { method, endpoint, data = null },) {
       try {
-        const url = `${state.apiBaseUrl}${endpoint}`;
+        const url = `${endpoint}`;
         const config = { method, url, data };
 
         const response = await axios(config);

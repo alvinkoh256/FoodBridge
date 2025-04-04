@@ -5,10 +5,13 @@
     <!-- Content area -->
     <div class="content-area">
       <transition name="fade" mode="out-in">
-        <component :is="currentTabComponent" 
-                  :listings="postedListing" 
-                  @listing-posted="handleListingPosted" 
-                  :key="activeTab" />
+        <component 
+          :is="currentTabComponent"
+          :listings="postedListing"
+          :user="user"
+          @listing-posted="handleListingPosted"
+          :key="activeTab" 
+        />
       </transition>
     </div>
   </div>
@@ -51,7 +54,7 @@ const checkAuth = async () => {
     return;
   }
   
-  if (session?.user && session.user?.user_metadata?.role === "donor") {
+  if (session?.user && session.user?.user_metadata?.role === "D") {
     user.value = session.user;
     console.log("User authenticated:", user.value);
   } else {
@@ -61,7 +64,7 @@ const checkAuth = async () => {
   
   // Then set up the listener for future changes
   const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-    if (session?.user && session.user?.user_metadata?.role === "donor") {
+    if (session?.user && session.user?.user_metadata?.role === "D") {
       user.value = session.user;
       console.log("Auth state changed - user authenticated:", user.value);
     } else {
@@ -83,9 +86,23 @@ const signOut = async () => {
 };
 
 // Handle new listing posted
-const handleListingPosted = (newListing) => {
-  postedListing.value.push(newListing);
-  activeTab.value = 'overview'; // Switch to current listings tab after posting
+const handleListingPosted = async (newListing) => {
+
+  try {
+    const response = await store.dispatch("apiRequest", {
+      method: "post",
+      endpoint: "http://localhost:5005/products",
+      data: newListing
+    });
+
+    filterProducts(response);
+    postedListing.value.push(newListing);
+    activeTab.value = 'overview'; 
+
+  } catch (error) {
+    console.error("Failed to fetch items:", error);
+  }
+
 };
 </script>
 

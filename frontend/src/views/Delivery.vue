@@ -50,9 +50,11 @@
   <script setup>
   import { ref } from 'vue';
   import { useStore } from 'vuex';
+  import { useRouter } from 'vue-router';
   import Dialog from 'primevue/dialog';
   import Button from 'primevue/button';
   
+  const router = useRouter();
   const store = useStore();
   const visible = ref(false);
   const imageUrl = ref(null);
@@ -72,6 +74,7 @@
   const confirmDelivery = () => {
     alert('Delivery Confirmed!');
     visible.value = false;
+    router.push('/home/drop');
   };
 
   const signOut = async () =>{

@@ -49,7 +49,7 @@ const supabase = inject('supabase');
 const email = ref('');
 const password = ref('');
 const errorMessage = ref('');
-const role = ref('donor');
+const role = ref('D');
 const router = useRouter();
 const store = useStore();
 
@@ -83,15 +83,15 @@ const signIn = async () => {
   }
 
   if (userRole !== role.value) {
-    errorMessage.value = `You are not registered as a ${role.value}`;
+    errorMessage.value = `You are not registered as the chosen role`;
     await signOut(); // Logout user
     return;
   }
 
-  if (userRole === 'donor') {
+  if (userRole === 'D') {
     router.push('/home/donor');
   } 
-  else if(userRole === 'bank'){
+  else if(userRole === 'B'){
     router.push('/home/bank');
   }
   else {

@@ -71,6 +71,7 @@ export default {
         const place = autocomplete.getPlace();
         if (place && place.formatted_address) {
           this.address = place.formatted_address;
+          this.$emit('location-selected', place.formatted_address);
         }
       });
     }
