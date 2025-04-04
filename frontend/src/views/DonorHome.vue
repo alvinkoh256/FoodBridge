@@ -85,25 +85,6 @@ const signOut = async () => {
   router.push('/');
 };
 
-// Handle new listing posted
-const handleListingPosted = async (newListing) => {
-
-  try {
-    const response = await store.dispatch("apiRequest", {
-      method: "post",
-      endpoint: "http://localhost:5005/products",
-      data: newListing
-    });
-
-    filterProducts(response);
-    postedListing.value.push(newListing);
-    activeTab.value = 'overview'; 
-
-  } catch (error) {
-    console.error("Failed to fetch items:", error);
-  }
-
-};
 </script>
 
 <style scoped>

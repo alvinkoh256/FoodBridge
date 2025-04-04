@@ -35,6 +35,7 @@
 
 <script setup>
 import { ref, defineProps } from 'vue';
+import { useStore } from 'vuex';
 import AutoComplete from './AutoComplete.vue';
 import ItemDropdown from './ItemDropdown.vue';
 import CreateItem from './CreateItem.vue';
@@ -43,11 +44,11 @@ const props = defineProps({
   user: Object
 });
 
+const store = useStore();
 const emit = defineEmits(['listing-posted']);
 
 const location = ref('Current Location');
 const previewImage = ref(null);
-const locationAutocomplete = ref(null);
 const selectedItems = ref([]);
 const newCreatedItems = ref([]);
 
@@ -80,34 +81,43 @@ const updateLocation = (selectedLocation) => {
 };
 
 // Form submission
-const postListing = () => {
-  // Get the current location from the autocomplete component
-  const currentLocation = locationAutocomplete.value?.getCurrentLocation() || location.value;
-  
-  if (previewImage.value && selectedItems.value.length > 0) {
+const postListing = async () => {
+
+  if (previewImage.value) {
     // Create the submission object with the required structure
     const newListing = {
-      image: previewImage.value, 
-      productAddress: currentLocation,
+      image: previewImage.value?.src ?? previewImage.value, 
+      productAddress: location.value,
       productCCDetails: {
         hubId: props.user?.id, 
         hubName: props.user?.username, 
         hubAddress: props.user?.user_metadata?.address 
       },
-      productItemList: selectedItems.value, 
-      newItems: newCreatedItems.value 
+      productItemList: {
+        items: selectedItems.value, 
+        newitems: newCreatedItems.value 
+      }
     };
     
     // Log the data for debugging
     console.log('Posting new listing:', newListing);
     
-    // Emit event to parent component
-    emit('listing-posted', newListing);
-    
-    // Reset form
-    previewImage.value = null;
-    selectedItems.value = [];
-    newCreatedItems.value = [];
+    try {
+      const response = await store.dispatch("apiRequest", {
+        method: "post",
+        endpoint: "http://localhost:5005/products",
+        data: newListing
+      });
+
+      // Reset form
+      previewImage.value = null;
+      selectedItems.value = [];
+      newCreatedItems.value = [];
+
+    } catch (error) {
+      console.error("Failed to fetch items:", error);
+    }
+  
 
   } else {
     alert('Please upload an image and select at least one item');
