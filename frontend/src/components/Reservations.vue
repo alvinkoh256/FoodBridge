@@ -156,7 +156,8 @@ const showRoute = async () => {
         endpoint: `5016/getOptimalRoute/${props.userId}/getRoute`
       });
       
-      window.open(response.data);
+      //Open route link on new tab
+      window.open(response.data.googleMapsLink);
 
     } catch (error) {
       console.error('Failed to fetch optimal route:', error);
