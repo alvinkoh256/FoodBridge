@@ -1,15 +1,15 @@
 <template>
   <div class="donation-app">
     <Navbar v-model="activeTab" @logout="signOut"/>
-    
     <!-- Content area -->
     <div class="content-area">
       <transition name="fade" mode="out-in">
-        <component 
+        <component
           :is="currentTabComponent"
           :listings="postedListing"
           :user="user"
-          :key="activeTab" 
+          :key="activeTab"
+          @listing-posted="handleListingPosted"
         />
       </transition>
     </div>
@@ -32,15 +32,68 @@ const user = ref(null);
 // Tab navigation
 const activeTab = ref('overview'); // Default to Current Listings view
 const postedListing = ref([]);
+const products = ref([]);
 
 // Compute the current component based on active tab
 const currentTabComponent = computed(() => {
   return activeTab.value === 'overview' ? PostedListing : CreateListing;
 });
 
+// Handler for when a listing is posted
+const handleListingPosted = (response) => {
+  // Switch to the overview tab to show posted listings
+  activeTab.value = 'overview';
+  fetchPostedListings();
+};
+
+// Function to fetch posted listings and filter by hub ID
+const fetchPostedListings = async () => {
+  try {
+    // First get all products
+    const response = await store.dispatch('apiRequest', {
+      method: 'get',
+      endpoint: 'http://localhost:5005/products'
+    });
+
+    if (response && Array.isArray(response)) {
+      products.value = response;
+      
+      // Filter products by matching the hub ID
+      const userProducts = [];
+      
+      // Process each product to check if it belongs to the current hub
+      for (const product of products.value) {
+        try {
+          // Fetch CC details for this product
+          const ccResponse = await store.dispatch('apiRequest', {
+            method: 'get',
+            endpoint: `http://localhost:5005/productCC/${product.productId}`
+          });
+          
+          // If the hubId matches the current user's ID, add to filtered list
+          if (ccResponse && ccResponse.hubId === user.value.id) {
+            userProducts.push(product);
+          }
+        } catch (error) {
+          console.error(`Failed to fetch CC details for product ${product.productId}:`, error);
+        }
+      }
+      
+      // Update the postedListing with filtered products
+      postedListing.value = userProducts;
+    }
+  } catch (error) {
+    console.error('Failed to fetch products:', error);
+  }
+};
+
 // Check authentication on component mount
 onMounted(async () => {
   await checkAuth();
+  // Only fetch listings after authentication is confirmed
+  if (user.value) {
+    await fetchPostedListings();
+  }
 });
 
 // Authentication management
@@ -66,6 +119,8 @@ const checkAuth = async () => {
     if (session?.user && session.user?.user_metadata?.role === "D") {
       user.value = session.user;
       console.log("Auth state changed - user authenticated:", user.value);
+      // Refresh listings when user changes
+      fetchPostedListings();
     } else {
       user.value = null;
       router.push("/");
@@ -83,7 +138,6 @@ const signOut = async () => {
   await store.dispatch('logout');
   router.push('/');
 };
-
 </script>
 
 <style scoped>
