@@ -126,6 +126,8 @@ const postListing = async () => {
       selectedItems.value = [];
       newCreatedItems.value = [];
 
+      emit('listing-posted', response);
+
     } catch (error) {
       console.error("Failed to fetch items:", error);
     }
