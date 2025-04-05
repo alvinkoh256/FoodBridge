@@ -80,7 +80,7 @@ onMounted(async () => {
     console.log("New product update received:", updatedProduct);
 
     // Only show products that include the user's ID
-    if (user.value?.id && updatedProduct.UserList?.includes(user.value.id)) {
+    if (user.value?.id && updatedProduct.productUserList?.includes(user.value.id)) {
       // Check if the product already exists in the list
       const index = products.value.findIndex(
         (p) => p.productId === updatedProduct.productId
@@ -120,7 +120,7 @@ const checkAuth = () => {
 const filterProducts = (productList) => {
   if (user.value?.id) {
     products.value = productList.filter(
-      (product) => product.UserList?.includes(user.value.id)
+      (product) => product.productUserList?.includes(user.value.id)
     );
   } else {
     products.value = [];

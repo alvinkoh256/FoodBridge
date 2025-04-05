@@ -34,6 +34,7 @@
 <script setup>
 import { defineProps, inject, computed, ref } from 'vue';
 import { useStore } from 'vuex';
+import { useRoute } from 'vue-router';
 import Button from 'primevue/button';
 
 const props = defineProps({
@@ -45,6 +46,7 @@ const props = defineProps({
 
 const store = useStore();
 const loading = ref(false);
+const router = useRouter();
 
 // Computed property to determine if the button should be disabled
 const isButtonDisabled = computed(() => {

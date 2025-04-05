@@ -28,7 +28,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed, onMounted, inject } from 'vue';
 import CreateItem from "../components/CreateItem.vue";
 import ItemDropdown from "../components/ItemDropdown.vue";
 import Button from "primevue/button";
@@ -38,13 +38,53 @@ import { useRouter } from "vue-router";
 // Use store and router
 const store = useStore();
 const router = useRouter();
+const supabase = inject('supabase');
 
 // Create refs to store selected items and new items
 const selectedItems = ref([]);
 const newCreatedItems = ref([]);
+const user = ref(null);
 
 //Retrieve selected product
 const product = computed(() => store.state.product);
+
+onMounted(async () => {
+  await checkAuth();
+});
+
+const checkAuth = async () => {
+  // First check the current session
+  const { data: { session }, error } = await supabase.auth.getSession();
+  if (error) {
+    console.error("Error checking session:", error);
+    router.push("/");
+    return;
+  }
+  
+  if (session?.user && session.user?.user_metadata?.role === "V") {
+    user.value = session.user;
+    console.log("User authenticated:", user.value);
+  } else {
+    user.value = null;
+    router.push("/");
+  }
+  
+  // Then set up the listener for future changes
+  const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+    if (session?.user && session.user?.user_metadata?.role === "V") {
+      user.value = session.user;
+      console.log("Auth state changed - user authenticated:", user.value);
+    } else {
+      user.value = null;
+      router.push("/");
+    }
+  });
+  
+  // Return the unsubscribe function
+  return () => {
+    authListener?.unsubscribe();
+  };
+};
 
 // Update functions to receive data from child components
 const updateSelectedItems = (items) => {
@@ -67,8 +107,7 @@ const signOut = async () => {
 const confirmDropOff = async () => {
   try {
     // Get user information from store or use fallback
-    const user = store.state.user;
-    const volunteerID = user?.user_metadata?.uid 
+    const volunteerID = user.value.id
     const productID = product.productId;
     
     // Format the payload according to the expected API structure
