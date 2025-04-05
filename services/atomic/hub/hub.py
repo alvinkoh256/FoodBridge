@@ -115,6 +115,16 @@ hub_foodbank_model = api.model('HubFoodbankRequest', {
     'foodbankID': fields.String(required=True, description='ID of the foodbank')
 })
 
+# to populate foodbank table
+user_to_foodbank_model = api.model('UserToFoodbank', {
+    'userId': fields.String(required=True, description='ID of the user (will be used as foodbankId)'),
+    'userName': fields.String(required=True, description='Name of the user (will be used as foodbankName)'),
+    'userEmail': fields.String(required=True, description='Email of the user'),
+    'userPhoneNumber': fields.String(required=True, description='Phone number of the user'),
+    'userAddress': fields.String(required=True, description='Address of the user (will be used as foodbankAddress)'),
+    'userRole': fields.String(required=True, description='Role of the user (F for Foodbank)')
+})
+
 #define rabbitmq variables for publishing messages
 RABBITMQ_HOST = os.environ.get("RABBITMQ_HOST", "rabbitmq")
 RABBITMQ_PORT = int(os.environ.get("RABBITMQ_PORT", 5672))
@@ -1093,6 +1103,69 @@ class FoodbankReservedInventories(Resource):
             
             return reserved_hubs, 200
             
+        except Exception as e:
+            return {"error": str(e)}, 500
+
+@public_hub_ns.route('/createFoodbank')
+class CreateFoodbank(Resource):
+    @public_hub_ns.doc('create_foodbank_from_user', description='Create a foodbank entry from user information')
+    @public_hub_ns.expect(user_to_foodbank_model)
+    @public_hub_ns.response(201, 'Created Successfully')
+    @public_hub_ns.response(400, 'Bad Request')
+    @public_hub_ns.response(409, 'Foodbank Already Exists')
+    @public_hub_ns.response(500, 'Internal Server Error')
+    def post(self):
+        """
+        Service to create a foodbank entry from user information.
+        
+        This endpoint accepts user information and converts it to the foodbank table format.
+        It will:
+        1. Check if a foodbank with the given ID already exists
+        2. If not, it will create a new foodbank entry with the provided information
+        3. If it exists, it will return a conflict response
+        """
+        try:
+            data = request.json
+            
+            # Validate required fields
+            required_fields = ['userId', 'userName', 'userEmail', 'userPhoneNumber', 'userAddress', 'userRole']
+            for field in required_fields:
+                if field not in data:
+                    return {"error": f"Missing required field: {field}"}, 400
+            
+            # Check if the userRole is 'F' (Foodbank)
+            if data['userRole'] != 'F':
+                return {"error": "User role must be 'F' to create a foodbank"}, 400
+            
+            # Check if foodbank already exists
+            foodbank_id = data['userId']
+            foodbank_response = supabase.table('foodbank').select('*').eq('foodbankId', foodbank_id).execute()
+            
+            if foodbank_response.data:
+                return {"error": f"Foodbank with ID {foodbank_id} already exists"}, 409
+            
+            # Convert user data to foodbank format with camelCase column names
+            foodbank_data = {
+                'foodbankId': data['userId'],
+                'foodbankName': data['userName'],
+                'foodbankAddress': data['userAddress'],
+                'foodbankEmail': data['userEmail'],
+                'foodbankPhoneNumber': data['userPhoneNumber'],
+                'foodbankRole': data['userRole']
+            }
+            
+            # Insert foodbank record
+            insert_response = supabase.table('foodbank').insert(foodbank_data).execute()
+            
+            if not insert_response.data:
+                return {"error": "Failed to create foodbank record"}, 500
+            
+            return {
+                "message": "Foodbank created successfully",
+                "foodbankID": foodbank_id,
+                "foodbankName": data['userName']
+            }, 201
+        
         except Exception as e:
             return {"error": str(e)}, 500
 if __name__ == '__main__':
