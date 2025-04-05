@@ -48,7 +48,7 @@
   </template>
   
   <script setup>
-  import { ref } from 'vue';
+  import { ref, onMounted, inject } from 'vue';
   import { useStore } from 'vuex';
   import { useRouter } from 'vue-router';
   import Dialog from 'primevue/dialog';
@@ -56,9 +56,49 @@
   
   const router = useRouter();
   const store = useStore();
+  const supabase = inject('supabase');
+  
   const visible = ref(false);
   const imageUrl = ref(null);
   const fileInput = ref(null);
+
+  onMounted(async () => {
+    await checkAuth();
+  });
+
+  const checkAuth = async () => {
+    // First check the current session
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error) {
+      console.error("Error checking session:", error);
+      router.push("/");
+      return;
+    }
+    
+    if (session?.user && session.user?.user_metadata?.role === "V") {
+      user.value = session.user;
+      console.log("User authenticated:", user.value);
+    } else {
+      user.value = null;
+      router.push("/");
+    }
+    
+    // Then set up the listener for future changes
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user && session.user?.user_metadata?.role === "V") {
+        user.value = session.user;
+        console.log("Auth state changed - user authenticated:", user.value);
+      } else {
+        user.value = null;
+        router.push("/");
+      }
+    });
+  
+    // Return the unsubscribe function
+    return () => {
+      authListener?.unsubscribe();
+    };
+  };
   
   const triggerFileInput = () => {
     fileInput.value.click();
