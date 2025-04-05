@@ -78,10 +78,9 @@ const fetchReservedHubs = async () => {
   try {
     const reservedHubsResponse = await store.dispatch('apiRequest', { 
       method: 'get', 
-      endpoint: `5010/public/hub/${props.userId}/reservedInventories` 
+      endpoint: `http://localhost:5010/public/hub/${props.userId}/reservedInventories` 
     });
-
-    reservedHubs.value = reservedHubsResponse.data || [];
+    reservedHubs.value = reservedHubsResponse || [];
     
     // Initialize isCollected property if not present
     reservedHubs.value.forEach(hub => {
@@ -126,7 +125,7 @@ const confirmCollection = async () => {
 
     await store.dispatch('apiRequest', { 
       method: 'post', 
-      endpoint: '5010/public/hub/collectionComplete', 
+      endpoint: 'http://localhost:5010/public/hub/collectionComplete', 
       data: payload 
     });
 
@@ -153,7 +152,7 @@ const showRoute = async () => {
       // Call the API to get the optimal route
       const response = await store.dispatch('apiRequest', {
         method: 'get',
-        endpoint: `5016/getOptimalRoute/${props.userId}/getRoute`
+        endpoint: `http://localhost:5016/getOptimalRoute/${props.userId}/getRoute`
       });
       
       //Open route link on new tab

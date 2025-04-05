@@ -7,11 +7,11 @@
     <div class="drop-off-info-panel">
       <h2 class="section-header">Items</h2>
       <div class="donation-items">
-        <div v-for="(item, index) in hub.items || []" :key="index" class="donation-item">
+        <div v-for="(item, index) in hub.reservedItems || hub.items || []" :key="index" class="donation-item">
           <span class="item-name">{{ item.itemName }}</span>
           <span class="item-quantity">x{{ item.quantity }}</span>
         </div>
-        <div v-if="!hub.items || hub.items.length === 0" class="no-items">
+        <div v-if="!hub.reservedItems || hub.reservedItems.length === 0 || !hub.items || hub.items.length === 0" class="no-items">
           No specific items information available.
         </div>
       </div>
@@ -64,17 +64,17 @@ const action = ref('');
 
 const handleReserve = async () => {
   if (loading.value) return;
-  
+
   action.value = 'reserve';
   loading.value = true;
-  
+
   try {
     await store.dispatch("apiRequest", {
       method: "POST",
-      endpoint: "5015/reserveHub/reserve",
+      endpoint: "http://localhost:5015/reserveHub/reserve",
       data: {
-        hubId: props.hub.hubId || props.hub.id,
-        foodbankId: props.foodbankId,
+        hubID: props.hub.hubID,
+        foodbankID: props.foodbankId,
       }
     });
     
@@ -82,7 +82,6 @@ const handleReserve = async () => {
     emit("close");
   } catch (error) {
     console.error("Reserve failed:", error);
-    // Add error notification here if needed
   } finally {
     loading.value = false;
   }
@@ -93,14 +92,14 @@ const handleUnreserve = async () => {
   
   action.value = 'unreserve';
   loading.value = true;
-  
+
   try {
     await store.dispatch("apiRequest", {
       method: "POST",
-      endpoint: "5015/reserveHub/unreserve",
+      endpoint: "http://localhost:5015/reserveHub/unreserve",
       data: {
-        hubId: props.hub.hubId || props.hub.id,
-        foodbankId: props.foodbankId,
+        hubID: props.hub.hubID,
+        foodbankID: props.foodbankID,
       }
     });
     

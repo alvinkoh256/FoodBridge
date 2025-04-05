@@ -7,7 +7,7 @@
       </div>
       <div 
         v-for="hub in reservedHubs" 
-        :key="hub.hubId || hub.id" 
+        :key="hub.hubID" 
         class="hub reserved" 
         @click="openDialog(hub, true)"
       >
@@ -22,7 +22,7 @@
       </div>
       <div 
         v-for="hub in unreservedHubs" 
-        :key="hub.hubId || hub.id" 
+        :key="hub.hubID" 
         class="hub unreserved" 
         @click="openDialog(hub, false)"
       >
@@ -70,21 +70,21 @@ const fetchHubsData = async () => {
     // Fetch reserved inventories
     const resHubsResponse = await store.dispatch('apiRequest', {
       method: 'get',
-      endpoint: `5010/public/hub/${props.userId}/reservedInventories`
+      endpoint: `http://localhost:5010/public/hub/${props.userId}/reservedInventories`
     });
     
     // Fetch unreserved hubs data
     const hubsResponse = await store.dispatch('apiRequest', {
       method: 'get',
-      endpoint: `5010/public/hub/hubsData`
+      endpoint: `http://localhost:5010/public/hub/hubsData`
     });
     
     // Update the data
-    reservedHubs.value = resHubsResponse?.data || [];
+    reservedHubs.value = resHubsResponse || [];
     
     // Filter out reserved hubs from the unreserved list
     const reservedIds = reservedHubs.value.map(hub => hub.hubId || hub.id);
-    unreservedHubs.value = (hubsResponse?.data || []).filter(
+    unreservedHubs.value = (hubsResponse || []).filter(
       hub => !reservedIds.includes(hub.hubId || hub.id)
     );
   } catch (error) {
