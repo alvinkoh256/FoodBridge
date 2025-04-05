@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import os
 import requests
 import json
@@ -9,6 +10,8 @@ from datetime import datetime
 # Initialize Flask app
 app = Flask(__name__)
 
+CORS(app)
+
 # Initialize Flask-RESTX API
 api = Api(app, version='1.0', 
           title='Confirm Delivery Service API',
@@ -16,7 +19,7 @@ api = Api(app, version='1.0',
           doc='/swagger')
 
 # Environment variables with Docker-friendly defaults
-HUB_SERVICE_URL = os.environ.get("HUB_SERVICE_URL", "http://hub:5000")
+HUB_SERVICE_URL = os.environ.get("HUB_SERVICE_URL", "http://hub:5010")
 ACCOUNT_INFO_API_URL = os.environ.get("ACCOUNT_INFO_API_URL", "https://personal-tdqpornm.outsystemscloud.com/FoodBridge/rest/AccountInfoAPI")
 PRODUCT_VALIDATION_URL = os.environ.get("PRODUCT_LISTING_URL", "http://product_listing:5005") # change when YH provides
 
@@ -68,7 +71,7 @@ class ConfirmDelivery(Resource):
             data = request.json
             print(f"Received delivery confirmation request: {json.dumps(data)}")
             
-            # Step 1: Retrieve volunteer phone number
+            # Step 1: Retrieve volunteer info
             volunteer_info = self.get_volunteer_info(data['volunteerID'])
             if not volunteer_info:
                 return {"error": "Could not retrieve volunteer information"}, 404
@@ -159,14 +162,9 @@ class ConfirmDelivery(Resource):
     def create_notification_payload(self, delivery_data, volunteer_info, hub_info):
         """Create notification payload for AMQP"""
         return {
-            "eventType": "delivery_confirmation",
+            "event": "dropoff",
             "volunteerName": volunteer_info.get('userName', 'Unknown Volunteer'),
-            "volunteerPhone": volunteer_info.get('userPhoneNumber', 'N/A'),
-            "hubName": hub_info['hubName'],
-            "hubAddress": hub_info['hubAddress'],
-            "items": delivery_data.get('items', []),
-            "newitems": delivery_data.get('newitems', []),
-            "timestamp": datetime.now().isoformat()
+            "volunteerMobile": volunteer_info.get('userPhoneNumber', 'N/A')
         }
     
     def send_notification(self, payload):
@@ -198,4 +196,4 @@ class ConfirmDelivery(Resource):
 
 if __name__ == '__main__':
     print(f"Starting Confirm Delivery Service with AMQP integration to {AMQP_HOST}:{AMQP_PORT}")
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5009, debug=True)

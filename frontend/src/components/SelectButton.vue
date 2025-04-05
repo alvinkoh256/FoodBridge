@@ -30,7 +30,7 @@ export default {
   methods: {
     selectOption(option) {
       this.selectedOption = option;
-      this.$emit("selection-changed", option);
+      this.$emit("selection-changed", option[0].toUpperCase());
     }
   }
 };

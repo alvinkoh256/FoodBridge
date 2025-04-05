@@ -1,11 +1,14 @@
 from flask import Flask, request, jsonify
 import os
+from flask_cors import CORS
 import requests
 import json
 from flask_restx import Api, Resource, Namespace, fields
 
 # Initialize Flask app
 app = Flask(__name__)
+
+CORS(app)
 
 # Initialize Flask-RESTX API
 api = Api(app, version='1.0', 
@@ -14,7 +17,7 @@ api = Api(app, version='1.0',
           doc='/swagger')
 
 # Environment variables with Docker-friendly defaults
-HUB_SERVICE_URL = os.environ.get("HUB_SERVICE_URL", "http://hub:5000")
+HUB_SERVICE_URL = os.environ.get("HUB_SERVICE_URL", "http://hub:5010")
 ACCOUNT_INFO_API_URL = os.environ.get("ACCOUNT_INFO_API_URL", "https://personal-tdqpornm.outsystemscloud.com/FoodBridge/rest/AccountInfoAPI")
 
 # Create namespace
@@ -353,4 +356,4 @@ class UnreserveHub(Resource):
         
 if __name__ == '__main__':
     print(f"Starting Reserve Hub Service")
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5015, debug=True)
