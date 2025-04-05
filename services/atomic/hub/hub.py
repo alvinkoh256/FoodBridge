@@ -1014,6 +1014,7 @@ class GetFoodbankInfo(Resource):
             
         except Exception as e:
             return {"error": str(e)}, 500
+
 # Alternative endpoint to get all reservations for a specific foodbank with their reserved inventory
 # this is to populate the modal for reserved food banks
 @public_hub_ns.route('/<string:foodbank_id>/reservedInventories')
