@@ -5,13 +5,7 @@ import json
 import notification_service
 import threading
 
-# RabbitMQ Configuration
-RABBITMQ_HOST = os.getenv("RABBITMQ_HOST", "localhost")
-RABBITMQ_PORT = int(os.getenv("RABBITMQ_PORT", 5672))
-RABBITMQ_USER = os.getenv("RABBITMQ_USER", "guest")
-RABBITMQ_PASS = os.getenv("RABBITMQ_PASS", "guest")
-RABBITMQ_QUEUE = os.getenv("RABBITMQ_QUEUE", "notification_queue")
-
+# RabbitMQ Configuration shifted to Dockerfile.
 
 def start_consumer(host, port, exchange, exchange_type, queue, callback):
     amqp_lib.start_consuming(
@@ -30,7 +24,7 @@ def callback(ch, method, properties, body):
         volunteer_name = message["volunteerName"]
         print(f"Volunteer name is: {volunteer_name}")
         notification_service.gen_message(message)
-        volunteer_phone_number = message["volunteerPhone"]
+        volunteer_phone_number = message["volunteerMobile"]
         print(f"Volunteer Phone Number is {volunteer_phone_number}")
     except Exception as e:
         print(f"Error processing message: {str(e)}")
@@ -38,32 +32,58 @@ def callback(ch, method, properties, body):
 
 
 
-# if __name__ == "__main__":
+def callback_notify(ch, method, properties, body):
+    try:
+        message = json.loads(body.decode())
+        print("\n------------- RECEIVED MESSAGE -------------")
+        print(f"Message Content: {json.dumps(message, indent=2)}")
+        print("--------------------------------------------\n")
         
-#         # Start consuming data from dropoff
-#         amqp_lib.start_consuming(
-#             "localhost", 5672, "notificationsS3", 
-#             "topic", "dropoff", 
-#             callback
-#         )
+        # Track phone numbers to avoid duplicates
+        phone_number_list = []
+        
+        # Loop through each user in the userList
+        for user in message["userList"]:
+            user_id = user["userId"]
+            user_name = user["userName"]
+            user_phone = user["userPhoneNumber"]
+            
+            # Check if this phone number has already been processed
+            if user_phone in phone_number_list:
+                print(f"Duplicate phone number {user_phone} detected, skipping notification")
+                continue
+            
+            phone_number_list.append(user_phone)
+            print(f"Volunteer ID is: {user_id}")
+            print(f"Volunteer name is: {user_name}")
+            print(f"Volunteer Phone Number is {user_phone}")
+            
+            # Call notification service for each user
+            notification_service.send_volunteer_notification({
+                "volunteerName": user_name,
+                "volunteerMobile": user_phone
+            })
+            
+    except Exception as e:
+        print(f"Error processing message: {str(e)}")
+    sys.stdout.flush()  # Force print to log
+
+
         
 if __name__ == "__main__":
     # Create threads for each queue
-    t1 = threading.Thread(target=start_consumer, 
-                         args=("localhost", 5672, "notificationsS3", "topic", "dropoff", callback))
-    
-    t2 = threading.Thread(target=start_consumer, 
-                         args=("localhost", 5672, "notificationsS3", "topic", "broadcastHubs", callback))
-    
-    t3 = threading.Thread(target=start_consumer, 
-                         args=("localhost", 5672, "scenario2NotifyExchange", "fanout", "scenario2Notify", callback))
+    t1 = threading.Thread(target=start_consumer,
+        args=(os.getenv("RABBITMQ_HOST", "localhost"), int(os.getenv("RABBITMQ_PORT", 5672)), 
+            "notificationsS3", "topic", "dropoff", callback))
+    t2 = threading.Thread(target=start_consumer,
+        args=(os.getenv("RABBITMQ_HOST", "localhost"), int(os.getenv("RABBITMQ_PORT", 5672)), 
+            "scenario2NotifyExchange", "fanout", "scenario2Notify", callback_notify))
+
     
     # Start all threads
     t1.start()
     t2.start()
-    t3.start()
     
     # Wait for all threads to complete
     t1.join()
     t2.join()
-    t3.join()
