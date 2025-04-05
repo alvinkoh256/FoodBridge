@@ -17,7 +17,7 @@
             @input="updateItems"
           />
         </div>
-        <div class="text-left">
+        <div class="text-left" v-if="showWeight">
           <label for="weight" class="text-black font-bold pl-1">Weight (kg)</label>
           <InputNumber
             v-model="item.itemWeight_kg"
@@ -66,12 +66,19 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, defineProps } from 'vue';
 import InputNumber from 'primevue/inputnumber';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 
 const emit = defineEmits(['new-items-added']);
+
+const props = defineProps({
+  showWeight: {
+    type: Boolean,
+    default: true
+  }
+});
 
 const inputItems = ref([{
   itemName: '',

@@ -9,7 +9,6 @@
           :is="currentTabComponent"
           :listings="postedListing"
           :user="user"
-          @listing-posted="handleListingPosted"
           :key="activeTab" 
         />
       </transition>

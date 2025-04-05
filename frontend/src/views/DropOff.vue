@@ -46,7 +46,7 @@ const newCreatedItems = ref([]);
 const user = ref(null);
 
 //Retrieve selected product
-const product = computed(() => store.state.product);
+const product = computed(() => JSON.parse(localStorage.getItem('savedProduct')));
 
 onMounted(async () => {
   await checkAuth();

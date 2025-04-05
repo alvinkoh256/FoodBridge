@@ -11,7 +11,7 @@
           <span class="item-name">{{ item.itemName }}</span>
           <span class="item-quantity">x{{ item.quantity }}</span>
         </div>
-        <div v-if="!hub.reservedItems || hub.reservedItems.length === 0 || !hub.items || hub.items.length === 0" class="no-items">
+        <div v-if="(!hub.reservedItems || hub.reservedItems.length === 0) && (!hub.items || hub.items.length === 0)" class="no-items">
           No specific items information available.
         </div>
       </div>
@@ -99,7 +99,7 @@ const handleUnreserve = async () => {
       endpoint: "http://localhost:5015/reserveHub/unreserve",
       data: {
         hubID: props.hub.hubID,
-        foodbankID: props.foodbankID,
+        foodbankID: props.foodbankId,
       }
     });
     

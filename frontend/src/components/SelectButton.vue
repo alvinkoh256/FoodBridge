@@ -4,7 +4,7 @@
     <div class="toggle-options">
       <div class="toggle-option" :class="{ 'active': selectedOption === 'donor' }" @click="selectOption('donor')">Donor</div>
       <div class="toggle-option" :class="{ 'active': selectedOption === 'volunteer' }" @click="selectOption('volunteer')">Volunteer</div>
-      <div class="toggle-option" :class="{ 'active': selectedOption === 'bank' }" @click="selectOption('bank')">Bank</div>
+      <div class="toggle-option" :class="{ 'active': selectedOption === 'foodbank' }" @click="selectOption('foodbank')">Bank</div>
     </div>
   </div>
 </template>
@@ -18,7 +18,7 @@ export default {
       positions: {
         donor: 0,
         volunteer: 100,
-        bank: 200
+        foodbank: 200
       }
     };
   },
