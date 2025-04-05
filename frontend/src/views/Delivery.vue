@@ -62,6 +62,8 @@
   const imageUrl = ref(null);
   const fileInput = ref(null);
 
+  const product = computed(() => JSON.parse(localStorage.getItem('savedProduct')));
+
   onMounted(async () => {
     await checkAuth();
   });

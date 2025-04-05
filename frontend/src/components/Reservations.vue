@@ -119,9 +119,11 @@ const confirmCollection = async () => {
   
   try {
     const payload = {
-      hubId: selectedHub.value.hubId || selectedHub.value.name,
-      foodbankId: props.userId,
+      hubID: selectedHub.value.hubID,
+      foodbankID: props.userId,
     };
+
+    console.log(payload);
 
     await store.dispatch('apiRequest', { 
       method: 'post', 

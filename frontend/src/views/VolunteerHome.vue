@@ -70,31 +70,32 @@ onMounted(async () => {
       endpoint: "http://localhost:5005/products",
     });
 
-    filterProducts(response);
+    products.value = response;
+    //filterProducts(response);
   } catch (error) {
     console.error("Failed to fetch items:", error);
   }
 
   // Listen for product updates from socket
-  socket.on("productUpdated", (updatedProduct) => {
-    console.log("New product update received:", updatedProduct);
+  // socket.on("productUpdated", (updatedProduct) => {
+  //   console.log("New product update received:", updatedProduct);
 
-    // Only show products that include the user's ID
-    if (user.value?.id && updatedProduct.productUserList?.includes(user.value.id)) {
-      // Check if the product already exists in the list
-      const index = products.value.findIndex(
-        (p) => p.productId === updatedProduct.productId
-      );
+  //   // Only show products that include the user's ID
+  //   if (user.value?.id && updatedProduct.productUserList?.includes(user.value.id)) {
+  //     // Check if the product already exists in the list
+  //     const index = products.value.findIndex(
+  //       (p) => p.productId === updatedProduct.productId
+  //     );
 
-      if (index !== -1) {
-        // Update existing product
-        products.value[index] = updatedProduct;
-      } else {
-        // Add new product
-        products.value.push(updatedProduct);
-      }
-    }
-  });
+  //     if (index !== -1) {
+  //       // Update existing product
+  //       products.value[index] = updatedProduct;
+  //     } else {
+  //       // Add new product
+  //       products.value.push(updatedProduct);
+  //     }
+  //   }
+  // });
 });
 
 // Authentication management

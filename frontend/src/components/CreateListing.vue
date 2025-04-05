@@ -17,7 +17,7 @@
               </div>
 
               <div class="input-with-icon">
-                <CreateItem @new-items-added="updateNewItems" />
+                <CreateItem @new-items-added="updateNewItems" :showWeight="false"/>
               </div>
             
             <div class="location-indicator">
@@ -51,11 +51,14 @@ const location = ref('Current Location');
 const previewImage = ref(null);
 const selectedItems = ref([]);
 const newCreatedItems = ref([]);
+const selectedImage = ref(null);
 
 // Image upload handling
 const handleImageUpload = (event) => {
   const file = event.target.files[0];
   if (file) {
+    selectedImage.value = file;
+
     const reader = new FileReader();
     reader.onload = (e) => {
       previewImage.value = e.target.result;
@@ -80,33 +83,42 @@ const updateLocation = (selectedLocation) => {
   location.value = selectedLocation;
 };
 
+//For Debugging
+// const logFormData = (formData) => {
+//   for (let [key, value] of formData.entries()) {
+//     console.log(key, value);
+//   }
+// };
+
 // Form submission
 const postListing = async () => {
 
   if (previewImage.value) {
     // Create the submission object with the required structure
-    const newListing = {
-      image: previewImage.value?.src ?? previewImage.value, 
-      productAddress: location.value,
-      productCCDetails: {
-        hubId: props.user?.id, 
-        hubName: props.user?.username, 
-        hubAddress: props.user?.user_metadata?.address 
-      },
-      productItemList: {
-        items: selectedItems.value, 
-        newitems: newCreatedItems.value 
-      }
-    };
+    const allItems = [...selectedItems.value, ...newCreatedItems.value].map(item => ({
+      itemName: item.itemName,
+      quantity: item.quantity
+    }));
+
+
+    const formData = new FormData();
+    formData.append('productPic', selectedImage.value); // the actual file
+    formData.append('productAddress', location.value);
+    formData.append('productCCDetails', JSON.stringify({
+      hubId: props.user?.id, 
+      hubName: props.user?.username, 
+      hubAddress: props.user?.user_metadata?.address 
+    }));
+    formData.append('productItemList', JSON.stringify(allItems));
     
-    // Log the data for debugging
-    console.log('Posting new listing:', newListing);
+    // // Log the data for debugging
+    // logFormData(formData);
     
     try {
       const response = await store.dispatch("apiRequest", {
         method: "post",
-        endpoint: "http://localhost:5005/products",
-        data: newListing
+        endpoint: "http://localhost:5005/product",
+        data: formData
       });
 
       // Reset form

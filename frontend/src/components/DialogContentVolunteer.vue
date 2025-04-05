@@ -34,7 +34,7 @@
 <script setup>
 import { defineProps, inject, computed, ref } from 'vue';
 import { useStore } from 'vuex';
-import { useRoute } from 'vue-router';
+import { useRouter } from "vue-router";
 import Button from 'primevue/button';
 
 const props = defineProps({
@@ -45,8 +45,8 @@ const props = defineProps({
 });
 
 const store = useStore();
-const loading = ref(false);
 const router = useRouter();
+const loading = ref(false);
 
 // Computed property to determine if the button should be disabled
 const isButtonDisabled = computed(() => {
@@ -77,8 +77,9 @@ const acceptDropOff = async () => {
 
     //Store product in store
     const updatedProduct = { ...props.product, productStatus: 'on-going' };
-    store.commit('setProduct', updatedProduct);
+    localStorage.setItem('savedProduct', JSON.stringify(updatedProduct));
     router.push('/home/delivery');
+
     
   } catch (error) {
     console.error('Failed to update product status:', error);
