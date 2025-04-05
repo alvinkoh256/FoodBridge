@@ -26,7 +26,7 @@ ns = api.namespace('reserveHub', description='Reserve Hub operations')
 # Define models for request validation
 reserve_hub_request_model = api.model('ReserveHubRequest', {
     'hubID': fields.Integer(required=True, description='ID of the hub to reserve'),
-    'foodbankID': fields.Integer(required=True, description='ID of the foodbank making the reservation')
+    'foodbankID': fields.String(required=True, description='ID of the foodbank making the reservation')
 })
 
 reserve_hub_response_model = api.model('ReserveHubResponse', {
@@ -208,8 +208,7 @@ class ReserveHub(Resource):
         
         Workflow:
         1. Check hub availability via Hub Service
-        2. Retrieve foodbank information from Account Info API
-        3. Reserve hub with complete foodbank details
+        2. Reserve hub with foodbank ID
         """
         try:
             # Get request data
@@ -241,22 +240,10 @@ class ReserveHub(Resource):
                     "hubReserved": False
                 }, 400
             
-            # Step 2: Retrieve foodbank information (from jeremy's service)
-            foodbank_info = get_foodbank_info(foodbank_id)
-            
-            if not foodbank_info:
-                return {
-                    "message": f"Foodbank with ID {foodbank_id} does not exist or could not be retrieved",
-                    "hubReserved": False,
-                    "accountServiceError": "Could not retrieve foodbank information"
-                }, 404
-            
-            # Step 3: Prepare reservation payload
+            # Step 2: Prepare simplified reservation payload (no foodbank details needed)
             reserve_payload = {
                 "hubID": hub_id,
-                "foodbankID": foodbank_id,
-                "foodbankName": foodbank_info.get('userName', 'Unknown Foodbank'),
-                "foodbankAddress": foodbank_info.get('userAddress', 'Unknown Address')
+                "foodbankID": foodbank_id
             }
             
             # Reserve the hub

@@ -104,9 +104,7 @@ reserved_hub_model = api.model('ReservedHub', {
 # Reserve hub request model
 reserve_hub_model = api.model('ReserveHubRequest', {
     'hubID': fields.Integer(required=True, description='ID of the hub to reserve'),
-    'foodbankID': fields.String(required=True, description='ID of the foodbank making the reservation'),
-    'foodbankName': fields.String(required=True, description='Name of the foodbank making the reservation'),
-    'foodbankAddress': fields.String(required=True, description='Address of the foodbank making the reservation')
+    'foodbankID': fields.String(required=True, description='ID of the foodbank making the reservation')
 })
 
 # for hub-food bank validation
@@ -589,7 +587,6 @@ class CheckHub(Resource):
         except Exception as e:
             return {"error": str(e)}, 500
    
-# Called by reserveHub service to reserve hub
 @internal_hub_ns.route('/reserveHub')
 class ReserveHub(Resource):
     @internal_hub_ns.doc('reserve_hub', description='Food Bank reserves Hub to collect from')
@@ -625,17 +622,11 @@ class ReserveHub(Resource):
                 return {"error": f"Hub with ID {hub_id} is already reserved"}, 400
             
             # Check if foodbank exists
-            foodbank_response = supabase.table('foodbank').select('*').eq('foodbankid', foodbank_id).execute()
+            foodbank_response = supabase.table('foodbank').select('*').eq('foodbankId', foodbank_id).execute()
             
-            # If foodbank doesn't exist, create it
+            # Require foodbank to exist first
             if not foodbank_response.data:
-                foodbank_data = {
-                    'foodbankid': foodbank_id,
-                    'foodbankname': data.get('foodbankName', 'Unknown Foodbank'),
-                    'foodbankaddress': data.get('foodbankAddress', 'Unknown Address')
-                }
-                supabase.table('foodbank').insert(foodbank_data).execute()
-                print(f"Created new foodbank: {foodbank_id}")
+                return {"error": f"Foodbank with ID {foodbank_id} does not exist. Please create it first."}, 404
             
             # Get current inventory
             inventory_response = supabase.table('inventory').select('*').eq('hubid', hub_id).execute()
@@ -644,14 +635,14 @@ class ReserveHub(Resource):
                 return {"error": f"Hub with ID {hub_id} has no inventory to reserve"}, 400
             
             try:
-                # 1. FIRST important step - Update hub's reserved status (this doesnt work)
+                # 1. FIRST important step - Update hub's reserved status
                 print(f"Setting hub {hub_id} reserved=TRUE")
                 hub_update = supabase.table('hub').update({'reserved': True}).eq('hubid', hub_id).execute()
                 print(f"Hub update response: {hub_update}")
                 
                 # 2. Create reservation record
                 reservation_data = {
-                    'foodbankid': foodbank_id,
+                    'foodbankId': foodbank_id,
                     'hubid': hub_id,
                     'totalweight_kg': hub['totalweight_kg']
                 }
@@ -718,8 +709,7 @@ class ReserveHub(Resource):
         except Exception as e:
             error_msg = str(e)
             print(f"Reservation failed: {error_msg}")
-            return {"error": error_msg}, 500
-        
+            return {"error": error_msg}, 500   
 # Called by reserveHub service to unreserve hub
 @internal_hub_ns.route('/unreserveHub')
 class UnreserveHub(Resource):
@@ -740,14 +730,14 @@ class UnreserveHub(Resource):
                 return {"error": f"Hub with ID {hub_id} does not exist"}, 404
             
             # Check if foodbank exists
-            foodbank_response = supabase.table('foodbank').select('*').eq('foodbankid', foodbank_id).execute()
-            
+            foodbank_response = supabase.table('foodbank').select('*').eq('foodbankId', foodbank_id).execute()
+
             if not foodbank_response.data:
                 return {"error": f"Foodbank with ID {foodbank_id} does not exist"}, 404
             
             # Check if this foodbank has a reservation for this hub
             reservation_response = supabase.table('foodbankreservation').select('*').eq(
-                'foodbankid', foodbank_id).eq('hubid', hub_id).eq('collectioncompleted', False).execute()
+                'foodbankId', foodbank_id).eq('hubid', hub_id).eq('collectioncompleted', False).execute()
             
             if not reservation_response.data:
                 return {"error": f"No active reservation found for Hub ID {hub_id} by Foodbank ID {foodbank_id}"}, 404
@@ -763,7 +753,7 @@ class UnreserveHub(Resource):
             
             # FINALLY, delete the reservation
             supabase.table('foodbankreservation').delete().eq(
-                'foodbankid', foodbank_id).eq('hubid', hub_id).eq('collectioncompleted', False).execute()
+                'foodbankId', foodbank_id).eq('hubid', hub_id).eq('collectioncompleted', False).execute()
             
             return {
                 "message": "Unreserved successfully.",
@@ -802,7 +792,7 @@ class CollectionComplete(Resource):
             
             # Check for active reservation
             reservation_response = supabase.table('foodbankreservation').select('*').eq(
-                'foodbankid', foodbank_id).eq('hubid', hub_id).eq('collectioncompleted', False).execute()
+                'foodbankId', foodbank_id).eq('hubid', hub_id).eq('collectioncompleted', False).execute()
             
             if not reservation_response.data:
                 return {"error": f"No active reservation found for Hub ID {hub_id} by Foodbank ID {foodbank_id}"}, 404
@@ -943,7 +933,7 @@ class HubReservedInventory(Resource):
                 "hubID": hub_id,
                 "hubName": hub['hubname'],
                 "hubAddress": hub['hubaddress'],
-                "foodbankID": reservation['foodbankid'],
+                "foodbankID": reservation['foodbankId'],
                 "reservationID": reservation_id,
                 "reservationDate": reservation['reservationdate'],
                 "totalWeight_kg": reservation['totalweight_kg'] or total_weight,
@@ -974,7 +964,7 @@ class GetFoodbankInfo(Resource):
         """
         try:
             # Check if foodbank exists
-            foodbank_response = supabase.table('foodbank').select('*').eq('foodbankid', foodbank_id).execute()
+            foodbank_response = supabase.table('foodbank').select('*').eq('foodbankId', foodbank_id).execute()
             
             if not foodbank_response.data:
                 return {"error": f"Foodbank with ID {foodbank_id} does not exist"}, 404
@@ -983,7 +973,7 @@ class GetFoodbankInfo(Resource):
             
             # Get all active reservations for this foodbank
             reservations_response = supabase.table('foodbankreservation').select('*')\
-                .eq('foodbankid', foodbank_id)\
+                .eq('foodbankId', foodbank_id)\
                 .eq('collectioncompleted', False)\
                 .execute()
             
@@ -1012,11 +1002,11 @@ class GetFoodbankInfo(Resource):
                             "totalWeight_kg": reservation['totalweight_kg']
                         })
             
-            # Format the response
+            # Format the response with correct camelCase column names
             response = {
-                "foodbankID": foodbank['foodbankid'],
-                "foodbankName": foodbank['foodbankname'],
-                "foodbankAddress": foodbank['foodbankaddress'],
+                "foodbankID": foodbank['foodbankId'],
+                "foodbankName": foodbank['foodbankName'],
+                "foodbankAddress": foodbank['foodbankAddress'],
                 "reservedHubs": reserved_hubs
             }
             
@@ -1024,7 +1014,6 @@ class GetFoodbankInfo(Resource):
             
         except Exception as e:
             return {"error": str(e)}, 500
-
 # Alternative endpoint to get all reservations for a specific foodbank with their reserved inventory
 # this is to populate the modal for reserved food banks
 @public_hub_ns.route('/<string:foodbank_id>/reservedInventories')
@@ -1045,14 +1034,14 @@ class FoodbankReservedInventories(Resource):
         """
         try:
             # Check if foodbank exists
-            foodbank_response = supabase.table('foodbank').select('*').eq('foodbankid', foodbank_id).execute()
+            foodbank_response = supabase.table('foodbank').select('*').eq('foodbankId', foodbank_id).execute()
             
             if not foodbank_response.data:
                 return {"error": f"Foodbank with ID {foodbank_id} does not exist"}, 404
             
             # Get all active reservations for this foodbank
             reservations_response = supabase.table('foodbankreservation').select('*')\
-                .eq('foodbankid', foodbank_id)\
+                .eq('foodbankId', foodbank_id)\
                 .eq('collectioncompleted', False)\
                 .execute()
             
