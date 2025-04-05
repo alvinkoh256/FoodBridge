@@ -50,6 +50,7 @@ const product = computed(() => JSON.parse(localStorage.getItem('savedProduct')))
 
 onMounted(async () => {
   await checkAuth();
+  console.log(product.value.productId);
 });
 
 const checkAuth = async () => {
@@ -108,7 +109,7 @@ const confirmDropOff = async () => {
   try {
     // Get user information from store or use fallback
     const volunteerID = user.value.id
-    const productID = product.productId;
+    const productID = product.value.productId;
     
     // Format the payload according to the expected API structure
     const payload = {
@@ -118,7 +119,7 @@ const confirmDropOff = async () => {
       newItems: newCreatedItems.value || [] // Note: Changed from 'newitems' to 'newItems'
     };
     
-    console.log("Sending payload:", payload);
+    console.log("Sending payload:", JSON.stringify(payload));
     
     const response = await store.dispatch('apiRequest', {
       method: 'post',
@@ -127,6 +128,8 @@ const confirmDropOff = async () => {
     });
     
     console.log('Drop-off confirmed:', response);
+    sessionStorage.removeItem('savedProduct');
+    router.push("/home");
     
   } catch (error) {
     console.error('Failed to confirm drop-off:', error);
