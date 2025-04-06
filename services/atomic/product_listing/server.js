@@ -46,10 +46,9 @@ async function getCCByProductId(productId){
 async function createProductListing(body){
     let productAddress = body.productAddress
     let productItemList = body.productItemList
-    let productCCDetails = body.productCCDetails
+
     
     // Log the incoming data to see what's happening
-    console.log("Received productCCDetails:", productCCDetails);
     console.log("Type:", typeof productCCDetails);
 
     // Fix the parsing - use the local variable, not body.productCCDetails
@@ -61,21 +60,11 @@ async function createProductListing(body){
         }
     }
     
-    if(typeof productCCDetails === "string"){
-        try {
-            productCCDetails = JSON.parse(productCCDetails)
-            console.log("Parsed productCCDetails:", productCCDetails);
-        } catch (err) {
-            console.error("Error parsing productCCDetails:", err);
-        }
-    }
-
     let productStatus = "open"
     const{data,error} = await supabase.from("product_listing").insert({
         productAddress:productAddress,
         productStatus:productStatus,
-        productItemList:productItemList,
-        productCCDetails:productCCDetails
+        productItemList:productItemList
     })
     .select()
     if (error){

@@ -222,11 +222,6 @@ app.post('/product', upload.single('productPic'), async (req, res)=>{
             });
         }
         
-        if (!body.productCCDetails) {
-            return res.status(400).json({ 
-                error: "Missing productHubAddress field" 
-            });
-        }
         
         if (!body.productItemList) {
             return res.status(400).json({ 
