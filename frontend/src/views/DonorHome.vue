@@ -125,7 +125,7 @@ const signOut = async () => {
 .donation-app {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  min-height: 100vh;
   background-color: #fff;
 }
 
