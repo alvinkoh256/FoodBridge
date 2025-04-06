@@ -83,6 +83,9 @@ onMounted(async () => {
       endpoint: "http://localhost:5005/products",
     });
     products.value = response;
+
+    //filterProducts(response);
+
   } catch (error) {
     console.error("Failed to fetch items:", error);
   }

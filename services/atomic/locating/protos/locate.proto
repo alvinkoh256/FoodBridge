@@ -9,15 +9,23 @@ message volunteerInfo{
     string userAddress = 2;
 }
 
+message hubInfo{
+    int32 hubID = 1;
+    string hubName = 2;
+    string hubAddress = 3;
+}
+
 message inputBody{
     string productId = 1;
     string productAddress = 2;
     string productHubAddress = 3;
     repeated volunteerInfo volunteerList = 4;
+    repeated hubInfo hubs = 5;
 }
 
 message responseBody{
     string productId = 1;
     repeated string userList = 2;
     string error = 3;
+    hubInfo closestHub = 4;
 }

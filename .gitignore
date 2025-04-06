@@ -30,3 +30,6 @@ virtualenv
 
 # image folder
 sample_pics
+
+# docker compose
+docker-compose-unify.yaml

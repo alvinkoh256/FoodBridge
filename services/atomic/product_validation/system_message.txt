@@ -6,11 +6,12 @@ Ensure that one image with multiple products contains all specified and unspecif
   - If any item is perishable or not listed, inform the user.
   - If an image does not clearly show all items, request a clearer image.
   - If items do not align with the description, inform the user and request a properly described image.
+  - If the item/items meet the requirements, refer to output
 
 # Output Format
 
 Return a result for each image:
-- A boolean ('true') if all products are non-perishable and present with no unidentified perishables.
+- A boolean (true) if all products are non-perishable and present with no unidentified perishables.
 - A string message for guidance if items are perishable, the image is unclear, descriptions are inconsistent, or if there are unidentified perishables.
 
 # Examples

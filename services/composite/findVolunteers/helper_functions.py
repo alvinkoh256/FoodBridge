@@ -22,6 +22,8 @@ PRODUCT_VALIDATION_URL = os.environ.get('PRODUCT_VALIDATION_URL', "http://localh
 PRODUCT_LISTING_URL = os.environ.get('PRODUCT_LISTING_URL', "http://localhost:5005") 
 LOCATING_URL = os.environ.get('LOCATING_SERVICE_URL', "localhost:5006")
 USER_URL = os.environ.get('ACCOUNT_SERVICE_URL', "https://personal-tdqpornm.outsystemscloud.com/FoodBridge/rest/AccountInfoAPI")
+HUB_URL = os.environ.get('HUB_SERVICE_URL', "http://localhost:5010")
+
 
 RABBIT_HOST = os.environ.get('RABBIT_HOST', 'localhost')
 RABBIT_PORT = int(os.environ.get('RABBIT_PORT', 5672))
@@ -109,10 +111,8 @@ def add_product(body):
     del body_copy["productPic"]
     
     # Convert the complex objects to JSON strings
-    body_copy["productCCDetails"] = json.dumps(body_copy["productCCDetails"])
     body_copy["productItemList"] = json.dumps(body_copy["productItemList"])
     
-    logger.info(f"Sending productCCDetails: {body_copy['productCCDetails']}")
     logger.info(f"Sending productItemList: {body_copy['productItemList']}")
     
     response = invoke_http(
@@ -147,9 +147,18 @@ def get_all_volunteers():
             "message": f"User service error: {str(e)}"
         }
 
+# function to retrieve all hubs
+def get_all_hubs():
+    response = invoke_http(
+        url=f"{HUB_URL}/internal/hub/allHubs",
+        method= "GET"
+    )
+    print(response)
+    return response
+
 
 # function to run locating service with list of volunteer ids and address and id, address
-def find_nearby_volunteers(product_id, product_address,product_hub_address, volunteer_list):
+def find_nearby_volunteers(product_id, product_address, product_hub_address, volunteer_list, hub_list):
     try:
         # Create a gRPC channel
         channel = grpc.insecure_channel(LOCATING_URL)
@@ -166,16 +175,31 @@ def find_nearby_volunteers(product_id, product_address,product_hub_address, volu
             )
             volunteer_infos.append(volunteer_info)
         
+        # Create hub info objects from the list
+        hub_infos = []
+        for hub in hub_list:
+            hub_info = locate_pb2.hubInfo(
+                hubID=hub['hubID'],
+                hubName=hub['hubName'],
+                hubAddress=hub['hubAddress']
+            )
+            hub_infos.append(hub_info)
+        
+        logger.info(f"Created {len(volunteer_infos)} volunteer info objects and {len(hub_infos)} hub info objects")
+        
         # Create the request message
         request = locate_pb2.inputBody(
             productId=product_id,
             productAddress=product_address,
             productHubAddress=product_hub_address,
-            volunteerList=volunteer_infos
+            volunteerList=volunteer_infos,
+            hubs=hub_infos  # Add the hub list to the request
         )
         
         # Make the gRPC call
+        logger.info("Sending request to locating service...")
         response = stub.getFilteredUsers(request)
+        logger.info(f"Received response from locating service: {response.error if response.error else 'Success'}")
         
         # Process the response
         result = {
@@ -186,19 +210,30 @@ def find_nearby_volunteers(product_id, product_address,product_hub_address, volu
         # Check if there's an error
         if response.error:
             result["error"] = response.error
-            
+        
+        # Extract the closest hub information if available
+        if hasattr(response, 'closestHub') and response.closestHub:
+            result["closest_hub"] = {
+                "hubID": response.closestHub.hubID,
+                "hubName": response.closestHub.hubName,
+                "hubAddress": response.closestHub.hubAddress
+            }
+            logger.info(f"Closest hub: {result['closest_hub']['hubName']}")
+        
         return result
         
     except grpc.RpcError as rpc_error:
         # Handle gRPC specific errors
         status_code = rpc_error.code()
         details = rpc_error.details()
-        print(f"gRPC error: {status_code}, {details}")
+        logger.error(f"gRPC error: {status_code}, {details}")
         return {"error": f"Locating service error: {details}"}
         
     except Exception as e:
         # Handle other errors
-        print(f"Error in find_nearby_volunteers: {str(e)}")
+        logger.error(f"Error in find_nearby_volunteers: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
         return {"error": f"General error: {str(e)}"}
 
 
@@ -250,7 +285,6 @@ def test_add_product():
             'productPic': img_file,
             'productItemList': [{"itemName":"tuna","quantity":10},{"itemName":"beans","quantity":10},{"itemName":"pickled vegetables","quantity":10}],
             'productAddress': "123 Main St, Singapore 123456",
-            'productCCDetails':{ "hubId": 1, "hubName": "Bedok Orchard RC", "hubAddress": "10C Bedok South Ave 2 #01-562, S462010"}
         }
         
         # Call the add_product function
@@ -280,9 +314,72 @@ def test_find_nearby_volunteers():
         {"userId":"2222-2222-2222","userAddress":"31 Jurong West Street 41, Singapore 649412"},
         {"userId":"3333-3333-3333","userAddress":"73 Jln Tua Kong, Singapore 457264"}
     ]
+
+    hub_list =     [
+        {
+            "hubID": 6,
+            "hubName": "Bedok Ixora RC",
+            "hubAddress": "51 New Upp Changi Rd #01-1500, S461051"
+        },
+        {
+            "hubID": 1,
+            "hubName": "Bedok Orchard RC",
+            "hubAddress": "10C Bedok South Ave 2 #01-562, S462010"
+        },
+        {
+            "hubID": 12,
+            "hubName": "Bishan East Zone 5 RN",
+            "hubAddress": "145 Bishan St 11 #01-99, S570145"
+        },
+        {
+            "hubID": 3,
+            "hubName": "Eunos Zone 6 RN",
+            "hubAddress": "671 Jalan Damai #01-03, S410671"
+        },
+        {
+            "hubID": 2,
+            "hubName": "Eunos Zone 7 RN",
+            "hubAddress": "114 Bedok Reservoir Rd #01-136, S470114"
+        },
+        {
+            "hubID": 9,
+            "hubName": "Geylang West CC",
+            "hubAddress": "1205 Upper Boon Keng Road, S387311"
+        },
+        {
+            "hubID": 5,
+            "hubName": "Kampong Chai Chee Rainbow Ville RN",
+            "hubAddress": "404 Bedok North Ave 3 #01-225, S460404"
+        },
+        {
+            "hubID": 8,
+            "hubName": "Pine Close RN",
+            "hubAddress": "5 Pine Close #01-141, S391005"
+        },
+        {
+            "hubID": 4,
+            "hubName": "Ping Yi Garden RC",
+            "hubAddress": "50 Chai Chee St #01-841, S461050"
+        },
+        {
+            "hubID": 7,
+            "hubName": "Siglap South CC",
+            "hubAddress": "6 Palm Road, S456441"
+        },
+        {
+            "hubID": 10,
+            "hubName": "Whampoa CC",
+            "hubAddress": "300 Whampoa Drive, S327737"
+        },
+        {
+            "hubID": 11,
+            "hubName": "Whampoa Lorong Limau RN",
+            "hubAddress": "76 Lor Limau #01-07, S320076"
+        }
+    ]
     
     # Call the function
-    result = find_nearby_volunteers(product_id, product_address,productHubAddress, volunteer_list)
+    result = find_nearby_volunteers(product_id, product_address,productHubAddress, volunteer_list, hub_list)
     
     # Print the result
     print("Nearby volunteers result:")
@@ -302,8 +399,3 @@ def test_update_product_details():
     # Print the result
     print("Update product details result:")
     print(response["productId"])
-
-def test_function():
-    return {
-        "message":"yuup"
-    }

@@ -156,7 +156,7 @@ def newcall_openai(image, description):
         text = reply_schema_edited,
         reasoning={},
         tools=[],
-        temperature=0.3,
+        temperature=0.1,
         max_output_tokens=2048,
         top_p=1,
         store=True
