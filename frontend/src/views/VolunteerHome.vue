@@ -109,6 +109,17 @@ onMounted(async () => {
   });
 });
 
+// Function to filter products by user ID
+const filterProducts = (productList) => {
+  if (user.value?.id) {
+    products.value = productList.filter(
+      (product) => product.productUserList?.includes(user.value.id)
+    );
+  } else {
+    products.value = [];
+  }
+};
+
 // Authentication management
 const checkAuth = () => {
   const authListener = supabase.auth.onAuthStateChange((event, session) => {
