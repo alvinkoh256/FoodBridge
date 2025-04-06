@@ -46,6 +46,7 @@ async function getCCByProductId(productId){
 async function createProductListing(body){
     let productAddress = body.productAddress
     let productItemList = body.productItemList
+    let userId = body.productUserId
 
     
     // Log the incoming data to see what's happening
@@ -64,7 +65,8 @@ async function createProductListing(body){
     const{data,error} = await supabase.from("product_listing").insert({
         productAddress:productAddress,
         productStatus:productStatus,
-        productItemList:productItemList
+        productItemList:productItemList,
+        productUserId:userId
     })
     .select()
     if (error){

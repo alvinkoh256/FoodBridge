@@ -228,6 +228,12 @@ app.post('/product', upload.single('productPic'), async (req, res)=>{
                 error: "Missing productItemList field" 
             });
         }
+
+        if (!body.productUserId) {
+            return res.status(400).json({ 
+                error: "Missing productuserId field" 
+            });
+        }
         
         const createResult = await createProductListing(body);
         const productId = createResult[0].productId;
