@@ -131,9 +131,9 @@ EXCHANGE_TYPE = "direct"
 
 @internal_hub_ns.route('/allHubs')
 class AllHubs(Resource):
-    @internal_hub_ns.doc('get_all_hubs', description='Retrieve basic information about all hubs')
-    @internal_hub_ns.response(200, 'Success')
-    @internal_hub_ns.response(500, 'Internal Server Error')
+    @public_hub_ns.doc('get_all_hubs', description='Retrieve basic information about all hubs')
+    @public_hub_ns.response(200, 'Success')
+    @public_hub_ns.response(500, 'Internal Server Error')
     def get(self):
         """
         Service to retrieve basic information for all hubs.
