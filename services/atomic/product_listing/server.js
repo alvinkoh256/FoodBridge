@@ -46,6 +46,7 @@ async function getCCByProductId(productId){
 async function createProductListing(body){
     let productAddress = body.productAddress
     let productItemList = body.productItemList
+    let userId = body.productUserId
 
     
     // Log the incoming data to see what's happening
@@ -64,7 +65,8 @@ async function createProductListing(body){
     const{data,error} = await supabase.from("product_listing").insert({
         productAddress:productAddress,
         productStatus:productStatus,
-        productItemList:productItemList
+        productItemList:productItemList,
+        productUserId:userId
     })
     .select()
     if (error){
@@ -74,6 +76,18 @@ async function createProductListing(body){
     return data
 }
 
+async function getProductByUserId(userId){
+    const { data, error } = await supabase
+    .from('product_listing')
+    .select('*')
+    .eq('productUserId',userId)
+
+    if (error) {
+        throw new Error(`Failed to retrieve products: ${error.message}`)
+    }
+
+    return data
+}
 
 async function updateProduct(body){
     const { data,error } = await supabase
@@ -122,5 +136,5 @@ async function uploadPicture(image,productId){
 }
 
 
-export {retrieveAllWhenUserListExist,createProductListing,updateProduct,deleteProduct,uploadPicture,getCCByProductId}
+export {retrieveAllWhenUserListExist,createProductListing,updateProduct,deleteProduct,uploadPicture,getCCByProductId, getProductByUserId}
 
