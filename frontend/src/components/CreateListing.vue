@@ -1,31 +1,31 @@
 <template>
-  <div class="create-listing">
+  <div class="create-listing w-full bg-gray-50 p-6 rounded-lg">
     <div class="listing-container">
       <div class="listing-form">
-        <div class="form-section">
-          <div class="image-upload-area">
+        <div class="form-section flex flex-col md:flex-row gap-6">
+          <div class="image-upload-area mx-auto md:mx-0 transition-all hover:shadow-lg">
             <img v-if="previewImage" :src="previewImage" class="preview-image" alt="Donation preview" />
             <div v-else class="upload-placeholder">
-              <i class="upload-icon">Insert Photo</i>
+              <i class="upload-icon pi pi-camera text-3xl text-gray-400"></i>
+              <p class="text-gray-500 mt-2 text-sm uppercase tracking-wider">Upload Photo</p>
               <input type="file" @change="handleImageUpload" class="file-input" accept="image/*" />
             </div>
           </div>
           
-          <div class="form-fields">
-              <div class="input-with-icon">
-                <ItemDropdown @items-selected="updateSelectedItems" />
-              </div>
+          <div class="form-fields flex-1 flex flex-col">
+            <div class="mb-5 bg-white p-5 rounded-lg shadow-sm border-t-4 border-indigo-500">
+              <h3 class="text-gray-700 font-medium text-sm uppercase tracking-wider mb-4">Select Existing Items</h3>
+              <ItemDropdown @items-selected="updateSelectedItems" />
 
-              <div class="input-with-icon">
-                <CreateItem @new-items-added="updateNewItems" :showWeight="false"/>
-              </div>
+              <CreateItem @new-items-added="updateNewItems" :showWeight="false"/>
             
-            <div class="location-indicator">
-              <div class="location-icon">📍</div>
-              <AutoComplete ref="locationAutocomplete" @location-selected="updateLocation" />
+              <div class="flex-1">
+                <label class="text-gray-700 font-medium text-sm text-left uppercase tracking-wider block mb-2">Location</label>
+                <AutoComplete ref="locationAutocomplete" @location-selected="updateLocation" />
+              </div>
             </div>
             
-            <button class="post-button" @click="postListing">Post Listing</button>
+            <button class="post-button transition-all" @click="postListing">Post Listing</button>
           </div>
         </div>
       </div>
@@ -53,7 +53,6 @@ const selectedItems = ref([]);
 const newCreatedItems = ref([]);
 const selectedImage = ref(null);
 
-// Image upload handling
 const handleImageUpload = (event) => {
   const file = event.target.files[0];
   if (file) {
@@ -67,115 +66,85 @@ const handleImageUpload = (event) => {
   }
 };
 
-// Update functions to receive data from child components
 const updateSelectedItems = (items) => {
   selectedItems.value = items;
-  console.log('Selected items updated:', items);
 };
 
 const updateNewItems = (items) => {
   newCreatedItems.value = items;
-  console.log('New items updated:', items);
 };
 
-// Update location from AutoComplete component
 const updateLocation = (selectedLocation) => {
   location.value = selectedLocation;
 };
 
-//For Debugging
-// const logFormData = (formData) => {
-//   for (let [key, value] of formData.entries()) {
-//     console.log(key, value);
-//   }
-// };
-
-// Form submission
 const postListing = async () => {
-
-  if (previewImage.value) {
-    // Create the submission object with the required structure
-    const allItems = [...selectedItems.value, ...newCreatedItems.value].map(item => ({
-      itemName: item.itemName,
-      quantity: item.quantity
-    }));
-
-
-    const formData = new FormData();
-    formData.append('productPic', selectedImage.value); // the actual file
-    formData.append('productAddress', location.value);
-
-    // Fix for productCCDetails
-    const ccDetailsObj = {
-      hubId: props.user?.id,
-      hubName: props.user?.username,
-      hubAddress: props.user?.user_metadata?.address
-    };
-    const ccDetailsJson = JSON.stringify(ccDetailsObj).replace(/\\\//g, '/');
-    formData.append('productCCDetails', ccDetailsJson);
-
-    // Fix for productItemList
-    const itemsJson = JSON.stringify(allItems).replace(/\\\//g, '/');
-    formData.append('productItemList', itemsJson);
-    
-    // // Log the data for debugging
-    // logFormData(formData);
-    
-    try {
-      const response = await store.dispatch("apiRequest", {
-        method: "post",
-        endpoint: "http://localhost:5005/product",
-        data: formData
-      });
-
-      // Reset form
-      previewImage.value = null;
-      selectedItems.value = [];
-      newCreatedItems.value = [];
-
-      emit('listing-posted', response);
-
-    } catch (error) {
-      console.error("Failed to fetch items:", error);
-    }
-  
-
-  } else {
+  if (!previewImage.value) {
     alert('Please upload an image and select at least one item');
+    return;
+  }
+
+  const allItems = [...selectedItems.value, ...newCreatedItems.value].map(item => ({
+    itemName: item.itemName,
+    quantity: item.quantity
+  }));
+
+  const formData = new FormData();
+  formData.append('productPic', selectedImage.value);
+  formData.append('productAddress', location.value);
+
+  const ccDetailsObj = {
+    hubId: props.user?.id,
+    hubName: props.user?.username,
+    hubAddress: props.user?.user_metadata?.address
+  };
+  const ccDetailsJson = JSON.stringify(ccDetailsObj).replace(/\\\//g, '/');
+  formData.append('productCCDetails', ccDetailsJson);
+
+  const itemsJson = JSON.stringify(allItems).replace(/\\\//g, '/');
+  formData.append('productItemList', itemsJson);
+  
+  try {
+    const response = await store.dispatch("apiRequest", {
+      method: "post",
+      endpoint: "http://localhost:5005/product",
+      data: formData
+    });
+
+    // Reset form
+    previewImage.value = null;
+    selectedItems.value = [];
+    newCreatedItems.value = [];
+
+    emit('listing-posted', response);
+  } catch (error) {
+    console.error("Failed to post listing:", error);
   }
 };
 </script>
 
 <style scoped>
 .create-listing {
-  width: 100%;
-}
-
-.listing-container {
-  display: flex;
-  flex-direction: column;
-}
-
-.listing-form {
-  width: 100%;
-}
-
-.form-section {
-  display: flex;
-  flex-direction: row;
-  gap: 20px;
+  transition: all 0.3s ease;
 }
 
 .image-upload-area {
   width: 300px;
   height: 300px;
-  border: 3px solid #ff7e5f;
+  border: 2px dashed #6366f1;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
+  border-radius: 0.75rem;
   position: relative;
   overflow: hidden;
+  margin-bottom: 1rem;
+  background-color: white;
+  transition: all 0.2s ease;
+}
+
+.image-upload-area:hover {
+  border-color: #4f46e5;
 }
 
 .upload-placeholder {
@@ -186,11 +155,7 @@ const postListing = async () => {
   width: 100%;
   height: 100%;
   cursor: pointer;
-}
-
-.upload-icon {
-  font-size: 1.5rem;
-  color: #aaa;
+  transition: all 0.2s ease;
 }
 
 .file-input {
@@ -207,70 +172,44 @@ const postListing = async () => {
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-
-.form-fields {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.form-group {
-  margin-bottom: 15px;
-}
-
-.input-with-icon {
-  display: flex;
-  justify-content: center;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.icon {
-  padding: 10px;
-  background-color: #f5f5f5;
-  color: #666;
-  font-weight: bold;
-}
-
-.form-control {
-  flex: 1;
-  padding: 10px 15px;
-  border: none;
-  outline: none;
-  font-size: 16px;
-}
-
-.location-indicator {
-  display: flex;
-  align-items: center;
-  margin-top: auto;
-  padding: 10px;
-  background-color: #f5f5f5;
-  border-radius: 4px;
-}
-
-.location-icon {
-  margin-right: 10px;
+  border-radius: 0.5rem;
 }
 
 .post-button {
-  margin-top: 20px;
-  padding: 15px;
-  background-color: #ff7e5f;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
   color: white;
   border: none;
-  border-radius: 25px;
-  font-size: 15px;
-  font-weight: bold;
+  border-radius: 50px;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
   cursor: pointer;
-  width: 40%;
-  margin: auto;
+  width: 100%;
+  max-width: 250px;
+  margin: 0 auto;
+  display: block;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(99, 102, 241, 0.25);
 }
 
 .post-button:hover {
-  background-color: #333;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 10px rgba(99, 102, 241, 0.3);
+}
+
+.post-button:active {
+  transform: translateY(1px);
+}
+
+@media (max-width: 768px) {
+  .form-section {
+    padding: 0 0.5rem;
+  }
+  
+  .image-upload-area {
+    width: 100%;
+    max-width: 300px;
+  }
 }
 </style>

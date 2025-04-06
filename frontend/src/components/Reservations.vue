@@ -1,43 +1,53 @@
 <template>
-  <div class="reservations-container">
-    <div class="title">
-      <h2>Your Reservations</h2>
-      <p class="info">Press a hub to mark it as collected.</p>
+  <div class="reservations-view">
+    <div class="header">
+      <h2 class="main-title">Your Reservations</h2>
+      <p class="subtitle">Press a hub to mark it as collected</p>
     </div>
 
-    <div class="reservations-list">
+    <!-- Reservations List -->
+    <div class="cards-container">
       <div 
         v-for="hub in reservedHubs" 
         :key="hub.hubId || hub.name" 
-        class="reservation-card" 
+        class="reservation" 
         @click="openDialog(hub)"
-        :class="{ 'collected': hub.isCollected }"
+        :class="{ 'is-collected': hub.isCollected }"
       >
-        <div class="hub-info">
-          <h3 class="hub-name">{{ hub.hubName }}</h3>
-          <p class="status">
-            Status: 
-            <span :class="{ uncollected: !hub.isCollected, collectedText: hub.isCollected }">
-              {{ hub.isCollected ? 'Collected' : 'Uncollected' }}
-            </span>
-          </p>
+        <div class="reservation-content">
+          <h3 class="reservation-title">{{ hub.hubName }}</h3>
+          <div class="status-badge" :class="hub.isCollected ? 'status-collected' : 'status-pending'">
+            {{ hub.isCollected ? 'Collected' : 'Uncollected' }}
+          </div>
         </div>
       </div>
       
-      <div v-if="reservedHubs.length === 0" class="no-reservations">
-        You don't have any reservations yet.
+      <div v-if="reservedHubs.length === 0" class="no-data">
+        <p>You don't have any reservations yet.</p>
       </div>
     </div>
 
-    <div class="route-section">
-      <p class="route-text">Ready to collect your reservations? Request the best route here!</p>
-      <Button label="Show me the best route!" @click="showRoute" severity="warn"/>
+    <!-- Route Request Section -->
+    <div class="route-container">
+      <p class="route-caption">Ready to collect your reservations?</p>
+      <Button 
+        label="Show me the best route" 
+        @click="showRoute" 
+        severity="warning" 
+        class="route-button"
+      />
     </div>
 
-    <Dialog v-model:visible="visible" :style="{ width: '50rem' }" header="Confirm Collection">
-      <div class="confirmation-dialog">
-        <p class="confirmation-message">Are you sure you want to mark this hub as collected?</p>
-        <div class="confirmation-buttons">
+    <!-- Collection Confirmation Dialog -->
+    <Dialog 
+      v-model:visible="visible" 
+      :style="{ width: '90vw', maxWidth: '500px' }"
+      :breakpoints="{ '768px': '95vw' }"
+      header="Confirm Collection"
+    >
+      <div class="dialog-content">
+        <p class="dialog-message">Are you sure you want to mark this hub as collected?</p>
+        <div class="dialog-actions">
           <Button 
             label="Yes" 
             class="p-button-rounded" 
@@ -54,7 +64,6 @@
         </div>
       </div>
     </Dialog>
-
   </div>
 </template>
 
@@ -123,8 +132,6 @@ const confirmCollection = async () => {
       foodbankID: props.userId,
     };
 
-    console.log(payload);
-
     await store.dispatch('apiRequest', { 
       method: 'post', 
       endpoint: 'http://localhost:5010/public/hub/collectionComplete', 
@@ -139,8 +146,6 @@ const confirmCollection = async () => {
     if (hubIndex !== -1) {
       reservedHubs.value[hubIndex].isCollected = true;
     }
-
-    console.log(`Collection status for ${selectedHub.value.hubName} updated successfully.`);
   } catch (error) {
     console.error('Failed to update collection status:', error);
   } finally {
@@ -150,143 +155,166 @@ const confirmCollection = async () => {
 };
 
 const showRoute = async () => {
-    try {
-      // Call the API to get the optimal route
-      const response = await store.dispatch('apiRequest', {
-        method: 'get',
-        endpoint: `http://localhost:5016/getOptimalRoute/${props.userId}/getRoute`
-      });
-      
-      //Open route link on new tab
-      window.open(response.data.googleMapsLink);
-
-    } catch (error) {
-      console.error('Failed to fetch optimal route:', error);
-    }
+  try {
+    // Call the API to get the optimal route
+    const response = await store.dispatch('apiRequest', {
+      method: 'get',
+      endpoint: `http://localhost:5016/getOptimalRoute/${props.userId}/getRoute`
+    });
+    
+    // Open route link on new tab
+    window.open(response.data.googleMapsLink);
+  } catch (error) {
+    console.error('Failed to fetch optimal route:', error);
   }
+};
 </script>
 
 <style scoped>
-.reservations-container {
-  max-width: 600px;
-  margin: auto;
-  padding: 20px;
-  font-family: Arial, sans-serif;
+.reservations-view {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
 }
 
-.title {
+.header {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 0.5rem;
 }
 
-.title h2 {
-  font-size: 1.8rem;
-  font-weight: bold;
-  margin-bottom: 10px;
+.main-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #333;
 }
 
-.info {
-  font-size: 1rem;
-  font-weight: normal;
+.subtitle {
+  font-size: 0.9rem;
   color: #666;
 }
 
-.reservations-list {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  margin-bottom: 30px;
+.cards-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
 }
 
-.reservation-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #fbe3e3;
-  padding: 15px;
+.reservation {
+  background-color: white;
   border-radius: 8px;
-  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  transition: all 0.2s ease;
   cursor: pointer;
-  transition: all 0.3s ease-in-out;
-  font-weight: bold;
-  color: red;
+  border-left: 4px solid #ff5252;
 }
 
-.reservation-card:hover:not(.collected) {
-  opacity: 0.9;
-  background-color: #d4edda !important;
-  font-weight: bold;
-  color: green;
+.reservation:hover:not(.is-collected) {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 6px rgba(0,0,0,0.12);
 }
 
-.collected {
-  background-color: #d4edda;
-  color: green;
+.is-collected {
+  border-left-color: #4caf50;
   cursor: default;
 }
 
-.hub-info {
-  flex-grow: 1;
+.reservation-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.hub-name {
-  font-size: 1.2rem;
-  font-weight: bold;
+.reservation-title {
+  font-size: 1.1rem;
+  font-weight: 500;
   margin: 0;
+  color: #333;
 }
 
-.status {
-  font-size: 0.9rem;
-  color: #555;
-  margin-top: 5px;
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.8rem;
+  font-weight: 500;
 }
 
-.uncollected {
-  color: #dc3545;
-  font-weight: bold;
+.status-pending {
+  background-color: #ffebee;
+  color: #c62828;
 }
 
-.collectedText {
-  color: #28a745;
-  font-weight: bold;
+.status-collected {
+  background-color: #e8f5e9;
+  color: #2e7d32;
 }
 
-.route-section {
+.no-data {
+  grid-column: 1 / -1;
+  padding: 2rem;
   text-align: center;
-  margin-top: 30px;
-}
-
-.route-text {
-  font-size: 1rem;
-  font-weight: bold;
-  margin-bottom: 15px;
-}
-
-.no-reservations {
-  text-align: center;
-  padding: 20px;
-  background-color: #f8f9fa;
+  background-color: #f9f9f9;
   border-radius: 8px;
-  color: #6c757d;
-  font-style: italic;
+  color: #757575;
 }
 
-.confirmation-dialog {
+.route-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 15px;
+  gap: 0.75rem;
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
 
-.confirmation-message {
-  font-size: 1.1rem;
-  margin-bottom: 20px;
-  text-align: center;
+.route-caption {
+  font-weight: 500;
+  color: #333;
 }
 
-.confirmation-buttons {
+.route-button {
+  min-width: 200px;
+}
+
+.dialog-content {
   display: flex;
-  gap: 15px;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem 0;
+}
+
+.dialog-message {
+  margin-bottom: 1.5rem;
+  font-size: 1rem;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .cards-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .route-container {
+    padding: 1rem;
+  }
+  
+  .dialog-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+    width: 100%;
+  }
+  
+  .dialog-actions button {
+    width: 100%;
+  }
 }
 </style>

@@ -1,36 +1,43 @@
 <template>
-  <div class="navbar-container">
-    <div class="navbar">
-      <div class="logo-section">
-        <img src="../assets/Foodbridge.png" alt="Profile" class="logo-image">
+  <nav class="navbar">
+    <div class="navbar-content">
+      <div class="navbar-logo">
+        <img src="../assets/Foodbridge.png" alt="Foodbridge Logo">
       </div>
-      <div class="tabs-section">
-        <div
-          class="nav-tab"
+      
+      <div class="navbar-menu" :class="{ 'is-active': isMobileMenuOpen }">
+        <div 
+          class="navbar-item" 
           :class="{ 'active': modelValue === 'overview' }"
           @click="updateTab('overview')"
         >
           {{ tabNames.overview }}
         </div>
-        <div
-          class="nav-tab"
+        <div 
+          class="navbar-item" 
           :class="{ 'active': modelValue === 'listings' }"
           @click="updateTab('listings')"
         >
-         {{ tabNames.listings }}
+          {{ tabNames.listings }}
         </div>
       </div>
-      <div class="logout-section">
-        <button class="logout-button" @click="handleLogout">
+      
+      <div class="navbar-actions">
+        <button class="btn-logout" @click="handleLogout">
           Log Out
+        </button>
+        <button class="btn-menu" @click="toggleMobileMenu">
+          <span></span>
+          <span></span>
+          <span></span>
         </button>
       </div>
     </div>
-  </div>
+  </nav>
 </template>
 
 <script setup>
-import { defineProps, defineEmits } from 'vue';
+import { defineProps, defineEmits, ref } from 'vue';
 
 const props = defineProps({
   modelValue: {
@@ -48,99 +55,180 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['update:modelValue', 'logout']);
+const isMobileMenuOpen = ref(false);
 
 const updateTab = (tab) => {
   emit('update:modelValue', tab);
+  isMobileMenuOpen.value = false;
 };
 
 const handleLogout = () => {
   emit('logout');
 };
+
+const toggleMobileMenu = () => {
+  isMobileMenuOpen.value = !isMobileMenuOpen.value;
+};
 </script>
 
 <style scoped>
-.navbar-container {
+.navbar {
   width: 100%;
   background-color: #fff;
-  border-bottom: 1px solid #f0f0f0;
-  padding: 0 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
-.navbar {
+.navbar-content {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   max-width: 1200px;
   margin: 0 auto;
-  height: 60px;
-  padding: 0 8px;
+  padding: 0 1rem;
+  height: 64px;
 }
 
-.logo-section {
+.navbar-logo {
   display: flex;
   align-items: center;
-  min-width: 100px;
 }
 
-.logo-image {
-  max-height: 100px; 
+.navbar-logo img {
+  max-height: 70px;
   width: auto;
 }
 
-.tabs-section {
+.navbar-menu {
   display: flex;
-  gap: 10px;
-  justify-content: center;
-  flex: 1;
+  gap: 1.5rem;
+  align-items: center;
 }
 
-.nav-tab {
-  padding: 8px 16px;
-  cursor: pointer;
+.navbar-item {
+  color: #6b7280;
   font-weight: 500;
-  color: #888;
+  cursor: pointer;
   position: relative;
+  padding: 0.5rem 0;
   transition: color 0.2s ease;
 }
 
-.nav-tab:hover {
-  color: #333;
+.navbar-item:hover {
+  color: #111827;
 }
 
-.nav-tab.active {
-  color: #333;
+.navbar-item.active {
+  color: #111827;
   font-weight: 600;
 }
 
-.nav-tab.active::after {
+.navbar-item.active::after {
   content: '';
   position: absolute;
-  bottom: -1px;
+  bottom: -2px;
   left: 0;
   width: 100%;
   height: 2px;
-  background-color: #333;
+  background-color: #111827;
+  border-radius: 1px;
 }
 
-.logout-section {
+.navbar-actions {
   display: flex;
-  justify-content: flex-end;
-  min-width: 100px;
+  align-items: center;
+  gap: 1rem;
 }
 
-.logout-button {
-  padding: 8px 16px;
+.btn-logout {
+  padding: 0.5rem 1rem;
+  color: #f43f5e;
   background-color: transparent;
-  color: black;
-  border: 2px solid #f44336;
+  border: 1px solid #f43f5e;
   border-radius: 4px;
-  cursor: pointer;
   font-weight: 500;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.logout-button:hover {
-  background-color: #d32f2f;
+.btn-logout:hover {
+  background-color: #f43f5e;
   color: white;
+}
+
+.btn-menu {
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 20px;
+  width: 24px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.btn-menu span {
+  height: 2px;
+  width: 100%;
+  background-color: #111827;
+  border-radius: 1px;
+  transition: all 0.3s ease;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .navbar-menu {
+    position: absolute;
+    top: 64px;
+    left: 0;
+    width: 100%;
+    flex-direction: column;
+    background-color: white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 1rem 0;
+    gap: 1rem;
+    transform: translateY(-100%);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 50;
+  }
+
+  .navbar-menu.is-active {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .btn-menu {
+    display: flex;
+  }
+
+  .btn-menu span:nth-child(1) {
+    transform: rotate(0) translateY(0);
+  }
+
+  .btn-menu span:nth-child(2) {
+    opacity: 1;
+  }
+
+  .btn-menu span:nth-child(3) {
+    transform: rotate(0) translateY(0);
+  }
+
+  .is-active + .navbar-actions .btn-menu span:nth-child(1) {
+    transform: rotate(45deg) translateY(6px);
+  }
+
+  .is-active + .navbar-actions .btn-menu span:nth-child(2) {
+    opacity: 0;
+  }
+
+  .is-active + .navbar-actions .btn-menu span:nth-child(3) {
+    transform: rotate(-45deg) translateY(-6px);
+  }
 }
 </style>

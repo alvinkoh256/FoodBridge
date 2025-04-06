@@ -1,28 +1,33 @@
 <template>
-  <div class="drop-off-details-container">
-    <div class="drop-off-image-container">
-      <img :src="product?.productPic || '../assets/logo.jpg'" alt="Drop-off items" class="drop-off-image">
+  <div class="donation-container">
+    <!-- Image Section -->
+    <div class="donation-image">
+      <img :src="product?.productPic || '../assets/logo.jpg'" alt="Donation items" class="rounded-img">
     </div>
-    <div class="drop-off-info-panel">
-      <h2 class="section-header">Details</h2>
-      <div class="donation-items">
-        <div v-for="(item, index) in product?.productItemList || []" :key="index" class="donation-item">
-          <div class="item-name text-black">{{ item.itemName }}</div>
-          <div class="item-quantity text-black">x{{ item.quantity }}</div>
+    
+    <!-- Details Section -->
+    <div class="donation-details">
+      <h2 class="details-title">Details</h2>
+      
+      <div class="item-list">
+        <div v-for="(item, index) in product?.productItemList || []" :key="index" class="item">
+          <span class="item-name">{{ item.itemName }}</span>
+          <span class="item-quantity">x{{ item.quantity }}</span>
         </div>
-        <div class="donation-notes">
-          <strong>Drop-off Location:</strong> {{ product?.productCCDetails?.hubName }}
-          <br>
-          <strong>Address:</strong> {{ product?.productAddress }}
-          <br>
-        </div>
+      </div>
+      
+      <div class="location-info">
+        <p><span class="text-bold">Drop-off Location:</span> {{ product?.productCCDetails?.hubName }}</p>
+        <p><span class="text-bold">Address:</span> {{ product?.productAddress }}</p>
       </div>
     </div>
   </div>
-  <div class="action-button-container">
+  
+  <!-- Action Button -->
+  <div class="button-wrapper">
     <Button 
       label="Accept" 
-      class="p-button-rounded w-full" 
+      class="p-button-rounded" 
       severity="success" 
       @click="acceptDropOff" 
       :disabled="isButtonDisabled"
@@ -32,7 +37,7 @@
 </template>
 
 <script setup>
-import { defineProps, inject, computed, ref } from 'vue';
+import { defineProps, computed, ref } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from "vue-router";
 import Button from 'primevue/button';
@@ -48,10 +53,8 @@ const store = useStore();
 const router = useRouter();
 const loading = ref(false);
 
-// Computed property to determine if the button should be disabled
-const isButtonDisabled = computed(() => {
-  return props.product?.productStatus === 'on-going';
-});
+// Determine if the button should be disabled
+const isButtonDisabled = computed(() => props.product?.productStatus === 'on-going');
 
 const acceptDropOff = async () => {
   if (!props.product?.productId) {
@@ -71,16 +74,10 @@ const acceptDropOff = async () => {
       }
     });
     
-    if (props.product) {
-      props.product.productStatus = 'on-going';
-    }
-
-    //Store product in store
+    // Update product status
     const updatedProduct = { ...props.product, productStatus: 'on-going' };
     localStorage.setItem('savedProduct', JSON.stringify(updatedProduct));
     router.push('/home/delivery');
-
-    
   } catch (error) {
     console.error('Failed to update product status:', error);
   } finally {
@@ -90,79 +87,100 @@ const acceptDropOff = async () => {
 </script>
 
 <style scoped>
-.drop-off-details-container {
+.donation-container {
   display: flex;
   gap: 1.5rem;
   margin-bottom: 1.5rem;
 }
 
-@media (max-width: 768px) {
-  .drop-off-details-container {
-    flex-direction: column;
-  }
-}
-
-.drop-off-image-container {
+.donation-image {
   flex: 1;
-  min-width: 0;
 }
 
-.drop-off-image {
+.rounded-img {
   width: 100%;
   height: auto;
-  object-fit: cover;
   border-radius: 8px;
-  max-height: 400px;
+  object-fit: cover;
+  max-height: 350px;
 }
 
-.drop-off-info-panel {
+.donation-details {
   flex: 1;
   background-color: white;
   border-radius: 8px;
-  padding: 1rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  padding: 1.25rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.04);
 }
 
-.section-header {
-  font-size: 1.25rem;
+.details-title {
+  font-size: 1.2rem;
   font-weight: 600;
   margin-bottom: 1rem;
   color: #333;
 }
 
-.donation-items {
+.item-list {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  margin-bottom: 1rem;
 }
 
-.donation-item {
+.item {
   display: flex;
   justify-content: space-between;
   font-size: 1rem;
+  padding: 0.25rem 0;
 }
 
 .item-name {
   font-weight: 500;
+  color: #333;
 }
 
 .item-quantity {
   color: #555;
 }
 
-.donation-notes {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid #eee;
-  color: #666;
+.location-info {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #f0f0f0;
   font-size: 0.9rem;
-  line-height: 1.5;
+  line-height: 1.6;
+  color: #555;
 }
 
-.action-button-container {
+.text-bold {
+  font-weight: 600;
+}
+
+.button-wrapper {
   display: flex;
   justify-content: center;
-  margin: auto;
-  width: 20%;
+  width: auto;
+  max-width: 180px;
+  margin: 0 auto;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .donation-container {
+    flex-direction: column;
+  }
+  
+  .donation-image, .donation-details {
+    width: 100%;
+  }
+  
+  .rounded-img {
+    max-height: 250px;
+  }
+  
+  .button-wrapper {
+    width: 100%;
+    max-width: 100%;
+  }
 }
 </style>

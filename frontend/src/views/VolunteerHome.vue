@@ -1,5 +1,6 @@
 <template>
   <div class="home-container">
+    <!-- Navbar -->
     <div class="header">
       <div class="navbar">
         <div class="logo-section">
@@ -15,28 +16,43 @@
         </div>
       </div>
     </div>
-    <div class="title">For You</div>
-    <div class="divider"></div>
-    <div 
-      v-for="(product, index) in products" 
-      :key="product.productId" 
-      :class="['drop-off-item', {'ongoing-status': product.productStatus === 'on-going'}]" 
-      @click="openDialog(product)"
-    >
-      <div class="profile-pic">
-        <img :src="product.productPic" alt="Product Image">
-      </div>
-      <div class="drop-off-info">
-        <div class="drop-off-location text-black">
-          Drop-off at {{ product.productCCDetails.hubName }}
-        </div>
-        <div class="drop-off-address">
-          {{ product.productAddress }}
+
+    <!-- Main Content -->
+    <div class="content">
+      <div class="title">For You</div>
+      <div class="divider"></div>
+
+      <!-- Product List -->
+      <div class="product-list">
+        <div 
+          v-for="product in products" 
+          :key="product.productId"
+          :class="['drop-off-item border-l-4 border-indigo-500', {'ongoing-status': product.productStatus === 'on-going'}]"
+          @click="openDialog(product)"
+        >
+          <div class="profile-pic">
+            <img :src="product.productPic" alt="Product Image">
+          </div>
+          <div class="drop-off-info">
+            <div class="drop-off-location">
+              Drop-off at {{ product.productCCDetails.hubName }}
+            </div>
+            <div class="drop-off-address">
+              {{ product.productAddress }}
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
-    <Dialog v-model:visible="visible" modal header="Drop-off Details" :style="{ width: '75rem' }">
+    <!-- Dialog -->
+    <Dialog 
+      v-model:visible="visible" 
+      modal 
+      header="Drop-off Details" 
+      :breakpoints="{'960px': '95vw'}" 
+      :style="{ width: '75rem', maxWidth: '95vw' }"
+    >
       <DialogContentVolunteer :product="selectedProduct"/>
     </Dialog>
   </div>
@@ -52,40 +68,32 @@ import Dialog from "primevue/dialog";
 const supabase = inject("supabase");
 const store = useStore();
 const router = useRouter();
-const socket = inject("socket"); 
-
+const socket = inject("socket");
 const user = ref(null);
 const visible = ref(false);
 const products = ref([]);
 const selectedProduct = ref(null);
 
-
 // Check authentication on component mount
 onMounted(async () => {
   checkAuth();
-
   try {
     const response = await store.dispatch("apiRequest", {
       method: "get",
       endpoint: "http://localhost:5005/products",
     });
-
     products.value = response;
-    //filterProducts(response);
   } catch (error) {
     console.error("Failed to fetch items:", error);
   }
 
   socket.on("productListingRoom", (data) => {
     console.log("Received data from productListingRoom:", data);
-
-    // Example logic to update products list
     if (Array.isArray(data)) {
       data.forEach((newProduct) => {
         const index = products.value.findIndex(
           (p) => p.productId === newProduct.productId
         );
-
         if (index !== -1) {
           products.value[index] = newProduct;
         } else {
@@ -96,27 +104,6 @@ onMounted(async () => {
       console.warn("Expected array from productListingRoom, got:", data);
     }
   });
-
-  //Listen for product updates from socket
-  // socket.on("productUpdated", (updatedProduct) => {
-  //   console.log("New product update received:", updatedProduct);
-
-  //   // Only show products that include the user's ID
-  //   //if (user.value?.id && updatedProduct.productUserList?.includes(user.value.id)) {
-  //     // Check if the product already exists in the list
-  //     const index = products.value.findIndex(
-  //       (p) => p.productId === updatedProduct.productId
-  //     );
-
-  //     if (index !== -1) {
-  //       // Update existing product
-  //       products.value[index] = updatedProduct;
-  //     } else {
-  //       // Add new product
-  //       products.value.push(updatedProduct);
-  //     }
-  //   //}
-  // });
 });
 
 // Authentication management
@@ -138,17 +125,6 @@ const checkAuth = () => {
   };
 };
 
-// Function to filter products by user ID
-const filterProducts = (productList) => {
-  if (user.value?.id) {
-    products.value = productList.filter(
-      (product) => product.productUserList?.includes(user.value.id)
-    );
-  } else {
-    products.value = [];
-  }
-};
-
 const signOut = async () => {
   await store.dispatch("logout");
   router.push("/");
@@ -161,30 +137,19 @@ const openDialog = (product) => {
 
 // Cleanup socket listeners when component unmounts
 onUnmounted(() => {
-  socket.off("productUpdated");
+  socket.off("productListingRoom");
 });
-
 </script>
 
 <style scoped>
 .home-container {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  padding: 1rem;
+  min-height: 100vh;
   background-color: #fff;
-  border-radius: 8px;
 }
 
-.nav-tab {
-  padding: 8px 16px;
-  cursor: pointer;
-  font-weight: bold;
-  color: black;
-  position: relative;
-  transition: color 0.2s ease;
-}
-
+/* Navbar styles - kept consistent with original */
 .header {
   width: 100%;
   background-color: #fff;
@@ -204,11 +169,11 @@ onUnmounted(() => {
 .logo-section {
   display: flex;
   align-items: center;
-  min-width: 100px;
+  max-height: 70px;
 }
 
 .logo-image {
-  max-height: 100px; 
+  max-height: 100px;
   width: auto;
 }
 
@@ -219,25 +184,83 @@ onUnmounted(() => {
   flex: 1;
 }
 
+.nav-tab {
+  padding: 8px 16px;
+  cursor: pointer;
+  font-weight: bold;
+  color: black;
+  position: relative;
+  transition: color 0.2s ease;
+}
+
+.logout-section {
+  display: flex;
+  align-items: center;
+}
+
+.logout-button {
+  padding: 0.5rem 1rem;
+  color: #f43f5e;
+  background-color: transparent;
+  border: 1px solid #f43f5e;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.logout-button:hover {
+  background-color: #f43f5e;
+  color: white;
+}
+
+/* Content styles - improved */
+.content {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 1rem;
+  flex: 1;
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: black;
+  margin-top: 1.5rem;
+}
+
 .divider {
-  border-top: 1px solid #ccc;
-  margin: 20px 0;
+  height: 1px;
+  background-color: #ccc;
+  margin: 1.25rem 0;
+}
+
+/* Product list styles - improved */
+.product-list {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
 }
 
 .drop-off-item {
   display: flex;
   align-items: center;
-  padding: 15px;
+  padding: 1rem;
   background-color: white;
   border-radius: 5px;
-  margin-bottom: 10px;
-  border: 3px solid #f44336;
-  cursor: pointer; 
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.drop-off-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .ongoing-status {
-  background-color: #ffecec;
-  border: 3px solid #ff0000;
+  border-left: 4px solid #ff0000;
 }
 
 .profile-pic {
@@ -245,42 +268,28 @@ onUnmounted(() => {
   height: 40px;
   border-radius: 50%;
   background-color: #ddd;
-  margin-right: 15px;
+  margin-right: 1rem;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
-.logout-button {
-  padding: 8px 16px;
-  background-color: transparent;
-  color: black;
-  border: 2px solid #f44336;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-.logout-button:hover {
-  background-color: #d32f2f;
-  color: white;
-}
-
-img {
-  object-fit: cover; 
+.profile-pic img {
   width: 100%;
   height: 100%;
+  object-fit: cover;
 }
 
 .drop-off-info {
-  flex-grow: 1;
+  flex: 1;
 }
 
 .drop-off-location {
   font-weight: bold;
-  margin-bottom: 5px;
+  color: black;
+  margin-bottom: 0.25rem;
 }
 
 .drop-off-address {
@@ -288,11 +297,46 @@ img {
   color: #666;
 }
 
-.title {
-  text-align: left;
-  padding-top: 10px;
-  font-weight: bold;
-  font-size: 40px;
-  color: black;
+/* Responsive styles */
+@media (max-width: 768px) {
+  .title {
+    font-size: 2rem;
+  }
+  
+  .drop-off-item {
+    padding: 0.75rem;
+  }
+  
+  .logo-image {
+    max-height: 60px;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar {
+    height: auto;
+    padding: 0.5rem;
+    flex-wrap: wrap;
+  }
+  
+  .tabs-section {
+    width: 100%;
+    justify-content: center;
+    margin-top: 0.5rem;
+  }
+  
+  .title {
+    font-size: 1.75rem;
+    text-align: center;
+  }
+  
+  .drop-off-item {
+    padding: 0.5rem;
+  }
+  
+  .profile-pic {
+    width: 32px;
+    height: 32px;
+  }
 }
 </style>
