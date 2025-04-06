@@ -18,9 +18,11 @@ class LocateService(locate_pb2_grpc.locateServicer):
         # Extract request data
         product_id = request.productId
         product_address = request.productAddress
-        product_hub_address = request.productHubAddress
+        hub_list = request.hubs
         volunteer_list = request.volunteerList
         
+        logger.info(request.hubs)
+
         # Validate product address
         try:
             product_coord = extra_functions.convertAddress(product_address)
@@ -38,24 +40,13 @@ class LocateService(locate_pb2_grpc.locateServicer):
                 error=f"Product address conversion error: {str(e)}"
             )
         
-        # Convert hub address to coordinates
-        try:
-            hub_coord = extra_functions.convertAddress(product_hub_address)
-            if hub_coord is None:
-                return locate_pb2.responseBody(
-                    productId=product_id,
-                    userList=[],
-                    error="Not a valid hub address!"
-                )
-        except Exception as e:
-            logger.error(f"Error converting hub address: {str(e)}")
-            return locate_pb2.responseBody(
-                productId=product_id,
-                userList=[],
-                error=f"Hub address conversion error: {str(e)}"
-            )
-        
+
+        # Find the hub closest to the product address
+        closest_hub_details = extra_functions.get_closest_hub(hub_list, product_coord)
+
+
         # Calculate center point and find closest users
+        hub_coord = extra_functions.convertAddress(closest_hub_details["hubAddress"])
         try:
             center_point_coord = extra_functions.get_center_point(product_coord, hub_coord)
             filtered_closest_list = extra_functions.find_closest_users(center_point_coord, volunteer_list)
@@ -67,11 +58,14 @@ class LocateService(locate_pb2_grpc.locateServicer):
                 error=f"User filtering error: {str(e)}"
             )
 
+
         # Create and return response
+        del closest_hub_details["distToProduct"]
         try:
             response = locate_pb2.responseBody(
                 productId=product_id,
                 userList=filtered_closest_list,
+                closestHub = closest_hub_details,
                 error=None
             )
             return response
