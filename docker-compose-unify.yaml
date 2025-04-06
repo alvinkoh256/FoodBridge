@@ -206,6 +206,7 @@ services:
       - product_validation
       - locating
       - amqp-setup
+      - hub
     env_file:
       - .env
     environment:
@@ -217,6 +218,7 @@ services:
       - RABBIT_PORT=5672
       - SCENARIO12_RABBIT_EXCHANGE=scenario12Exchange
       - SCENARIO12_EXCHANGE_TYPE=fanout
+      - HUB_SERVICE_URL=http://hub:5010
     ports:
       - "5001:5001"
     networks:

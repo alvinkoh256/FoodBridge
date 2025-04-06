@@ -146,11 +146,12 @@ def find_volunteers():
             }), 530
 
         # Step 4: Retrieve list of hubs
-        
+        logger.info("Starting Step 4: Getting all hubs")
+        hub_list = helper_functions.get_all_hubs()
 
         # Step 5: Filter Nearby Volunteers
         try:
-            logger.info("Starting Step 4: Getting volunteers in 2km radius")
+            logger.info("Starting Step 5: Getting volunteers in 2km radius")
             hub_address = product_cc_details["hubAddress"]
             product_id = product["product_id"]
             logger.info(f"Inserted Address: {hub_address} | Product ID: {product_id}")
@@ -169,7 +170,7 @@ def find_volunteers():
 
         # Step 6: Update Product Details with Volunteers
         try:
-            logger.info("Starting Step 5: Updating product CC and userList")
+            logger.info("Starting Step 6: Updating product CC and userList")
             update_body = {
                 "productId": product_id,
                 "productUserList": filtered_volunteers_list
@@ -188,7 +189,7 @@ def find_volunteers():
 
         # Step 7: Send Filtered Volunteers to Queue
         try:
-            logger.info("Starting Step 6: Sending filtered list into queue")
+            logger.info("Starting Step 7: Sending filtered list into queue")
             retrievedUserList = updated_product["productUserList"]
             helper_functions.sendToQueue(retrievedUserList)
         except Exception as e:
