@@ -104,12 +104,19 @@ const postListing = async () => {
     const formData = new FormData();
     formData.append('productPic', selectedImage.value); // the actual file
     formData.append('productAddress', location.value);
-    formData.append('productCCDetails', JSON.stringify({
-      hubId: props.user?.id, 
-      hubName: props.user?.username, 
-      hubAddress: props.user?.user_metadata?.address 
-    }));
-    formData.append('productItemList', JSON.stringify(allItems));
+
+    // Fix for productCCDetails
+    const ccDetailsObj = {
+      hubId: props.user?.id,
+      hubName: props.user?.username,
+      hubAddress: props.user?.user_metadata?.address
+    };
+    const ccDetailsJson = JSON.stringify(ccDetailsObj).replace(/\\\//g, '/');
+    formData.append('productCCDetails', ccDetailsJson);
+
+    // Fix for productItemList
+    const itemsJson = JSON.stringify(allItems).replace(/\\\//g, '/');
+    formData.append('productItemList', itemsJson);
     
     // // Log the data for debugging
     // logFormData(formData);

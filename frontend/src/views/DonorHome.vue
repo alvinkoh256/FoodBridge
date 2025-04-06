@@ -49,7 +49,7 @@ const handleListingPosted = (response) => {
 // Function to fetch posted listings and filter by hub ID
 const fetchPostedListings = async () => {
   try {
-    // First get all products
+    // Get all products
     const response = await store.dispatch('apiRequest', {
       method: 'get',
       endpoint: 'http://localhost:5005/products'
@@ -58,29 +58,10 @@ const fetchPostedListings = async () => {
     if (response && Array.isArray(response)) {
       products.value = response;
       
-      // Filter products by matching the hub ID
-      const userProducts = [];
-      
-      // Process each product to check if it belongs to the current hub
-      for (const product of products.value) {
-        try {
-          // Fetch CC details for this product
-          const ccResponse = await store.dispatch('apiRequest', {
-            method: 'get',
-            endpoint: `http://localhost:5005/productCC/${product.productId}`
-          });
-          
-          // If the hubId matches the current user's ID, add to filtered list
-          if (ccResponse && ccResponse.hubId === user.value.id) {
-            userProducts.push(product);
-          }
-        } catch (error) {
-          console.error(`Failed to fetch CC details for product ${product.productId}:`, error);
-        }
-      }
-      
-      // Update the postedListing with filtered products
-      postedListing.value = userProducts;
+      // Filter products that belong to the current hub
+      postedListing.value = products.value.filter(product => 
+        product.productCCdetails && product.productCCdetails.hubId === user.value.id
+      );
     }
   } catch (error) {
     console.error('Failed to fetch products:', error);
