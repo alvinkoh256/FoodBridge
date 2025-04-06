@@ -129,6 +129,40 @@ RABBITMQ_PORT = int(os.environ.get("RABBITMQ_PORT", 5672))
 EXCHANGE_NAME = "notificationsS3"
 EXCHANGE_TYPE = "direct"
 
+@internal_hub_ns.route('/allHubs')
+class AllHubs(Resource):
+    @internal_hub_ns.doc('get_all_hubs', description='Retrieve basic information about all hubs')
+    @internal_hub_ns.response(200, 'Success')
+    @internal_hub_ns.response(500, 'Internal Server Error')
+    def get(self):
+        """
+        Service to retrieve basic information for all hubs.
+        
+        This endpoint returns a simplified list of all hubs in the system,
+        including just their ID, name, and address. This is useful for
+        dropdowns and other UI elements that need to display hub options.
+        """
+        try:
+            # Get all hubs
+            hubs_response = supabase.table('hub').select('hubid, hubname, hubaddress').order('hubname').execute()
+            
+            if not hubs_response.data:
+                return [], 200  # Return empty list if no hubs
+            
+            # Transform to camelCase for the response
+            result = []
+            for hub in hubs_response.data:
+                result.append({
+                    "hubID": hub['hubid'],
+                    "hubName": hub['hubname'],
+                    "hubAddress": hub['hubaddress']
+                })
+            
+            return result, 200
+        
+        except Exception as e:
+            return {"error": str(e)}, 500
+
 # To populate item dropdown in Volunteer UI
 @public_hub_ns.route('/existingItems')
 class ExistingItems(Resource):
