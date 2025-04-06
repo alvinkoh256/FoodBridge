@@ -466,3 +466,8 @@ app.delete('/product', async (req,res)=>{
     }
     await sendToWebSocket()
 })
+
+app.get('/api-docs.json', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(specs);
+  });
