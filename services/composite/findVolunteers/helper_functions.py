@@ -22,6 +22,8 @@ PRODUCT_VALIDATION_URL = os.environ.get('PRODUCT_VALIDATION_URL', "http://localh
 PRODUCT_LISTING_URL = os.environ.get('PRODUCT_LISTING_URL', "http://localhost:5005") 
 LOCATING_URL = os.environ.get('LOCATING_SERVICE_URL', "localhost:5006")
 USER_URL = os.environ.get('ACCOUNT_SERVICE_URL', "https://personal-tdqpornm.outsystemscloud.com/FoodBridge/rest/AccountInfoAPI")
+HUB_URL = os.environ.get('HUB_SERVICE_URL', "http://localhost:5010")
+
 
 RABBIT_HOST = os.environ.get('RABBIT_HOST', 'localhost')
 RABBIT_PORT = int(os.environ.get('RABBIT_PORT', 5672))
@@ -146,6 +148,14 @@ def get_all_volunteers():
             "status": "error", 
             "message": f"User service error: {str(e)}"
         }
+
+
+def get_all_hubs():
+    response = invoke_http(
+        url=f"{HUB_URL}/internal/hubs/allHubs",
+        method= "GET"
+    )
+    return response
 
 
 # function to run locating service with list of volunteer ids and address and id, address

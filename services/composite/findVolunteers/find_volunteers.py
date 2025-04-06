@@ -145,7 +145,10 @@ def find_volunteers():
                 "traceback": tb
             }), 530
 
-        # Step 4: Filter Nearby Volunteers
+        # Step 4: Retrieve list of hubs
+        
+
+        # Step 5: Filter Nearby Volunteers
         try:
             logger.info("Starting Step 4: Getting volunteers in 2km radius")
             hub_address = product_cc_details["hubAddress"]
@@ -164,7 +167,7 @@ def find_volunteers():
                 "traceback": tb
             }), 540
 
-        # Step 5: Update Product Details with Volunteers
+        # Step 6: Update Product Details with Volunteers
         try:
             logger.info("Starting Step 5: Updating product CC and userList")
             update_body = {
@@ -183,7 +186,7 @@ def find_volunteers():
                 "traceback": tb
             }), 550
 
-        # Step 6: Send Filtered Volunteers to Queue
+        # Step 7: Send Filtered Volunteers to Queue
         try:
             logger.info("Starting Step 6: Sending filtered list into queue")
             retrievedUserList = updated_product["productUserList"]
