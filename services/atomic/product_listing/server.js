@@ -79,7 +79,7 @@ async function createProductListing(body){
 async function getProductByUserId(userId){
     const { data, error } = await supabase
     .from('product_listing')
-    .select()
+    .select('*')
     .eq('productUserId',userId)
 
     if (error) {
