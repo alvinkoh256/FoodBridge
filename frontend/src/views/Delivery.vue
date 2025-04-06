@@ -48,7 +48,7 @@
   </template>
   
   <script setup>
-  import { ref, onMounted, inject } from 'vue';
+  import { ref, onMounted, inject, computed } from 'vue';
   import { useStore } from 'vuex';
   import { useRouter } from 'vue-router';
   import Dialog from 'primevue/dialog';
@@ -61,6 +61,9 @@
   const visible = ref(false);
   const imageUrl = ref(null);
   const fileInput = ref(null);
+  const user = ref(null);
+
+  const product = computed(() => JSON.parse(localStorage.getItem('savedProduct')));
 
   onMounted(async () => {
     await checkAuth();
@@ -111,10 +114,22 @@
     }
   };
   
-  const confirmDelivery = () => {
-    alert('Delivery Confirmed!');
-    visible.value = false;
-    router.push('/home/drop');
+  const confirmDelivery = async () => {
+    try {
+        await store.dispatch('apiRequest', {
+          method: 'delete',
+          endpoint: 'http://localhost:5005/product',
+          data: {
+            productId: product.value.productId
+          }
+      });
+
+      alert('Delivery Confirmed!');
+      visible.value = false;
+      router.push('/home/drop');
+    } catch(error){
+      console.error('Failed to update product status:', error);
+    }
   };
 
   const signOut = async () =>{

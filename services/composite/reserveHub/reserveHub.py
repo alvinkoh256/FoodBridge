@@ -26,7 +26,7 @@ ns = api.namespace('reserveHub', description='Reserve Hub operations')
 # Define models for request validation
 reserve_hub_request_model = api.model('ReserveHubRequest', {
     'hubID': fields.Integer(required=True, description='ID of the hub to reserve'),
-    'foodbankID': fields.Integer(required=True, description='ID of the foodbank making the reservation')
+    'foodbankID': fields.String(required=True, description='ID of the foodbank making the reservation')
 })
 
 reserve_hub_response_model = api.model('ReserveHubResponse', {
@@ -37,42 +37,6 @@ reserve_hub_response_model = api.model('ReserveHubResponse', {
 })
 
 # Common helper methods
-def get_hub_info(hub_id):
-    """Get hub information from Hub Service"""
-    try:
-        print(f"Fetching hub info for ID: {hub_id}")
-        
-        # Setup session with retry
-        session = requests.Session()
-        adapter = requests.adapters.HTTPAdapter(
-            max_retries=requests.packages.urllib3.util.retry.Retry(
-                total=3,
-                backoff_factor=0.5,
-                status_forcelist=[500, 502, 503, 504],
-            )
-        )
-        session.mount('http://', adapter)
-        
-        # Make request to Hub Service's checkHub endpoint
-        hub_url = f"{HUB_SERVICE_URL}/internal/hub/checkHub/{hub_id}"
-        print(f"Calling URL: {hub_url}")
-        
-        response = session.get(hub_url, timeout=10)
-        
-        if response.status_code != 200:
-            print(f"Hub Service error: {response.status_code} - {response.text}")
-            return None
-        
-        # Extract data from the response
-        hub_info = response.json()
-        print(f"Found hub info: {json.dumps(hub_info)}")
-        
-        return hub_info
-        
-    except Exception as e:
-        print(f"Error retrieving hub info: {str(e)}")
-        return None
-
 def get_foodbank_info(foodbank_id):
     """Retrieve foodbank information from Account Info API"""
     try:
@@ -207,9 +171,8 @@ class ReserveHub(Resource):
         Handle hub reservation request from foodbank UI
         
         Workflow:
-        1. Check hub availability via Hub Service
-        2. Retrieve foodbank information from Account Info API
-        3. Reserve hub with complete foodbank details
+        1. Validate foodbank ID via Account Info Service
+        2. Reserve hub directly with foodbank ID
         """
         try:
             # Get request data
@@ -226,54 +189,54 @@ class ReserveHub(Resource):
             hub_id = data['hubID']
             foodbank_id = data['foodbankID']
             
-            # Step 1: Check hub availability
-            hub_info = get_hub_info(hub_id)
-            
-            if not hub_info:
-                return {
-                    "message": f"Hub with ID {hub_id} does not exist or could not be retrieved",
-                    "hubReserved": False
-                }, 404
-            
-            if hub_info.get('reserved', True):
-                return {
-                    "message": f"Hub '{hub_info.get('hubName', '')}' is already reserved",
-                    "hubReserved": False
-                }, 400
-            
-            # Step 2: Retrieve foodbank information (from jeremy's service)
+            # Step 1: Validate foodbank
             foodbank_info = get_foodbank_info(foodbank_id)
             
             if not foodbank_info:
                 return {
-                    "message": f"Foodbank with ID {foodbank_id} does not exist or could not be retrieved",
+                    "message": f"Invalid foodbank ID or account service error",
                     "hubReserved": False,
-                    "accountServiceError": "Could not retrieve foodbank information"
-                }, 404
+                    "accountServiceError": "Foodbank not found or validation failed"
+                }, 400
             
-            # Step 3: Prepare reservation payload
+            # Step 2: Reserve the hub (hub service will handle all validation and reservation logic)
             reserve_payload = {
                 "hubID": hub_id,
-                "foodbankID": foodbank_id,
-                "foodbankName": foodbank_info.get('userName', 'Unknown Foodbank'),
-                "foodbankAddress": foodbank_info.get('userAddress', 'Unknown Address')
+                "foodbankID": foodbank_id
             }
             
             # Reserve the hub
             reserve_result = reserve_hub_in_service(reserve_payload)
             
-            # Prepare response
+            # Process hub service response
             if reserve_result.get('success', False):
+                # Extract data from successful response
+                response_data = reserve_result.get('data', {})
+                reservation_id = response_data.get('reservationID', '')
+                reserved_weight = response_data.get('reservedWeight_kg', 0)
+                
                 return {
                     "message": "Hub reserved successfully",
-                    "hubReserved": True
+                    "hubReserved": True,
+                    "reservationID": reservation_id,
+                    "reservedWeight_kg": reserved_weight
                 }, 200
             else:
+                # Handle specific error cases from the hub service
+                error_msg = reserve_result.get('error', 'Unknown error')
+                status_code = 500
+                
+                # Check for known error conditions
+                if "already reserved" in error_msg:
+                    status_code = 400
+                elif "does not exist" in error_msg:
+                    status_code = 404
+                
                 return {
-                    "message": "Failed to reserve hub",
+                    "message": f"Failed to reserve hub: {error_msg}",
                     "hubReserved": False,
-                    "hubServiceError": reserve_result.get('error', 'Unknown error')
-                }, 500
+                    "hubServiceError": error_msg
+                }, status_code
         
         except Exception as e:
             print(f"Error processing hub reservation: {str(e)}")
@@ -294,7 +257,7 @@ class UnreserveHub(Resource):
         Handle hub unreservation request from foodbank UI
         
         Workflow:
-        1. Check hub availability via Hub Service
+        1. Validate foodbank ID via Account Info Service
         2. Unreserve hub
         """
         try:
@@ -312,40 +275,48 @@ class UnreserveHub(Resource):
             hub_id = data['hubID']
             foodbank_id = data['foodbankID']
             
-            # Step 1: Check hub availability
-            hub_info = get_hub_info(hub_id)
+            # Step 1: Validate foodbank
+            foodbank_info = get_foodbank_info(foodbank_id)
             
-            if not hub_info:
+            if not foodbank_info:
                 return {
-                    "message": f"Hub with ID {hub_id} does not exist or could not be retrieved",
-                    "hubReserved": False
-                }, 404
-            
-            # Check if hub is reserved - use the same property as the reserve endpoint
-            if not hub_info.get('reserved', False):
-                return {
-                    "message": f"Hub '{hub_info.get('hubName', '')}' is not currently reserved",
-                    "hubReserved": False
+                    "message": f"Invalid foodbank ID or account service error",
+                    "hubReserved": True,
+                    "accountServiceError": "Foodbank not found or validation failed"
                 }, 400
             
-            # Step 2: Unreserve the hub
+            # Step 2: Unreserve the hub (hub service will handle all validation and unreserve logic)
             unreserve_result = unreserve_hub_in_service({
                 "hubID": hub_id,
                 "foodbankID": foodbank_id
             })
             
-            # Prepare response
+            # Process hub service response
             if unreserve_result.get('success', False):
                 return {
                     "message": "Hub unreserved successfully",
                     "hubReserved": False
                 }, 200
             else:
+                # Handle specific error cases from the hub service
+                error_msg = unreserve_result.get('error', 'Unknown error')
+                status_code = 500
+                
+                # Check for known error conditions
+                if "does not exist" in error_msg:
+                    status_code = 404
+                elif "No active reservation found" in error_msg:
+                    return {
+                        "message": f"No active reservation found for this hub and foodbank",
+                        "hubReserved": False,
+                        "hubServiceError": error_msg
+                    }, 400
+                
                 return {
-                    "message": "Failed to unreserve hub",
+                    "message": f"Failed to unreserve hub: {error_msg}",
                     "hubReserved": True,
-                    "hubServiceError": unreserve_result.get('error', 'Unknown error')
-                }, 500
+                    "hubServiceError": error_msg
+                }, status_code
         
         except Exception as e:
             print(f"Error processing hub unreservation: {str(e)}")

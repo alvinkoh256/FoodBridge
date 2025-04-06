@@ -71,31 +71,54 @@ onMounted(async () => {
     });
 
     products.value = response;
-    // filterProducts(response);
+
+    //filterProducts(response);
+
   } catch (error) {
     console.error("Failed to fetch items:", error);
   }
 
-  // Listen for product updates from socket
-  socket.on("productUpdated", (updatedProduct) => {
-    console.log("New product update received:", updatedProduct);
+  socket.on("productListingRoom", (data) => {
+    console.log("Received data from productListingRoom:", data);
 
-    // Only show products that include the user's ID
-    if (user.value?.id && updatedProduct.productUserList?.includes(user.value.id)) {
-      // Check if the product already exists in the list
-      const index = products.value.findIndex(
-        (p) => p.productId === updatedProduct.productId
-      );
+    // Example logic to update products list
+    if (Array.isArray(data)) {
+      data.forEach((newProduct) => {
+        const index = products.value.findIndex(
+          (p) => p.productId === newProduct.productId
+        );
 
-      if (index !== -1) {
-        // Update existing product
-        products.value[index] = updatedProduct;
-      } else {
-        // Add new product
-        products.value.push(updatedProduct);
-      }
+        if (index !== -1) {
+          products.value[index] = newProduct;
+        } else {
+          products.value.push(newProduct);
+        }
+      });
+    } else {
+      console.warn("Expected array from productListingRoom, got:", data);
     }
   });
+
+  //Listen for product updates from socket
+  // socket.on("productUpdated", (updatedProduct) => {
+  //   console.log("New product update received:", updatedProduct);
+
+  //   // Only show products that include the user's ID
+  //   //if (user.value?.id && updatedProduct.productUserList?.includes(user.value.id)) {
+  //     // Check if the product already exists in the list
+  //     const index = products.value.findIndex(
+  //       (p) => p.productId === updatedProduct.productId
+  //     );
+
+  //     if (index !== -1) {
+  //       // Update existing product
+  //       products.value[index] = updatedProduct;
+  //     } else {
+  //       // Add new product
+  //       products.value.push(updatedProduct);
+  //     }
+  //   //}
+  // });
 });
 
 // Authentication management

@@ -91,7 +91,7 @@ const signIn = async () => {
   if (userRole === 'D') {
     router.push('/home/donor');
   } 
-  else if(userRole === 'B'){
+  else if(userRole === 'F'){
     router.push('/home/bank');
   }
   else {

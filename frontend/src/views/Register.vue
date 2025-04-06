@@ -112,14 +112,16 @@
    } else {
      // Create the user data object for the OutSystems API
      const userData = {
+       userId: data.user.id,
        userName: username.value,
        userEmail: email.value,
        userPhoneNumber: phoneNumber.value,  
        userAddress: location.value,
-       userRole: role.value,
-       userId: data.user.id
+       userRole: role.value
      };
- 
+
+     console.log(userData);
+
      try {
        // Send the user data to the OutSystems API
        const response = await fetch('https://personal-tdqpornm.outsystemscloud.com/FoodBridge/rest/AccountInfoAPI/user', {
@@ -129,13 +131,26 @@
          },
          body: JSON.stringify(userData)
        });
+
+       if(role.value === 'F'){
+        const responseAPI = await fetch('http://localhost:5010/public/hub/createFoodbank', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(userData)
+          });
+        }
  
        if (!response.ok) {
          throw new Error('API request failed');
        }
- 
+       
+       const responseAPIData = await responseAPI.json();
        const responseData = await response.json();
+
        console.log('API response:', responseData);
+       console.log('API response:', responseAPIData);
      } catch (error) {
        console.error('Failed to send user data to API:', error);
      }
