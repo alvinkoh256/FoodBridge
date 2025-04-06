@@ -1,4 +1,4 @@
-import { retrieveAllWhenUserListExist, createProductListing, updateProduct, deleteProduct, uploadPicture, getCCByProductId } from './server.js'
+import { retrieveAllWhenUserListExist, createProductListing, updateProduct, deleteProduct, uploadPicture, getCCByProductId, getProductByUserId } from './server.js'
 import { sendToWebSocket } from './send-data-to-websocket.js'
 import express from 'express'
 import multer from 'multer'
@@ -369,6 +369,15 @@ app.put('/product', async (req,res)=>{
     await sendToWebSocket()
 })
 
+app.get('/product/:userId',async(req,res)=>{
+    const userId = req.params["userId"]
+    try {
+        const result = await getProductByUserId(userId)
+        res.status(200).json(result[0])
+    } catch (error) {
+        res.status(500).json({ error: error.message })
+    }
+})
 
 app.get('/productCC/:productId',async(req,res)=>{
     const productId = req.params["productId"]
