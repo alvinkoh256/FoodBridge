@@ -112,7 +112,6 @@ services:
     networks:
       - esd-net
 
-
   notify_volunteers:
     build:
       context: ./services/composite/notifyVolunteers
@@ -130,6 +129,26 @@ services:
       - SCENARIO2_RABBIT_EXCHANGE=scenario2NotifyExchange
     networks:
       - esd-net
+
+  notification_service:
+    build:
+      context: ./services/atomic/notification
+      dockerfile: Dockerfile
+    image: wongyh01/notification_service:1.0
+    container_name: notification_service
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASS=guest
+    networks:
+      - esd-net
+
 networks:
   esd-net:
 
