@@ -101,44 +101,58 @@ const postListing = async () => {
     }));
 
 
-    const formData = new FormData();
-    formData.append('productPic', selectedImage.value); // the actual file
-    formData.append('productAddress', location.value);
+    // Step 1: Create formData for posting product
+    const formData1 = new FormData();
+    formData1.append('productPic', selectedImage.value); 
+    formData1.append('productAddress', location.value);
 
-    // Fix for productCCDetails
     const ccDetailsObj = {
       hubId: props.user?.id,
       hubName: props.user?.username,
       hubAddress: props.user?.user_metadata?.address
     };
     const ccDetailsJson = JSON.stringify(ccDetailsObj).replace(/\\\//g, '/');
-    formData.append('productCCDetails', ccDetailsJson);
+    formData1.append('productCCDetails', ccDetailsJson);
 
-    // Fix for productItemList
     const itemsJson = JSON.stringify(allItems).replace(/\\\//g, '/');
-    formData.append('productItemList', itemsJson);
-    
-    // // Log the data for debugging
-    // logFormData(formData);
-    
+    formData1.append('productItemList', itemsJson);
+
+    // Step 2: Post product
     try {
       const response = await store.dispatch("apiRequest", {
         method: "post",
         endpoint: "http://localhost:5005/product",
-        data: formData
+        data: formData1
       });
 
-      // Reset form
+    } catch (error) {
+      console.error("Failed to post product:", error);
+    }
+
+    // Step 3: Create formData for finding volunteers
+    const formData2 = new FormData();
+    formData2.append('image', selectedImage.value); 
+    formData2.append('productAddress', location.value);
+    formData2.append('productItemList', itemsJson);
+    formData2.append('productUserId', props.user.id);
+
+    // Step 4: Find volunteers
+    try {
+      const response = await store.dispatch("apiRequest", {
+        method: "post",
+        endpoint: "http://localhost:5001/findVolunteers",
+        data: formData2
+      });
+
       previewImage.value = null;
       selectedItems.value = [];
       newCreatedItems.value = [];
 
       emit('listing-posted', response);
-
     } catch (error) {
-      console.error("Failed to fetch items:", error);
+      console.error("Failed to find volunteer:", error);
     }
-  
+
 
   } else {
     alert('Please upload an image and select at least one item');
