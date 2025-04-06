@@ -6,7 +6,7 @@ const socket = io("http://localhost:5014", {
 
 socket.on("connect", () => {
   console.log("Connected to socket server:", socket.id);
-  socket.emit("joinRoom", "productListingRoom");
+  socket.emit("join", "productListingRoom");
 });
 
 export default socket;
