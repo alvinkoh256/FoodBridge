@@ -75,21 +75,16 @@ def find_volunteers():
     try:
         data = request.form
         product_image = request.files.get('image')
-        product_cc_details = data.get("productCCDetails")
         product_address = data.get("productAddress")
         product_item_list = data.get("productItemList")
         
-        if isinstance(product_cc_details, str):
-            product_cc_details = json.loads(product_cc_details)
+
         if isinstance(product_item_list, str):
             product_item_list = json.loads(product_item_list)
         
         if not product_image:
             logger.error("No image provided")
             return jsonify({"error": "No image provided"}), 400
-        if not product_cc_details:
-            logger.error("Product CC Details is required")
-            return jsonify({"error": "Product CC Details is required"}), 400
         if not product_address:
             logger.error("Product address is required")
             return jsonify({"error": "Product address is required"}), 400
@@ -117,7 +112,6 @@ def find_volunteers():
             logger.info("Starting Step 2: Adding Products")
             input_body = {
                 "productPic": product_image,
-                "productCCDetails": product_cc_details,
                 "productAddress": product_address,
                 "productItemList": product_item_list
             }
@@ -146,15 +140,16 @@ def find_volunteers():
             }), 530
 
         # Step 4: Retrieve list of hubs
-        
+        logger.info("Starting Step 4: Getting all hubs")
+        hub_list = helper_functions.get_all_hubs()
 
         # Step 5: Filter Nearby Volunteers
         try:
-            logger.info("Starting Step 4: Getting volunteers in 2km radius")
-            hub_address = product_cc_details["hubAddress"]
+            logger.info("Starting Step 5: Getting volunteers in 2km radius")
+            hub_address = "yuup"
             product_id = product["product_id"]
             logger.info(f"Inserted Address: {hub_address} | Product ID: {product_id}")
-            filtered_volunteers_result = helper_functions.find_nearby_volunteers(product_id, product_address, hub_address, volunteer_list)
+            filtered_volunteers_result = helper_functions.find_nearby_volunteers(product_id, product_address, hub_address, volunteer_list,hub_list)
             filtered_volunteers_list = filtered_volunteers_result["user_list"]
             if len(filtered_volunteers_list) == 0:
                 logger.warning(f"No nearby volunteers found for product {product_id}")
@@ -169,10 +164,11 @@ def find_volunteers():
 
         # Step 6: Update Product Details with Volunteers
         try:
-            logger.info("Starting Step 5: Updating product CC and userList")
+            logger.info("Starting Step 6: Updating product CC and userList")
             update_body = {
                 "productId": product_id,
-                "productUserList": filtered_volunteers_list
+                "productUserList": filtered_volunteers_list,
+                "productCCDetails": filtered_volunteers_result["closest_hub"]
             }
             updated_product = helper_functions.update_product_details(update_body)
             logger.info(updated_product)
@@ -188,7 +184,7 @@ def find_volunteers():
 
         # Step 7: Send Filtered Volunteers to Queue
         try:
-            logger.info("Starting Step 6: Sending filtered list into queue")
+            logger.info("Starting Step 7: Sending filtered list into queue")
             retrievedUserList = updated_product["productUserList"]
             helper_functions.sendToQueue(retrievedUserList)
         except Exception as e:
