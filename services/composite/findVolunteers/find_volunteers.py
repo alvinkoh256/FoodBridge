@@ -112,7 +112,6 @@ def find_volunteers():
             logger.info("Starting Step 2: Adding Products")
             input_body = {
                 "productPic": product_image,
-                "productCCDetails": product_cc_details,
                 "productAddress": product_address,
                 "productItemList": product_item_list
             }

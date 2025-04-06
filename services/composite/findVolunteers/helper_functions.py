@@ -111,10 +111,8 @@ def add_product(body):
     del body_copy["productPic"]
     
     # Convert the complex objects to JSON strings
-    body_copy["productCCDetails"] = json.dumps(body_copy["productCCDetails"])
     body_copy["productItemList"] = json.dumps(body_copy["productItemList"])
     
-    logger.info(f"Sending productCCDetails: {body_copy['productCCDetails']}")
     logger.info(f"Sending productItemList: {body_copy['productItemList']}")
     
     response = invoke_http(
@@ -159,7 +157,6 @@ def get_all_hubs():
     return response
 
 
-# function to run locating service with list of volunteer ids and address and id, address
 # function to run locating service with list of volunteer ids and address and id, address
 def find_nearby_volunteers(product_id, product_address, product_hub_address, volunteer_list, hub_list):
     try:
@@ -288,7 +285,6 @@ def test_add_product():
             'productPic': img_file,
             'productItemList': [{"itemName":"tuna","quantity":10},{"itemName":"beans","quantity":10},{"itemName":"pickled vegetables","quantity":10}],
             'productAddress': "123 Main St, Singapore 123456",
-            'productCCDetails':{ "hubId": 1, "hubName": "Bedok Orchard RC", "hubAddress": "10C Bedok South Ave 2 #01-562, S462010"}
         }
         
         # Call the add_product function
