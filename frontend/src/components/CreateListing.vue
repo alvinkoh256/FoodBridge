@@ -89,9 +89,9 @@ const postListing = async () => {
     quantity: item.quantity
   }));
 
-  const formData = new FormData();
-  formData.append('productPic', selectedImage.value);
-  formData.append('productAddress', location.value);
+  const formData1 = new FormData();
+    formData1.append('productPic', selectedImage.value); 
+    formData1.append('productAddress', location.value);
 
   const ccDetailsObj = {
     hubId: props.user?.id,
@@ -99,26 +99,42 @@ const postListing = async () => {
     hubAddress: props.user?.user_metadata?.address
   };
   const ccDetailsJson = JSON.stringify(ccDetailsObj).replace(/\\\//g, '/');
-  formData.append('productCCDetails', ccDetailsJson);
+  formData1.append('productCCDetails', ccDetailsJson);
 
   const itemsJson = JSON.stringify(allItems).replace(/\\\//g, '/');
-  formData.append('productItemList', itemsJson);
-  
+  formData1.append('productItemList', itemsJson);
+
   try {
     const response = await store.dispatch("apiRequest", {
       method: "post",
       endpoint: "http://localhost:5005/product",
-      data: formData
+      data: formData1
     });
 
-    // Reset form
+  } catch (error) {
+    console.error("Failed to post product:", error);
+  }
+
+  const formData2 = new FormData();
+  formData2.append('image', selectedImage.value); 
+  formData2.append('productAddress', location.value);
+  formData2.append('productItemList', itemsJson);
+  formData2.append('productUserId', props.user.id);
+
+  try {
+    const response = await store.dispatch("apiRequest", {
+      method: "post",
+      endpoint: "http://localhost:5001/findVolunteers",
+      data: formData2
+    });
+
     previewImage.value = null;
     selectedItems.value = [];
     newCreatedItems.value = [];
 
     emit('listing-posted', response);
   } catch (error) {
-    console.error("Failed to post listing:", error);
+    console.error("Failed to find volunteer:", error);
   }
 };
 </script>
