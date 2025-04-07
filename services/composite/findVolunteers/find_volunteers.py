@@ -21,8 +21,8 @@ def find_volunteers():
     """
     Find Volunteers Endpoint
     This endpoint processes product information, validates the image, adds 
-    the product, retrieves volunteers, filters them based on proximity, updates 
-    the product details, and sends the filtered list to a queue.
+    the product, retrieves volunteers and hubs, filters volunteers based on proximity,
+    updates the product details with the closest hub, and sends the filtered list to a queue.
     ---
     consumes:
       - multipart/form-data
@@ -31,22 +31,25 @@ def find_volunteers():
         in: formData
         type: file
         required: true
-        description: The product image.
-      - name: productCCDetails
-        in: formData
-        type: string
-        required: true
-        description: A JSON string containing product CC details.
+        description: The product image file.
       - name: productAddress
         in: formData
         type: string
         required: true
-        description: The product address.
+        description: The physical address where the product is located.
+        example: "750A Chai Chee Rd, #01-01 ESR BizPark @Chai Chee, Singapore 469001"
       - name: productItemList
         in: formData
         type: string
         required: true
-        description: A JSON string containing the product item list.
+        description: A JSON string containing the list of food items with quantities.
+        example: '[{"itemName":"tuna","quantity":10},{"itemName":"luncheon meat","quantity":5},{"itemName":"instant noodle","quantity":5}]'
+      - name: productUserId
+        in: formData
+        type: string
+        required: true
+        description: The unique identifier of the user who created the product.
+        example: "1111-1111-1111"
     responses:
       200:
         description: All steps completed successfully.
@@ -55,22 +58,132 @@ def find_volunteers():
           properties:
             result:
               type: boolean
+              example: true
       400:
         description: Bad request due to missing or invalid input.
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "Product address is required"
+      404:
+        description: No volunteers or hubs available.
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "No volunteers available"
+      432:
+        description: No nearby volunteers found for product.
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "No nearby volunteers found for product"
+      433:
+        description: No closest hub identified.
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "No closest hub identified"
       510:
         description: Error occurred during product validation.
+        schema:
+          type: object
+          properties:
+            step:
+              type: string
+              example: "Product Validation"
+            error:
+              type: string
+            traceback:
+              type: string
       520:
         description: Error occurred while adding the product.
+        schema:
+          type: object
+          properties:
+            step:
+              type: string
+              example: "Add Product"
+            error:
+              type: string
+            traceback:
+              type: string
       530:
         description: Error occurred during volunteer retrieval.
+        schema:
+          type: object
+          properties:
+            step:
+              type: string
+              example: "Retrieve Volunteers"
+            error:
+              type: string
+            traceback:
+              type: string
+      535:
+        description: Error occurred during hub retrieval.
+        schema:
+          type: object
+          properties:
+            step:
+              type: string
+              example: "Retrieve Hubs"
+            error:
+              type: string
+            traceback:
+              type: string
       540:
         description: Error occurred while filtering volunteers.
+        schema:
+          type: object
+          properties:
+            step:
+              type: string
+              example: "Filter Nearby Volunteers"
+            error:
+              type: string
+            traceback:
+              type: string
       550:
         description: Error occurred while updating product details.
+        schema:
+          type: object
+          properties:
+            step:
+              type: string
+              example: "Update Product Details"
+            error:
+              type: string
+            traceback:
+              type: string
       560:
         description: Error occurred while sending filtered volunteers to queue.
+        schema:
+          type: object
+          properties:
+            step:
+              type: string
+              example: "Send to Queue"
+            error:
+              type: string
+            traceback:
+              type: string
       500:
         description: Internal server error.
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+            traceback:
+              type: string
     """
     try:
         data = request.form
