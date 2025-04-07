@@ -21,7 +21,7 @@ api = Api(app, version='1.0',
 # Environment variables with Docker-friendly defaults
 HUB_SERVICE_URL = os.environ.get("HUB_SERVICE_URL", "http://hub:5010")
 ACCOUNT_INFO_API_URL = os.environ.get("ACCOUNT_INFO_API_URL", "https://personal-tdqpornm.outsystemscloud.com/FoodBridge/rest/AccountInfoAPI")
-PRODUCT_VALIDATION_URL = os.environ.get("PRODUCT_LISTING_URL", "http://product_listing:5005") # change when YH provides
+PRODUCT_LISTING_URL = os.environ.get("PRODUCT_LISTING_URL", "http://product_listing:5005") # change when YH provides
 
 # AMQP Configuration
 AMQP_HOST = os.environ.get("AMQP_HOST", "rabbitmq")
@@ -82,7 +82,7 @@ class ConfirmDelivery(Resource):
                 return {"error": "Could not retrieve hub information for the product"}, 404
             
             inventory_payload = {
-                'hubID': hub_info.get('hubId'),  # Use .get() to avoid KeyError
+                'hubID': hub_info.get('hubID'),  # Use .get() to avoid KeyError
                 'hubName': hub_info.get('hubName'),
                 'hubAddress': hub_info.get('hubAddress'),
                 'items': data.get('items', []),
@@ -124,7 +124,7 @@ class ConfirmDelivery(Resource):
         """Validate product and retrieve hub information"""
         try:
             # Construct the URL using the PRODUCT_LISTING_URL environment variable
-            url = f"{PRODUCT_VALIDATION_URL}/ProductCC/{product_id}"
+            url = f"{PRODUCT_LISTING_URL}/ProductCC/{product_id}"
             
             # Make a GET request to retrieve hub information
             response = requests.get(url, timeout=10)
@@ -141,9 +141,9 @@ class ConfirmDelivery(Resource):
                     return None
 
                 # Access 'hubId' inside 'productCCDetails'
-                hub_id = hub_info.get('hubId')
+                hub_id = hub_info.get('hubID')
                 if not hub_id:
-                    print("Error: hubId is missing")
+                    print("Error: hubID is missing")
                     return None
 
                 # You can return the whole hub info or just 'hubId' based on your needs
