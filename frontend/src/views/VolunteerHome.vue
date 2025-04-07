@@ -17,23 +17,57 @@
       </div>
     </div>
 
-    <!-- Progress Bar 3 Stages-->
+    <!-- Progress Bar -->
+    <div class="progress-container">
+      <div class="progress-steps">
+        <div 
+          v-for="(step, index) in steps" 
+          :key="index"
+          :class="['progress-step', { 'active': currentStep >= index, 'complete': currentStep > index }]"
+        >
+          <div class="step-icon">{{ index + 1 }}</div>
+          <div class="step-label">{{ step }}</div>
+          <div v-if="index < steps.length - 1" class="step-connector"></div>
+        </div>
+      </div>
+    </div>
 
-    <!--1st stage Main Content -->
-    <ProductListing></ProductListing>
+    <!-- Dynamic Content Based on Current Step -->
+    <div class="step-content">
+      <!-- 1st Stage: Product Listing -->
+      <ProductListing 
+        v-if="currentStep === 0" 
+        :products="products"
+        @product-selected="handleProductSelected"
+      ></ProductListing>
 
-    <!-- 2nd Stage Delivery -->
-    <Delivery></Delivery>
+      <!-- 2nd Stage: Delivery -->
+      <Delivery 
+        v-if="currentStep === 1" 
+        :selectedProduct="selectedProduct"
+        @delivery-confirmed="handleDeliveryConfirmed"
+      ></Delivery>
 
-    <!-- 3rd Stage Drop Off-->
-    <DropOff></DropOff>
+      <!-- 3rd Stage: Drop Off -->
+      <DropOff 
+        v-if="currentStep === 2" 
+        :selectedProduct="selectedProduct"
+        @drop-off-confirmed="handleDropOffConfirmed"
+      ></DropOff>
 
-
+      <!-- Success Message after completion -->
+      <div v-if="currentStep === 3" class="completion-message">
+        <div class="success-icon">✓</div>
+        <h2>Delivery Complete!</h2>
+        <p>Thank you for your contribution to Food Bridge.</p>
+        <button class="new-delivery-button" @click="resetProcess">Start New Delivery</button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, inject, onMounted, onUnmounted } from "vue";
+import { ref, inject, onMounted, onUnmounted, watch } from "vue";
 import { useStore } from "vuex";
 import { useRouter } from "vue-router";
 import ProductListing from "../components/ProductListing.vue";
@@ -45,22 +79,52 @@ const store = useStore();
 const router = useRouter();
 const socket = inject("socket");
 const user = ref(null);
-const visible = ref(false);
 const products = ref([]);
 const selectedProduct = ref(null);
+const currentStep = ref(0);
+
+const steps = ["Select Product", "Confirm Delivery", "Drop Off"];
+
+// Check for saved product and set appropriate step
+const checkSavedProduct = () => {
+  const savedProductString = localStorage.getItem('savedProduct');
+  const deliveryStatus = localStorage.getItem('deliveryConfirmed');
+  if (savedProductString) {
+    try {
+      const savedProduct = JSON.parse(savedProductString);
+      if (savedProduct && savedProduct.productId) {
+        selectedProduct.value = savedProduct;
+        // Go directly to the drop-off step (step 2)
+        if(deliveryStatus){
+          currentStep.value = 2;
+        }
+        else{
+          currentStep.value = 1;
+        }
+        console.log('Restored saved product, proceeding to drop-off step:', savedProduct);
+      }
+    } catch (error) {
+      console.error('Error parsing saved product:', error);
+      localStorage.removeItem('savedProduct');
+    }
+  }
+};
 
 // Check authentication on component mount
 onMounted(async () => {
   checkAuth();
+  // Check for saved product immediately after auth check
+  checkSavedProduct();
+
+  // localStorage.removeItem('savedProduct');
+  // localStorage.removeItem('deliveryConfirmed');
+  
   try {
     const response = await store.dispatch("apiRequest", {
       method: "get",
       endpoint: "http://localhost:5005/products",
     });
     products.value = response;
-
-    //filterProducts(response);
-
   } catch (error) {
     console.error("Failed to fetch items:", error);
   }
@@ -84,23 +148,14 @@ onMounted(async () => {
   });
 });
 
-// Function to filter products by user ID
-const filterProducts = (productList) => {
-  if (user.value?.id) {
-    products.value = productList.filter(
-      (product) => product.productUserList?.includes(user.value.id)
-    );
-  } else {
-    products.value = [];
-  }
-};
-
 // Authentication management
 const checkAuth = () => {
   const authListener = supabase.auth.onAuthStateChange((event, session) => {
     if (session?.user && session.user?.user_metadata?.role === "V") {
       user.value = session.user;
       console.log("User authenticated:", user.value);
+      // Check for saved product again after successful authentication
+      checkSavedProduct();
     } else {
       user.value = null;
       router.push("/");
@@ -119,9 +174,32 @@ const signOut = async () => {
   router.push("/");
 };
 
-const openDialog = (product) => {
+// Handle product selection from the ProductListing component
+const handleProductSelected = (product) => {
   selectedProduct.value = product;
-  visible.value = true;
+  localStorage.setItem('savedProduct', JSON.stringify(product));
+  currentStep.value = 1;
+};
+
+// Handle delivery confirmation from the Delivery component
+const handleDeliveryConfirmed = () => {
+  localStorage.setItem('deliveryConfirmed', 'true');
+  currentStep.value = 2;
+};
+
+// Handle drop-off confirmation from the DropOff component
+const handleDropOffConfirmed = () => {
+  // Clean up after successful completion
+  localStorage.removeItem('savedProduct');
+  localStorage.removeItem('deliveryConfirmed');
+  currentStep.value = 3;
+};
+
+// Reset the process to start a new delivery
+const resetProcess = () => {
+  selectedProduct.value = null;
+  localStorage.removeItem('savedProduct');
+  currentStep.value = 0;
 };
 
 // Cleanup socket listeners when component unmounts
@@ -138,7 +216,7 @@ onUnmounted(() => {
   background-color: #fff;
 }
 
-/* Navbar styles - kept consistent with original */
+/* Navbar styles */
 .header {
   width: 100%;
   background-color: #fff;
@@ -203,129 +281,131 @@ onUnmounted(() => {
   color: white;
 }
 
-/* Content styles - improved */
-.content {
+/* Progress Bar Styles */
+.progress-container {
+  padding: 2rem 1rem;
   max-width: 1200px;
-  width: 100%;
   margin: 0 auto;
-  padding: 0 1rem;
+  width: 100%;
+}
+
+.progress-steps {
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+  margin: 0 auto;
+  max-width: 800px;
+}
+
+.progress-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 1;
   flex: 1;
 }
 
-.title {
-  font-size: 2.5rem;
-  font-weight: bold;
-  color: black;
-  margin-top: 1.5rem;
-}
-
-.divider {
-  height: 1px;
-  background-color: #ccc;
-  margin: 1.25rem 0;
-}
-
-/* Product list styles - improved */
-.product-list {
-  display: grid;
-  gap: 0.75rem;
-  margin-bottom: 2rem;
-}
-
-.drop-off-item {
-  display: flex;
-  align-items: center;
-  padding: 1rem;
-  background-color: white;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.drop-off-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.ongoing-status {
-  border-left: 4px solid #ff0000;
-}
-
-.profile-pic {
-  width: 40px;
-  height: 40px;
+.step-icon {
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background-color: #ddd;
-  margin-right: 1rem;
+  background-color: #f0f0f0;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
-  flex-shrink: 0;
+  color: #909090;
+  font-weight: 500;
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.profile-pic img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.step-label {
+  font-size: 13px;
+  color: #909090;
+  text-align: center;
+  transition: all 0.3s ease;
+  font-weight: 400;
+  letter-spacing: 0.2px;
 }
 
-.drop-off-info {
-  flex: 1;
+.step-connector {
+  position: absolute;
+  top: 16px;
+  right: calc(-50% + 16px);
+  width: calc(100% - 32px);
+  height: 1px;
+  background-color: #f0f0f0;
+  z-index: 0;
+  transition: all 0.3s ease;
 }
 
-.drop-off-location {
-  font-weight: bold;
-  color: black;
-  margin-bottom: 0.25rem;
+.progress-step.active .step-icon {
+  background-color: #f43f5e;
+  color: white;
+  transform: scale(1.05);
+  box-shadow: 0 2px 4px rgba(244, 63, 94, 0.2);
 }
 
-.drop-off-address {
-  font-size: 12px;
-  color: #666;
+.progress-step.active .step-label {
+  color: #222222;
+  font-weight: 500;
+}
+
+.progress-step.complete .step-icon {
+  background-color: #10b981;
+  color: white;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+}
+
+.progress-step.complete + .progress-step .step-connector,
+.progress-step.complete .step-connector {
+  background-color: #10b981;
+  height: 2px;
 }
 
 /* Responsive styles */
 @media (max-width: 768px) {
-  .title {
-    font-size: 2rem;
+  .progress-steps {
+    max-width: 600px;
   }
   
-  .drop-off-item {
-    padding: 0.75rem;
+  .step-label {
+    font-size: 12px;
   }
   
-  .logo-image {
-    max-height: 60px;
+  .step-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+  
+  .step-connector {
+    top: 14px;
   }
 }
 
 @media (max-width: 480px) {
-  .navbar {
-    height: auto;
-    padding: 0.5rem;
-    flex-wrap: wrap;
+  .step-label {
+    display: none;
   }
   
-  .tabs-section {
-    width: 100%;
-    justify-content: center;
-    margin-top: 0.5rem;
+  .step-icon {
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+    margin-bottom: 0;
   }
   
-  .title {
-    font-size: 1.75rem;
-    text-align: center;
+  .step-connector {
+    top: 12px;
+    right: calc(-50% + 12px);
+    width: calc(100% - 24px);
   }
   
-  .drop-off-item {
-    padding: 0.5rem;
-  }
-  
-  .profile-pic {
-    width: 32px;
-    height: 32px;
+  .progress-container {
+    padding: 1.5rem 0.5rem;
   }
 }
 </style>

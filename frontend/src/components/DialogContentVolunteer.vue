@@ -1,47 +1,43 @@
 <template>
-  <div class="donation-container">
-    <!-- Image Section -->
-    <div class="donation-image">
-      <img :src="product?.productPic || '../assets/logo.jpg'" alt="Donation items" class="rounded-img">
-    </div>
-    
-    <!-- Details Section -->
-    <div class="donation-details">
-      <h2 class="details-title">Details</h2>
-      
-      <div class="item-list">
-        <div v-for="(item, index) in product?.productItemList || []" :key="index" class="item">
-          <span class="item-name">{{ item.itemName }}</span>
-          <span class="item-quantity">x{{ item.quantity }}</span>
+  <div>
+    <div class="donation-container">
+      <!-- Image Section -->
+      <div class="donation-image">
+        <img :src="product?.productPic || '../assets/logo.jpg'" alt="Donation items" class="rounded-img">
+      </div>
+      <!-- Details Section -->
+      <div class="donation-details">
+        <h2 class="details-title">Details</h2>
+        <div class="item-list">
+          <div v-for="(item, index) in product?.productItemList || []" :key="index" class="item">
+            <span class="item-name">{{ item.itemName }}</span>
+            <span class="item-quantity">x{{ item.quantity }}</span>
+          </div>
+        </div>
+        <div class="location-info">
+          <p><span class="text-bold">Drop-off Location:</span> {{ product?.productCCDetails?.hubName }}</p>
+          <p><span class="text-bold">Address:</span> {{ product?.productAddress }}</p>
         </div>
       </div>
-      
-      <div class="location-info">
-        <p><span class="text-bold">Drop-off Location:</span> {{ product?.productCCDetails?.hubName }}</p>
-        <p><span class="text-bold">Address:</span> {{ product?.productAddress }}</p>
-      </div>
     </div>
-  </div>
-  
-  <!-- Action Button -->
-  <div class="button-wrapper">
-    <Button 
-      label="Accept" 
-      class="p-button-rounded" 
-      severity="success" 
-      @click="acceptDropOff" 
-      :disabled="isButtonDisabled"
-      :loading="loading"
-    />
+    <!-- Action Button -->
+    <div class="button-wrapper">
+      <Button
+        label="Accept"
+        class="p-button-rounded"
+        severity="success"
+        @click="acceptDropOff"
+        :disabled="isButtonDisabled"
+        :loading="loading"
+      />
+    </div>
   </div>
 </template>
 
 <script setup>
-import { defineProps, computed, ref } from 'vue';
+import { defineProps, defineEmits, computed, ref } from 'vue';
 import { useStore } from 'vuex';
-
-import { useRouter } from "vue-router";
-
+import { useRouter } from 'vue-router';
 import Button from 'primevue/button';
 
 const props = defineProps({
@@ -50,6 +46,8 @@ const props = defineProps({
     default: () => ({})
   }
 });
+
+const emit = defineEmits(['accept']);
 
 const store = useStore();
 const router = useRouter();
@@ -63,9 +61,8 @@ const acceptDropOff = async () => {
     console.error('Product ID is missing');
     return;
   }
-
-  loading.value = true;
   
+  loading.value = true;
   try {
     await store.dispatch('apiRequest', {
       method: 'put',
@@ -79,7 +76,9 @@ const acceptDropOff = async () => {
     // Update product status
     const updatedProduct = { ...props.product, productStatus: 'on-going' };
     localStorage.setItem('savedProduct', JSON.stringify(updatedProduct));
-    router.push('/home/delivery');
+    
+    // Emit event to parent component
+    emit('accept', updatedProduct);
   } catch (error) {
     console.error('Failed to update product status:', error);
   } finally {

@@ -1,39 +1,31 @@
 <template>
-  <div class="header">
-    <div class="navbar">
-      <div class="logo-section">
-        <img src="../assets/Foodbridge.png" alt="Profile" class="logo-image" />
-      </div>
-      <div class="tabs-section">
-        <div class="nav-tab">Food Bridge</div>
-      </div>
-      <div class="logout-section">
-        <button class="logout-button" @click="signOut">
-          Log Out
-        </button>
-      </div>
-    </div>
-    <div class="container">
-      <div class="title">What have you delivered ?</div>
-      <ItemDropdown @items-selected="updateSelectedItems" />
-      <CreateItem @new-items-added="updateNewItems" />
-      <Button 
-        label="Confirm Items" 
-        class="confirm-button" 
-        severity="warn" 
-        @click="confirmDropOff" 
-      />
-    </div>
+  <div class="container">
+    <h2 class="title">What have you delivered?</h2>
+    <ItemDropdown @items-selected="updateSelectedItems" />
+    <CreateItem @new-items-added="updateNewItems" />
+    <button 
+      class="confirm-button" 
+      @click="confirmDropOff"
+      :disabled="!canConfirm"
+    >
+      Confirm Items
+    </button>
   </div>
 </template>
 
-<script setup lang="ts">
-import { ref, computed, onMounted, inject } from 'vue';
+<script setup>
+import { ref, computed, onMounted, inject, defineProps, defineEmits } from 'vue';
 import CreateItem from "../components/CreateItem.vue";
 import ItemDropdown from "../components/ItemDropdown.vue";
-import Button from "primevue/button";
 import { useStore } from "vuex";
 import { useRouter } from "vue-router";
+
+// Define props and emits
+const props = defineProps({
+  selectedProduct: Object
+});
+
+const emit = defineEmits(['drop-off-confirmed']);
 
 // Use store and router
 const store = useStore();
@@ -44,168 +36,151 @@ const supabase = inject('supabase');
 const selectedItems = ref([]);
 const newCreatedItems = ref([]);
 const user = ref(null);
+const loading = ref(false);
 
-//Retrieve selected product
-const product = computed(() => JSON.parse(localStorage.getItem('savedProduct')));
+// Check if user can confirm drop-off
+const canConfirm = computed(() => 
+  (selectedItems.value.length > 0 || newCreatedItems.value.length > 0) && !loading.value
+);
+
+// Access selected product from props or localStorage as fallback
+const product = computed(() => {
+  if (props.selectedProduct) {
+    return props.selectedProduct;
+  }
+  return JSON.parse(localStorage.getItem('savedProduct'));
+});
 
 onMounted(async () => {
   await checkAuth();
-  console.log(product.value.productId);
 });
 
 const checkAuth = async () => {
-  // First check the current session
   const { data: { session }, error } = await supabase.auth.getSession();
-  if (error) {
-    console.error("Error checking session:", error);
+  
+  if (error || !session?.user || session.user?.user_metadata?.role !== "V") {
     router.push("/");
     return;
   }
   
-  if (session?.user && session.user?.user_metadata?.role === "V") {
-    user.value = session.user;
-    console.log("User authenticated:", user.value);
-  } else {
-    user.value = null;
-    router.push("/");
-  }
+  user.value = session.user;
   
-  // Then set up the listener for future changes
+  // Set up auth state listener
   const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
     if (session?.user && session.user?.user_metadata?.role === "V") {
       user.value = session.user;
-      console.log("Auth state changed - user authenticated:", user.value);
     } else {
-      user.value = null;
       router.push("/");
     }
   });
   
-  // Return the unsubscribe function
-  return () => {
-    authListener?.unsubscribe();
-  };
+  return () => authListener?.unsubscribe();
 };
 
 // Update functions to receive data from child components
 const updateSelectedItems = (items) => {
   selectedItems.value = items;
-  console.log('Selected items updated:', items);
 };
 
 const updateNewItems = (items) => {
   newCreatedItems.value = items;
-  console.log('New items updated:', items);
-};
-
-// Sign out function
-const signOut = async () => {
-  store.dispatch("logout");
-  router.push("/");
 };
 
 // Function to confirm drop-off
 const confirmDropOff = async () => {
+  if (!canConfirm.value) return;
+  
   try {
-    // Get user information from store or use fallback
-    const volunteerID = user.value.id
-    const productID = product.value.productId;
+    loading.value = true;
     
-    // Format the payload according to the expected API structure
+    const volunteerID = user.value?.id;
+    const productID = product.value?.productId;
+    
+    if (!volunteerID || !productID) {
+      throw new Error("Missing required information");
+    }
+    
     const payload = {
       volunteerID,
       productID,
       items: selectedItems.value || [],
-      newItems: newCreatedItems.value || [] // Note: Changed from 'newitems' to 'newItems'
+      newItems: newCreatedItems.value || []
     };
     
-    console.log("Sending payload:", JSON.stringify(payload));
-    
-    const response = await store.dispatch('apiRequest', {
+    await store.dispatch('apiRequest', {
       method: 'post',
       endpoint: 'http://localhost:5009/confirmDelivery/drop-off',
       data: payload
     });
     
-    console.log('Drop-off confirmed:', response);
-    sessionStorage.removeItem('savedProduct');
-    router.push("/home");
+    // Clear saved data
+    localStorage.removeItem('savedProduct');
+    localStorage.removeItem('deliveryConfirmed');
     
+    // Emit event to parent
+    emit('drop-off-confirmed');
   } catch (error) {
     console.error('Failed to confirm drop-off:', error);
+  } finally {
+    loading.value = false;
   }
 };
 </script>
 
 <style scoped>
-.header {
-  width: 100%;
-  height: 100%;
-  background-color: #fff;
-  border-bottom: 1px solid #f0f0f0;
-}
-.navbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  max-width: 1200px;
-  margin: 0 auto;
-  height: 60px;
-  padding: 0 8px;
-  margin-bottom: 10px;
-}
-.logo-section {
-  display: flex;
-  align-items: center;
-  min-width: 100px;
-}
-.logo-image {
-  max-height: 100px;
-  width: auto;
-}
-.tabs-section {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  flex: 1;
-}
-.logout-button {
-  padding: 8px 16px;
-  background-color: transparent;
-  color: black;
-  border: 2px solid #f44336;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.2s ease, color 0.2s ease;
-}
-.logout-button:hover {
-  background-color: #d32f2f;
-  color: white;
-}
 .container {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1rem;
-  padding: 1.5rem;
+  padding: 1rem;
   width: 100%;
-  border-radius: 6px;
-  margin: auto;
-}
-.confirm-button {
-  width: 100%;
-  max-width: 300px;
-  border-radius: 12px;
-  padding: 10px;
-  font-size: 1rem;
+  margin: 0 auto;
 }
 
 .title {
-  text-align: left;
-  padding-top: 10px;
-  font-weight: bold;
-  font-size: 30px;
-  color: black;
+  align-self: flex-start;
+  font-weight: 600;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.confirm-button {
+  width: 100%;
+  max-width: 300px;
+  border-radius: 8px;
+  padding: 0.75rem;
+  font-size: 1rem;
+  background-color: #f59e0b;
+  color: white;
+  border: none;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-top: 1rem;
+}
+
+.confirm-button:hover:not(:disabled) {
+  background-color: #d97706;
+}
+
+.confirm-button:disabled {
+  background-color: #e5e7eb;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding: 0.75rem;
+  }
+  
+  .title {
+    font-size: 1.25rem;
+  }
+  
+  .confirm-button {
+    max-width: 100%;
+  }
 }
 </style>

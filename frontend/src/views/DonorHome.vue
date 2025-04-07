@@ -48,20 +48,14 @@ const handleListingPosted = (response) => {
 
 // Function to fetch posted listings and filter by hub ID
 const fetchPostedListings = async () => {
-  try {
-    // Get all products
+  try{
     const response = await store.dispatch('apiRequest', {
       method: 'get',
-      endpoint: 'http://localhost:5005/products'
+      endpoint: `http://localhost:5005/product/${user.value.id}`
     });
 
     if (response && Array.isArray(response)) {
-      products.value = response;
-      
-      // Filter products that belong to the current hub
-      postedListing.value = products.value.filter(product => 
-        product.productCCdetails && product.productCCdetails.hubId === user.value.id
-      );
+      postedListing.value = response;
     }
   } catch (error) {
     console.error('Failed to fetch products:', error);
@@ -74,6 +68,7 @@ onMounted(async () => {
   // Only fetch listings after authentication is confirmed
   if (user.value) {
     await fetchPostedListings();
+
   }
 });
 

@@ -1,5 +1,6 @@
 <template>
   <div class="create-listing w-full bg-gray-50 p-6 rounded-lg">
+    <Toast position="bottom-center" />
     <div class="listing-container">
       <div class="listing-form">
         <div class="form-section flex flex-col md:flex-row gap-6">
@@ -25,7 +26,14 @@
               </div>
             </div>
             
-            <button class="post-button transition-all" @click="postListing">Post Listing</button>
+            <button 
+              class="post-button transition-all flex items-center justify-center" 
+              @click="postListing"
+              :disabled="isLoading"
+            >
+              <i v-if="isLoading" class="pi pi-spin pi-spinner mr-2"></i>
+              {{ isLoading ? 'Posting...' : 'Post Listing' }}
+            </button>
           </div>
         </div>
       </div>
@@ -36,6 +44,9 @@
 <script setup>
 import { ref, defineProps } from 'vue';
 import { useStore } from 'vuex';
+import { useToast } from 'primevue/usetoast';
+import Dropdown from 'primevue/dropdown';
+import Toast from 'primevue/toast';
 import AutoComplete from './AutoComplete.vue';
 import ItemDropdown from './ItemDropdown.vue';
 import CreateItem from './CreateItem.vue';
@@ -45,6 +56,7 @@ const props = defineProps({
 });
 
 const store = useStore();
+const toast = useToast();
 const emit = defineEmits(['listing-posted']);
 
 const location = ref('Current Location');
@@ -52,6 +64,7 @@ const previewImage = ref(null);
 const selectedItems = ref([]);
 const newCreatedItems = ref([]);
 const selectedImage = ref(null);
+const isLoading = ref(false);
 
 const handleImageUpload = (event) => {
   const file = event.target.files[0];
@@ -78,63 +91,74 @@ const updateLocation = (selectedLocation) => {
   location.value = selectedLocation;
 };
 
+const showErrorToast = (message) => {
+  toast.add({
+    severity: 'error',
+    summary: 'Error',
+    detail: message,
+    life: 5000,
+    position: 'bottom-center'
+  });
+};
+
+const showSuccessToast = (message) => {
+  toast.add({
+    severity: 'success',
+    summary: 'Success',
+    detail: message,
+    life: 5000,
+    position: 'bottom-center'
+  });
+};
+
 const postListing = async () => {
   if (!previewImage.value) {
-    alert('Please upload an image and select at least one item');
+    showErrorToast('Please upload an image');
     return;
   }
+  
+  if (selectedItems.value.length === 0 && newCreatedItems.value.length === 0) {
+    showErrorToast('Please select at least one item');
+    return;
+  }
+
+  isLoading.value = true;
 
   const allItems = [...selectedItems.value, ...newCreatedItems.value].map(item => ({
     itemName: item.itemName,
     quantity: item.quantity
   }));
-
-  const formData1 = new FormData();
-    formData1.append('productPic', selectedImage.value); 
-    formData1.append('productAddress', location.value);
-
-  const ccDetailsObj = {
-    hubId: props.user?.id,
-    hubName: props.user?.username,
-    hubAddress: props.user?.user_metadata?.address
-  };
-  const ccDetailsJson = JSON.stringify(ccDetailsObj).replace(/\\\//g, '/');
-  formData1.append('productCCDetails', ccDetailsJson);
+  
+  const formData = new FormData();
+  formData.append('image', selectedImage.value); 
+  formData.append('productAddress', location.value);
 
   const itemsJson = JSON.stringify(allItems).replace(/\\\//g, '/');
-  formData1.append('productItemList', itemsJson);
+  formData.append('productItemList', itemsJson);
 
-  try {
-    const response = await store.dispatch("apiRequest", {
-      method: "post",
-      endpoint: "http://localhost:5005/product",
-      data: formData1
-    });
-
-  } catch (error) {
-    console.error("Failed to post product:", error);
-  }
-
-  const formData2 = new FormData();
-  formData2.append('image', selectedImage.value); 
-  formData2.append('productAddress', location.value);
-  formData2.append('productItemList', itemsJson);
-  formData2.append('productUserId', props.user.id);
+  formData.append('productUserId', props.user.id);
 
   try {
     const response = await store.dispatch("apiRequest", {
       method: "post",
       endpoint: "http://localhost:5001/findVolunteers",
-      data: formData2
+      data: formData
     });
 
     previewImage.value = null;
     selectedItems.value = [];
     newCreatedItems.value = [];
-
+    
+    showSuccessToast('Listing posted successfully!');
     emit('listing-posted', response);
   } catch (error) {
     console.error("Failed to find volunteer:", error);
+    
+    // Extract error message from response or use a default message
+    const errorMessage = error.response?.data?.message || 'Failed to post listing. Please try again.';
+    showErrorToast(errorMessage);
+  } finally {
+    isLoading.value = false;
   }
 };
 </script>
@@ -207,15 +231,21 @@ const postListing = async () => {
   display: block;
   transition: all 0.3s ease;
   box-shadow: 0 4px 6px rgba(99, 102, 241, 0.25);
+  height: 3.5rem;
 }
 
-.post-button:hover {
+.post-button:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 6px 10px rgba(99, 102, 241, 0.3);
 }
 
-.post-button:active {
+.post-button:active:not(:disabled) {
   transform: translateY(1px);
+}
+
+.post-button:disabled {
+  background: linear-gradient(135deg, #a5a6f6 0%, #9795ee 100%);
+  cursor: not-allowed;
 }
 
 @media (max-width: 768px) {
