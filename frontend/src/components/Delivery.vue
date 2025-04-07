@@ -71,7 +71,7 @@ const confirmDelivery = async () => {
       endpoint: 'http://localhost:5005/product',
       data: {
         productId: props.selectedProduct.productId,
-        productStatus: completed
+        productStatus: "completed"
       }
     });
 

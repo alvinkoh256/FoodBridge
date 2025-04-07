@@ -55,13 +55,6 @@
         @drop-off-confirmed="handleDropOffConfirmed"
       ></DropOff>
 
-      <!-- Success Message after completion -->
-      <div v-if="currentStep === 3" class="completion-message">
-        <div class="success-icon">✓</div>
-        <h2>Delivery Complete!</h2>
-        <p>Thank you for your contribution to Food Bridge.</p>
-        <button class="new-delivery-button" @click="resetProcess">Start New Delivery</button>
-      </div>
     </div>
   </div>
 </template>
@@ -192,13 +185,7 @@ const handleDropOffConfirmed = () => {
   // Clean up after successful completion
   localStorage.removeItem('savedProduct');
   localStorage.removeItem('deliveryConfirmed');
-  currentStep.value = 3;
-};
-
-// Reset the process to start a new delivery
-const resetProcess = () => {
   selectedProduct.value = null;
-  localStorage.removeItem('savedProduct');
   currentStep.value = 0;
 };
 
