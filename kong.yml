@@ -1,0 +1,92 @@
+_format_version: "2.1"
+
+services:
+  - name: hub-service
+    url: http://hub:5010
+    routes:
+      - name: hub-route
+        paths:
+          - /hub
+
+  - name: locating-service
+    url: http://locating:5006
+    routes:
+      - name: locating-route
+        paths:
+          - /locating
+
+  - name: product-listing-service
+    url: http://product_listing:5005
+    routes:
+      - name: product-route
+        paths:
+          - /products
+
+  - name: product-validation-service
+    url: http://product_validation:5004
+    routes:
+      - name: product-validation-route
+        paths:
+          - /productValidation
+
+  - name: route-service
+    url: http://route:5011
+    routes:
+      - name: route-route
+        paths:
+          - /route
+
+  - name: confirm-delivery-service
+    url: http://confirmDelivery:5009
+    routes:
+      - name: confirm-delivery-route
+        paths:
+          - /drop-off
+
+  - name: reserve-hub-service
+    url: http://reserveHub:5015
+    routes:
+      - name: reserve-hub-route
+        paths:
+          - /reserve
+          - /unreserve
+
+  - name: find-volunteers-service
+    url: http://findVolunteers:5001
+    routes:
+      - name: find-volunteers-route
+        paths:
+          - /findVolunteers
+
+  # - name: notify-volunteers-service
+  #   url: http://notifyVolunteers:5672
+  #   routes:
+  #     - name: notify-route
+  #       paths:
+  #         - /notifyVolunteers
+
+  - name: get-optimal-route-service
+    url: http://getOptimalRoute:5016
+    routes:
+      - name: get-optimal-route
+        paths:
+          - /get-optimal-route
+
+plugins:
+  - name: cors
+    config:
+      origins:
+        - "*"
+      methods:
+        - GET
+        - POST
+        - PUT
+        - PATCH
+        - DELETE
+        - OPTIONS
+      headers:
+        - Accept
+        - Authorization
+        - Content-Type
+        - Origin
+      credentials: true
