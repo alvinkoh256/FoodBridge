@@ -8,6 +8,7 @@ import './style.css';
 import { definePreset } from '@primeuix/themes';
 import { createClient } from '@supabase/supabase-js';
 import 'primeicons/primeicons.css'
+import ToastService from 'primevue/toastservice';
 import axios from "axios";
 import socket from "./socket";
 
@@ -42,6 +43,7 @@ app.config.globalProperties.$axios = axios;
 app
   .use(router)
   .use(store)
+  .use(ToastService)
   .use(PrimeVue, {
     theme: {
       preset: MyPreset

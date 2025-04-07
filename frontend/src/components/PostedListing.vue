@@ -17,7 +17,7 @@
                 <p><strong>{{ item.itemName }}</strong>: {{ item.quantity }}</p>
               </div>
             </div>
-            <p class="location">📍 {{ product.productAddress }}</p>
+            <p class="location">{{ product.productAddress }}</p>
           </div>
         </div>
       </div>

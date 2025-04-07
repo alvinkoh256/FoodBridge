@@ -1,37 +1,59 @@
 <template>
-  <div class="hubs-listing-container">
-    <h3 class="font-bold">Reserved Hubs</h3>
-    <div class="flex flex-col mb-10 items-center">
-      <div v-if="reservedHubs.length === 0" class="empty-state">
-        No reserved hubs at the moment
+  <div class="hubs-container">
+    <!-- Reserved Hubs Section -->
+    <section class="hub-section">
+      <h2 class="section-title">Reserved Hubs</h2>
+      
+      <div class="hub-grid">
+        <div v-if="reservedHubs.length === 0" class="empty-state">
+          No reserved hubs available
+        </div>
+        
+        <div 
+          v-for="hub in reservedHubs" 
+          :key="hub.hubID" 
+          class="hub-card reserved" 
+          @click="openDialog(hub, true)"
+        >
+          <div class="hub-content">
+            <span class="hub-name">{{ hub.hubName }}</span>
+            <span class="hub-weight">{{ hub.totalWeight_kg }}kg</span>
+          </div>
+        </div>
       </div>
-      <div 
-        v-for="hub in reservedHubs" 
-        :key="hub.hubID" 
-        class="hub reserved" 
-        @click="openDialog(hub, true)"
-      >
-        {{ hub.hubName }} - {{ hub.totalWeight_kg }}kg
-      </div>
-    </div>
+    </section>
     
-    <h3 class="font-bold">Unreserved Hubs</h3>
-    <div class="flex flex-col mb-10 items-center">
-      <div v-if="unreservedHubs.length === 0" class="empty-state">
-        No unreserved hubs available
+    <!-- Unreserved Hubs Section -->
+    <section class="hub-section">
+      <h2 class="section-title">Unreserved Hubs</h2>
+      
+      <div class="hub-grid">
+        <div v-if="filteredUnreservedHubs.length === 0" class="empty-state">
+          No unreserved hubs available
+        </div>
+        
+        <div 
+          v-for="hub in filteredUnreservedHubs"
+          :key="hub.hubID" 
+          class="hub-card unreserved border-l-4 border-indigo-500" 
+          @click="openDialog(hub, false)"
+        >
+          <div class="hub-content">
+            <span class="hub-name">{{ hub.hubName }}</span>
+            <span class="hub-weight">{{ hub.totalWeight_kg }}kg</span>
+          </div>
+        </div>
       </div>
-      <div 
-        v-for="hub in unreservedHubs" 
-        :key="hub.hubID" 
-        class="hub unreserved" 
-        @click="openDialog(hub, false)"
-      >
-        {{ hub.hubName }} - {{ hub.totalWeight_kg }}kg
-      </div>
-    </div>
+    </section>
     
-    <!-- Drop-off Dialog -->
-    <Dialog v-model:visible="visible" modal :header="dialogHeader" :style="{ width: '50rem' }">
+    <!-- Hub Details Dialog -->
+    <Dialog 
+      v-model:visible="visible" 
+      modal 
+      :header="dialogHeader" 
+      :style="{ width: '90vw', maxWidth: '600px' }"
+      :breakpoints="{ '768px': '95vw' }"
+    >
       <DialogContentBank
         :hub="selectedHub"
         :isReserved="isReserved"
@@ -44,7 +66,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, defineProps, watch } from 'vue';
+import { ref, onMounted, defineProps, watch, computed } from 'vue';
 import { useStore } from 'vuex';
 import DialogContentBank from '../components/DialogContentBank.vue';
 import Dialog from 'primevue/dialog';
@@ -60,6 +82,13 @@ const loading = ref(true);
 
 const props = defineProps({
   userId: String
+});
+
+const filteredUnreservedHubs = computed(() => {
+  return unreservedHubs.value.filter(hub => {
+    const weight = parseFloat(hub.totalWeight_kg);
+    return !isNaN(weight) && weight > 0;
+  });
 });
 
 // Function to fetch all hubs data
@@ -137,52 +166,92 @@ const updateHubStatus = async (updatedStatus) => {
   
   // Close the dialog
   visible.value = false;
-
 };
 </script>
 
 <style scoped>
-.hubs-listing-container {
-  padding: 20px;
-  font-family: Arial, sans-serif;
+.hubs-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
 }
 
-h3 {
-  text-align: center;
-  margin-top: 1.5rem;
-  margin-bottom: 1rem;
-}
-
-.hub {
-  padding: 10px;
-  margin: 10px 0;
-  width: 30%;
+.hub-section {
+  background-color: white;
   border-radius: 8px;
-  font-weight: bold;
-  text-align: center;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
-.hub:hover {
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+  color: #333;
+  text-align: left;
+}
+
+.hub-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.hub-card {
+  padding: 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+}
+
+.hub-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+}
+
+.hub-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.hub-name {
+  font-weight: 500;
+}
+
+.hub-weight {
+  font-size: 0.9rem;
 }
 
 .reserved {
-  background-color: #4CAF50;
-  color: white;
+  background-color: #e8f5e9;
+  border-left: 4px solid #4CAF50;
+  color: #2e7d32;
 }
 
 .unreserved {
-  background-color: #ddd;
-  color: black;
+  background-color: #f5f5f5;
+  color: #424242;
 }
 
 .empty-state {
-  padding: 15px;
-  color: #666;
+  grid-column: 1 / -1;
+  padding: 1.5rem;
+  background-color: #f9f9f9;
+  border-radius: 6px;
   text-align: center;
+  color: #757575;
   font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .hub-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .hub-section {
+    padding: 1rem;
+  }
 }
 </style>

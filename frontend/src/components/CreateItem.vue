@@ -1,45 +1,43 @@
 <template>
-  <div class="mt-6 p-6">
-    <h3 class="text-xl font-bold mb-4 text-center">Can't find an item? Add it below!</h3>
+  <div class="p-4 md:p-6 rounded-lg">
+    <h3 class="text-xl font-bold mb-6 text-center text-gray-800 block">Can't find an item? Add it below!</h3>
     <div>
       <div
         v-for="(item, index) in inputItems"
-        :key="item.id"
-        class="card flex justify-content-center items-center space-x-4"
+        :key="index"
+        class="card flex flex-wrap md:flex-nowrap justify-center items-center gap-4 transition-all"
       >
-        <div class="text-left">
-          <label for="item" class="text-black font-bold pl-1">Item</label>
+        <div class="text-left w-full md:w-auto">
+          <label for="item" class="text-gray-700 font-medium text-sm uppercase tracking-wider block mb-2">Item</label>
           <InputText
             v-model="item.itemName"
             type="text"
             placeholder="Item Name"
-            class="w-full"
+            class="w-full focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
             @input="updateItems"
           />
         </div>
-        <div class="text-left" v-if="showWeight">
-          <label for="weight" class="text-black font-bold pl-1">Weight (kg)</label>
+        <div class="text-left w-full md:w-auto" v-if="showWeight">
+          <label for="weight" class="text-gray-700 font-medium text-sm uppercase tracking-wider block mb-2">Weight (kg)</label>
           <InputNumber
             v-model="item.itemWeight_kg"
-            inputId="minmax-buttons"
             mode="decimal"
             showButtons
             :min="0"
             :max="100"
-            class="w-full"
+            class="w-full input-number-styled"
             @input="updateItems"
           />
         </div>
-        <div class="text-left">
-          <label for="quantity" class="text-black font-bold pl-1">Qty</label>
+        <div class="text-left w-full md:w-auto">
+          <label for="quantity" class="text-gray-700 font-medium text-sm uppercase tracking-wider block mb-2">Qty</label>
           <InputNumber
             v-model="item.quantity"
-            inputId="minmax-buttons"
             mode="decimal"
             showButtons
             :min="0"
             :max="100"
-            class="w-full"
+            class="w-full input-number-styled"
             @input="updateItems"
           />
         </div>
@@ -49,16 +47,18 @@
           text
           @click="removeItem(index)"
           v-if="inputItems.length > 1"
+          class="self-end mb-1 hover:bg-red-50 rounded-full p-2 transition-colors"
         />
       </div>
-      <div class="flex justify-center mt-4 mb-4">
+      <div class="flex justify-center mt-6 mb-2">
         <Button
           severity="danger"
           icon="pi pi-plus"
           variant="text"
-          raised 
+          raised
           rounded
           @click="addItem"
+          class="add-button transition-transform hover:scale-110"
         />
       </div>
     </div>
@@ -86,7 +86,6 @@ const inputItems = ref([{
   itemWeight_kg: 0
 }]);
 
-// Add a new item
 const addItem = () => {
   inputItems.value.push({
     id: Date.now(),
@@ -97,7 +96,6 @@ const addItem = () => {
   updateItems();
 };
 
-// Remove an item by index
 const removeItem = (index) => {
   if (inputItems.value.length > 1) {
     inputItems.value.splice(index, 1);
@@ -105,7 +103,6 @@ const removeItem = (index) => {
   }
 };
 
-// Update items and emit the changes
 const updateItems = () => {
   const validItems = inputItems.value.filter(item => 
     item.itemName && item.quantity > 0
@@ -114,41 +111,64 @@ const updateItems = () => {
   emit('new-items-added', validItems);
 };
 
-// Watch for changes in the input items
 watch(inputItems, () => {
   updateItems();
-  console.log(inputItems.value);
 }, { deep: true });
 </script>
 
 <style scoped>
 .card {
-  margin-bottom: 1rem;
-  padding: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  background-color: white;
+  transition: all 0.2s ease;
+}
+
+.card:hover {
+  box-shadow: 0 10px 15px rgba(0,0,0,0.05);
+  transform: translateY(-2px);
+}
+
+:deep(.p-inputtext:focus) {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 1px #6366f1;
+}
+
+:deep(.p-inputtext) {
   border-radius: 0.5rem;
+  transition: all 0.2s ease;
 }
-.flex {
-  display: flex;
+
+:deep(.p-inputnumber-buttons-stacked .p-button.p-inputnumber-button-up) {
+  border-top-right-radius: 0.5rem;
 }
-.justify-content-center {
-  justify-content: center;
+
+:deep(.p-inputnumber-buttons-stacked .p-button.p-inputnumber-button-down) {
+  border-bottom-right-radius: 0.5rem;
 }
-.items-center {
-  align-items: center;
+
+:deep(.p-button) {
+  transition: background-color 0.2s ease, transform 0.2s ease;
 }
-.space-x-4 > * + * {
-  margin-left: 1rem;
+
+:deep(.p-button-danger) {
+  color: #ef4444;
 }
-.text-left {
-  text-align: left;
+
+:deep(.p-button-danger:hover) {
+  color: #b91c1c;
 }
-.justify-center {
-  justify-content: center;
+
+.add-button:deep(.p-button) {
+  background-color: #6366f1;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 9999px;
 }
-.mt-4 {
-  margin-top: 1rem;
-}
-.mb-4 {
-  margin-bottom: 1rem;
+
+.add-button:deep(.p-button:hover) {
+  background-color: #4f46e5;
 }
 </style>

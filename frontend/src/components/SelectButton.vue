@@ -1,10 +1,20 @@
 <template>
-  <div class="toggle-container">
-    <div class="toggle-slider" :style="{ transform: `translateX(${sliderPosition}%)` }"></div>
-    <div class="toggle-options">
-      <div class="toggle-option" :class="{ 'active': selectedOption === 'donor' }" @click="selectOption('donor')">Donor</div>
-      <div class="toggle-option" :class="{ 'active': selectedOption === 'volunteer' }" @click="selectOption('volunteer')">Volunteer</div>
-      <div class="toggle-option" :class="{ 'active': selectedOption === 'foodbank' }" @click="selectOption('foodbank')">Bank</div>
+  <div class="select-container">
+    <div 
+      class="select-slider" 
+      :style="{ transform: `translateX(${sliderPosition}px)`, width: `${sliderWidth}px` }"
+    ></div>
+    <div class="select-options">
+      <div 
+        v-for="option in options" 
+        :key="option.value"
+        class="select-option" 
+        :class="{ 'active': selectedOption === option.value }" 
+        @click="selectOption(option.value)"
+        ref="optionRefs"
+      >
+        {{ option.label }}
+      </div>
     </div>
   </div>
 </template>
@@ -15,69 +25,105 @@ export default {
   data() {
     return {
       selectedOption: "donor",
-      positions: {
-        donor: 0,
-        volunteer: 100,
-        foodbank: 200
-      }
+      options: [
+        { value: "donor", label: "Donor" },
+        { value: "volunteer", label: "Volunteer" },
+        { value: "foodbank", label: "Bank" }
+      ],
+      sliderPosition: 0,
+      sliderWidth: 0
     };
   },
-  computed: {
-    sliderPosition() {
-      return this.positions[this.selectedOption];
-    }
+  mounted() {
+    this.calculateSliderPosition();
+    window.addEventListener('resize', this.calculateSliderPosition);
+  },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.calculateSliderPosition);
   },
   methods: {
     selectOption(option) {
       this.selectedOption = option;
       this.$emit("selection-changed", option[0].toUpperCase());
+      this.calculateSliderPosition();
+    },
+    calculateSliderPosition() {
+      this.$nextTick(() => {
+        if (!this.$refs.optionRefs) return;
+        
+        const activeIndex = this.options.findIndex(opt => opt.value === this.selectedOption);
+        if (activeIndex === -1 || !this.$refs.optionRefs[activeIndex]) return;
+        
+        const activeElement = this.$refs.optionRefs[activeIndex];
+        this.sliderWidth = activeElement.offsetWidth;
+        this.sliderPosition = activeElement.offsetLeft;
+      });
     }
   }
 };
 </script>
 
 <style scoped>
-.toggle-container {
+.select-container {
   position: relative;
-  width: 100%;
-  height: 60px;
-  border-radius: 30px;
-  background-color: #000;
+  width: 350px;
+  height: 46px;
+  border-radius: 23px;
+  background-color: #f5f5f5;
   overflow: hidden;
   cursor: pointer;
   display: flex;
-  border: 2px solid #000;
+  transition: all 0.2s ease;
+  border: 1px solid #e0e0e0;
 }
 
-.toggle-slider {
+.select-slider {
   position: absolute;
-  width: 33%;
-  height: 80%;
-  border-radius: 30px;
+  height: 38px;
+  border-radius: 19px;
   background-color: #fff;
-  transition: transform 0.3s ease;
-  top: 10%;
-  left: 0.5%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  top: 4px;
 }
 
-.toggle-options {
+.select-options {
   display: flex;
   width: 100%;
   height: 100%;
 }
 
-.toggle-option {
+.select-option {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
-  font-weight: bold;
+  color: #666;
+  font-weight: 500;
+  font-size: 0.95rem;
   z-index: 2;
   transition: color 0.3s ease;
 }
 
-.toggle-option.active {
-  color: #f8b100;
+.select-option.active {
+  color: #ff7e5f;
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .select-container {
+    height: 40px;
+    border-radius: 20px;
+  }
+  
+  .select-slider {
+    height: 32px;
+    border-radius: 16px;
+    top: 4px;
+  }
+  
+  .select-option {
+    font-size: 0.85rem;
+  }
 }
 </style>
