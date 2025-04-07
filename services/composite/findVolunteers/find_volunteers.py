@@ -77,6 +77,7 @@ def find_volunteers():
         product_image = request.files.get('image')
         product_address = data.get("productAddress")
         product_item_list = data.get("productItemList")
+        product_user_id = data.get("productUserId")
         
 
         if isinstance(product_item_list, str):
@@ -91,6 +92,9 @@ def find_volunteers():
         if not product_item_list:
             logger.error("Product item list is required")
             return jsonify({"error": "Product item list is required"}), 400
+        if not product_user_id:
+            logger.error("Product user id is required")
+            return jsonify({"error": "Product user id is required"}), 400
 
         # Step 1: Validate Product
         try:
@@ -113,7 +117,8 @@ def find_volunteers():
             input_body = {
                 "productPic": product_image,
                 "productAddress": product_address,
-                "productItemList": product_item_list
+                "productItemList": product_item_list,
+                "productUserId": product_user_id
             }
             product = helper_functions.add_product(input_body)
         except Exception as e:

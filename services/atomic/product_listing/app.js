@@ -1,4 +1,4 @@
-import { retrieveAllWhenUserListExist, createProductListing, updateProduct, deleteProduct, uploadPicture, getCCByProductId } from './server.js'
+import { retrieveAllWhenUserListExist, createProductListing, updateProduct, deleteProduct, uploadPicture, getCCByProductId, getProductByUserId } from './server.js'
 import { sendToWebSocket } from './send-data-to-websocket.js'
 import express from 'express'
 import multer from 'multer'
@@ -228,6 +228,12 @@ app.post('/product', upload.single('productPic'), async (req, res)=>{
                 error: "Missing productItemList field" 
             });
         }
+
+        if (!body.productUserId) {
+            return res.status(400).json({ 
+                error: "Missing productuserId field" 
+            });
+        }
         
         const createResult = await createProductListing(body);
         const productId = createResult[0].productId;
@@ -369,6 +375,102 @@ app.put('/product', async (req,res)=>{
     await sendToWebSocket()
 })
 
+/**
+ * @swagger
+ * /product/{userId}:
+ *   get:
+ *     summary: Get products by user ID
+ *     description: Retrieves product listings associated with a specific user ID
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         description: The unique identifier of the user
+ *         schema:
+ *           type: string
+ *         example: "1111-1111-1111"
+ *     responses:
+ *       200:
+ *         description: Product successfully retrieved
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 productId:
+ *                   type: string
+ *                   example: "190038b4-2911-4e43-956d-9f31cb55a869"
+ *                 productTimeStamp:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2025-03-19T16:06:13.121895+00:00"
+ *                 productPic:
+ *                   type: string
+ *                   format: uri
+ *                   example: "https://vdiqdxayroxnapzbyhzi.supabase.co/storage/v1/object/public/esd-products/products/190038b4-2911-4e43-956d-9f31cb55a869"
+ *                 productAddress:
+ *                   type: string
+ *                   example: "123 Sunshine Plaza, Singapore 30495893"
+ *                 productStatus:
+ *                   type: string
+ *                   enum: [open, assigned, picked, delivered]
+ *                   example: "assigned"
+ *                 productCCDetails:
+ *                   type: object
+ *                   example: {
+ *                     "hubId": 1,
+ *                     "hubName": "Bedok Orchard RC",
+ *                     "hubAddress": "10C Bedok South Ave 2 #01-562, S462010"
+ *                   }
+ *                 productUserList:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   example: ["1111-1111-1111", "2222-2222-2222"]
+ *                 productItemList:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       itemName:
+ *                         type: string
+ *                       quantity:
+ *                         type: integer
+ *                   example: [
+ *                     {"itemName": "tuna", "quantity": 10},
+ *                     {"itemName": "beans", "quantity": 10},
+ *                     {"itemName": "pickled vegetables", "quantity": 10}
+ *                   ]
+ *       404:
+ *         description: No products found for this user
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "No products found for user 1111-1111-1111"
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Internal server error"
+ */
+app.get('/product/:userId',async(req,res)=>{
+    const userId = req.params["userId"]
+    try {
+        const result = await getProductByUserId(userId)
+        res.status(200).json(result)
+    } catch (error) {
+        res.status(500).json({ error: error.message })
+    }
+})
 
 app.get('/productCC/:productId',async(req,res)=>{
     const productId = req.params["productId"]
@@ -466,3 +568,8 @@ app.delete('/product', async (req,res)=>{
     }
     await sendToWebSocket()
 })
+
+app.get('/api-docs.json', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(specs);
+  });

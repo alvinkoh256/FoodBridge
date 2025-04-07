@@ -115,12 +115,17 @@ def add_product(body):
     
     logger.info(f"Sending productItemList: {body_copy['productItemList']}")
     
+    logger.info(f"Data sending: {body_copy}")
+
     response = invoke_http(
         f"{PRODUCT_LISTING_URL}/product",
         method="POST",
         files=image_file,
         data=body_copy  # Use the modified copy with JSON strings
     )
+
+    logger.info(f"Response receieved: {response}")
+
     
     result = {
         "product_id": response["productId"],
