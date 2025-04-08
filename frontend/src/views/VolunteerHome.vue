@@ -117,6 +117,7 @@ onMounted(async () => {
       method: "get",
       endpoint: "http://localhost:5005/products",
     });
+    //filterProducts(response)
     products.value = response;
   } catch (error) {
     console.error("Failed to fetch items:", error);
@@ -140,6 +141,16 @@ onMounted(async () => {
     }
   });
 });
+
+const filterProducts = (productList) => {
+  if (user.value?.id) {
+    products.value = productList.filter(
+      (product) => product.productUserList?.includes(user.value.id)
+    );
+  } else {
+    products.value = [];
+  }
+};
 
 // Authentication management
 const checkAuth = () => {
