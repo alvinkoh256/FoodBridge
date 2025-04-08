@@ -32,7 +32,7 @@
       <p class="route-caption">Ready to collect your reservations?</p>
       <Button 
         label="Show me the best route" 
-        v-if="reservedHubs.length > 0"
+        :disabled="disableButton"
         @click="showRoute" 
         severity="warning" 
         class="route-button"
@@ -69,7 +69,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, defineProps } from 'vue';
+import { ref, onMounted, defineProps, computed } from 'vue';
 import { useStore } from 'vuex';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
@@ -79,6 +79,15 @@ const store = useStore();
 const visible = ref(false);
 const loading = ref(false);
 const selectedHub = ref(null);
+
+const disableButton = computed(() => {
+  if (reservedHubs.value.length > 0) return true;
+
+  // Check if there is at least one uncollected hub
+  const hasUncollectedHub = reservedHubs.value.some(hub => !hub.isCollected);
+
+  return !hasUncollectedHub;
+});
 
 const props = defineProps({
   userId: String
