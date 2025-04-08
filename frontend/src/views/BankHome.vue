@@ -21,7 +21,7 @@
 </template>
 
 <script setup>
-import { ref, inject, onMounted, computed } from 'vue';
+import { ref, inject, onMounted, computed, watch } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import Navbar from '../components/Navbar.vue';
@@ -40,50 +40,50 @@ const currentTabComponent = computed(() => {
   return activeTab.value === 'overview' ? HubsListing : Reservations;
 });
 
-// Check authentication on component mount
+// Check role and access on component mount
 onMounted(async () => {
-  await checkAuth();
+  // Wait for auth to be initialized
+  await checkAuthAndAccess();
 });
 
-const checkAuth = async () => {
-  // Check the current session
-  const { data: { session }, error } = await supabase.auth.getSession();
+// Watch for role changes
+watch(
+  () => store.getters.userRole,
+  (newRole) => {
+    if (store.getters.isAuthInitialized) {
+      checkRole(newRole);
+    }
+  }
+);
+
+const checkAuthAndAccess = async () => {
+  if (!store.getters.isAuthInitialized) {
+    await store.dispatch('initializeAuth');
+  }
   
-  if (error) {
-    console.error("Error checking session:", error);
-    router.push("/");
+  // Update local user object
+  user.value = store.state.user;
+  
+  // Check role
+  checkRole(store.getters.userRole);
+};
+
+const checkRole = (role) => {
+  // Only allow access if role is 'F' (Food Bank)
+  if (role !== 'F') {
+    console.log('Unauthorized role for BankHome:', role);
+    router.push('/');
     return;
   }
   
-  if (session?.user && session.user?.user_metadata?.role === "F") {
-    user.value = session.user;
-    console.log("User authenticated:", user.value);
-  } else {
-    user.value = null;
-    router.push("/");
-  }
-  
-  // Set up the listener for future changes
-  const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-    if (session?.user && session.user?.user_metadata?.role === "F") {
-      user.value = session.user;
-      console.log("Auth state changed - user authenticated:", user.value);
-    } else {
-      user.value = null;
-      router.push("/");
-    }
-  });
-  
-  // Return the unsubscribe function
-  return () => {
-    authListener?.unsubscribe();
-  };
+  // Update local user reference
+  user.value = store.state.user;
+  console.log("User authenticated in BankHome:", user.value);
 };
 
 // Logout function
 const signOut = async () => {
   await store.dispatch('logout');
-  router.push('/');
 };
 
 // Handle new listing posted

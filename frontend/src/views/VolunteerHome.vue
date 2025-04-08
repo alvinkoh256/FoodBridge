@@ -103,26 +103,26 @@ const checkSavedProduct = () => {
   }
 };
 
-// Check authentication on component mount
-onMounted(async () => {
-  checkAuth();
-  // Check for saved product immediately after auth check
-  checkSavedProduct();
-
-  // localStorage.removeItem('savedProduct');
-  // localStorage.removeItem('deliveryConfirmed');
+// Fetch products
+const fetchProducts = async () => {
+  if (!user.value?.id) return;
   
   try {
     const response = await store.dispatch("apiRequest", {
       method: "get",
       endpoint: "http://localhost:8000/products",
     });
-    filterProducts(response)
-    // products.value = response;
+    filterProducts(response);
   } catch (error) {
     console.error("Failed to fetch items:", error);
   }
+};
 
+// Check role and access on component mount
+onMounted(async () => {
+  await checkAuthAndAccess();
+  
+  // Socket setup
   socket.on("productListingRoom", (data) => {
     console.log("Received data from productListingRoom:", data);
     if (Array.isArray(data)) {
@@ -132,7 +132,7 @@ onMounted(async () => {
         );
         if (index !== -1) {
           products.value[index] = newProduct;
-        } else if(newProduct.productUserList && newProduct.productUserList.includes(user.value.id)) {
+        } else if(newProduct.productUserList && newProduct.productUserList.includes(user.value?.id)) {
           products.value.push(newProduct);
         }
       });
@@ -141,6 +141,47 @@ onMounted(async () => {
     }
   });
 });
+
+// Watch for role changes
+watch(
+  () => store.getters.userRole,
+  (newRole) => {
+    if (store.getters.isAuthInitialized) {
+      checkRole(newRole);
+    }
+  }
+);
+
+const checkAuthAndAccess = async () => {
+  if (!store.getters.isAuthInitialized) {
+    await store.dispatch('initializeAuth');
+  }
+  
+  // Update local user object
+  user.value = store.state.user;
+  
+  // Check role
+  checkRole(store.getters.userRole);
+  
+  // If authenticated, check saved product and fetch products
+  if (user.value) {
+    checkSavedProduct();
+    await fetchProducts();
+  }
+};
+
+const checkRole = (role) => {
+  // Only allow access if role is 'V' (Volunteer)
+  if (role !== 'V') {
+    console.log('Unauthorized role for VolunteerHome:', role);
+    router.push('/');
+    return;
+  }
+  
+  // Update local user reference
+  user.value = store.state.user;
+  console.log("User authenticated in VolunteerHome:", user.value);
+};
 
 const filterProducts = (productList) => {
   if (user.value?.id) {
@@ -152,30 +193,8 @@ const filterProducts = (productList) => {
   }
 };
 
-// Authentication management
-const checkAuth = () => {
-  const authListener = supabase.auth.onAuthStateChange((event, session) => {
-    if (session?.user && session.user?.user_metadata?.role === "V") {
-      user.value = session.user;
-      console.log("User authenticated:", user.value);
-      // Check for saved product again after successful authentication
-      checkSavedProduct();
-    } else {
-      user.value = null;
-      router.push("/");
-    }
-  });
-
-  return () => {
-    if (authListener?.data) {
-      authListener.data.unsubscribe();
-    }
-  };
-};
-
 const signOut = async () => {
   await store.dispatch("logout");
-  router.push("/");
 };
 
 // Handle product selection from the ProductListing component
