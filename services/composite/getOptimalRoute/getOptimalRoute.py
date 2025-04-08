@@ -23,7 +23,7 @@ load_dotenv(env_path)
 HUB_SERVICE_URL = os.getenv("HUB_SERVICE_URL", "http://hub:5010")
 ROUTE_SERVICE_URL = os.getenv("ROUTE_SERVICE_URL", "http://route:5011")
 
-@app.route('/get-optimal-route/<foodbank_id>', methods=['POST'])
+@app.route('/get-optimal-route/<foodbank_id>', methods=['GET'])
 def get_optimal_route(foodbank_id):
     try:
         if not foodbank_id:
