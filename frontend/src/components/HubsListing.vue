@@ -148,19 +148,19 @@ const updateHubStatus = async (updatedStatus) => {
   isReserved.value = updatedStatus;
   
   // Get the hub ID
-  const hubId = selectedHub.value.hubId || selectedHub.value.id;
+  const hubId = selectedHub.value.hubID;
   
   if (updatedStatus) {
-    const hubToMove = unreservedHubs.value.find(hub => (hub.hubId || hub.id) === hubId);
+    const hubToMove = unreservedHubs.value.find(hub => (hub.hubID) === hubId);
     if (hubToMove) {
       reservedHubs.value.push(hubToMove);
-      unreservedHubs.value = unreservedHubs.value.filter(hub => (hub.hubId || hub.id) !== hubId);
+      unreservedHubs.value = unreservedHubs.value.filter(hub => (hub.hubID) !== hubId);
     }
   } else {
-    const hubToMove = reservedHubs.value.find(hub => (hub.hubId || hub.id) === hubId);
+    const hubToMove = reservedHubs.value.find(hub => (hub.hubID) === hubId);
     if (hubToMove) {
       unreservedHubs.value.push(hubToMove);
-      reservedHubs.value = reservedHubs.value.filter(hub => (hub.hubId || hub.id) !== hubId);
+      reservedHubs.value = reservedHubs.value.filter(hub => (hub.hubID) !== hubId);
     }
   }
   
