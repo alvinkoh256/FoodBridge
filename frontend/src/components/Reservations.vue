@@ -159,7 +159,7 @@ const showRoute = async () => {
     // Call the API to get the optimal route
     const response = await store.dispatch('apiRequest', {
       method: 'get',
-      endpoint: `http://localhost:5016/getOptimalRoute/${props.userId}/getRoute`
+      endpoint: `http://localhost:5016/get-optimal-route/${props.userId}`
     });
     
     // Open route link on new tab
