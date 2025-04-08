@@ -144,7 +144,6 @@ const signUp = async () => {
       });
 
       if(role.value === 'F'){
-        const responseAPI = await fetch('http://localhost:5010/public/hub/createFoodbank', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'

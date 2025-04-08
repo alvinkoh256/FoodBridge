@@ -1,76 +1,122 @@
 _format_version: "2.1"
 
-services:
-  - name: hub-service
-    url: http://hub:5010
+services:        
+  # Hub Service - (Existing Items)
+  - name: hub-service-items
+    url: http://host.docker.internal:5010/public/hub/existingItems
     routes:
-      - name: hub-route
+      - name: hub-existingitems
         paths:
-          - /hub
+          - /hub/existing-items
+        strip_path: true
 
-  - name: locating-service
-    url: http://locating:5006
+        
+  # Hub Service - Hubs Data
+  - name: hub-service-data
+    url: http://host.docker.internal:5010/public/hub/hubsData
     routes:
-      - name: locating-route
+      - name: hub-data
         paths:
-          - /locating
+          - /hub/hubs-data
+        strip_path: true
 
-  - name: product-listing-service
-    url: http://product_listing:5005
+# Hub Service - check reserved inventories
+  - name: hub-reserved-inventory-service
+    url: http://host.docker.internal:5010/public/hub
     routes:
-      - name: product-route
+      - name: hub-reserved-inventory
+        paths:
+          - /hub/reservedInventories/[0-9]+
+        strip_path: true
+        
+  # Hub Service - Create Foodbank
+  - name: hub-service-foodbank
+    url: http://host.docker.internal:5010/public/hub/createFoodbank
+    routes:
+      - name: hub-create-foodbank
+        paths:
+          - /hub/create-foodbank
+        strip_path: true
+        
+  # Hub Service - Collection Complete
+  - name: hub-service-collection
+    url: http://host.docker.internal:5010/public/hub/collectionComplete
+    routes:
+      - name: hub-collection-complete
+        paths:
+          - /hub/collection-complete
+        strip_path: true
+        
+  # Product
+  - name: product #not sure
+    url: http://host.docker.internal:5005/product
+    routes:
+      - name: product
+        paths:
+          - /product
+        strip_path: true
+        
+  # Products
+  - name: products
+    url: http://host.docker.internal:5005/products
+    routes:
+      - name: products
         paths:
           - /products
-
-  - name: product-validation-service
-    url: http://product_validation:5004
+        strip_path: true
+        
+  - name: confirm-delivery-service #not working
+    url: http://host.docker.internal:5009/confirmDelivery/drop-off
     routes:
-      - name: product-validation-route
+      - name: confirm-drop-off
         paths:
-          - /productValidation
-
-  - name: route-service
-    url: http://route:5011
+          - /confirm-drop-off
+        strip_path: true
+        
+  # Find Volunteers
+  - name: find-volunteers-service #not sure
+    url: http://host.docker.internal:5001/findVolunteers
     routes:
-      - name: route-route
+      - name: find-volunteers
         paths:
-          - /route
-
-  - name: confirm-delivery-service
-    url: http://confirmDelivery:5009
+          - /find-volunteers
+        strip_path: true
+        
+  # Reserve Hub
+  - name: reserve-hub-service #not sure
+    url: http://host.docker.internal:5015/reserveHub/reserve
     routes:
-      - name: confirm-delivery-route
+      - name: reserve-hub
         paths:
-          - /drop-off
-
-  - name: reserve-hub-service
-    url: http://reserveHub:5015
+          - /reserve-hub
+        strip_path: true
+        
+  # Unreserve Hub
+  - name: unreserve-hub-service #not sure
+    url: http://host.docker.internal:5015/reserveHub/unreserve
     routes:
-      - name: reserve-hub-route
+      - name: unreserve-hub
         paths:
-          - /reserve
-          - /unreserve
-
-  - name: find-volunteers-service
-    url: http://findVolunteers:5001
+          - /unreserve-hub
+        strip_path: true
+        
+  # User Account
+  - name: user-account-service
+    url: https://personal-tdqpornm.outsystemscloud.com/FoodBridge/rest/AccountInfoAPI/user
     routes:
-      - name: find-volunteers-route
+      - name: user-account
         paths:
-          - /findVolunteers
+          - /user-account
+        strip_path: true
 
-  # - name: notify-volunteers-service
-  #   url: http://notifyVolunteers:5672
-  #   routes:
-  #     - name: notify-route
-  #       paths:
-  #         - /notifyVolunteers
-
-  - name: get-optimal-route-service
-    url: http://getOptimalRoute:5016
+  # Get Optimal Route
+  - name: optimal-route-service #not sure
+    url: http://host.docker.internal:5016/getOptimalRoute
     routes:
-      - name: get-optimal-route
+      - name: optimal-route
         paths:
-          - /get-optimal-route
+          - /optimal-route
+        strip_path: true
 
 plugins:
   - name: cors

@@ -125,6 +125,28 @@ services:
     networks:
       - esd-net
 
+    # Add this to your existing docker-compose.yml file
+  kong:
+    image: kong/kong-gateway:3.9
+    platform: linux/amd64  # Only needed for Mac M1/M2 chips
+    restart: always
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /etc/kong/kong.yml
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+    volumes:
+      - ./kong.yml:/etc/kong/kong.yml:ro
+    ports:
+      - "8000:8000"  # API Gateway
+      - "8001:8001"  # Admin API
+    networks:
+      # Make sure to use your existing network name here
+      - esd-net  # Replace with your actual network name
+
     # # PostgreSQL Service
   # postgres:
   #   image: postgres:13
