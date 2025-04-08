@@ -32,6 +32,7 @@
       <p class="route-caption">Ready to collect your reservations?</p>
       <Button 
         label="Show me the best route" 
+        v-if="reservedHubs.length > 0"
         @click="showRoute" 
         severity="warning" 
         class="route-button"
