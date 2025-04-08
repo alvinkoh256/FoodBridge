@@ -52,6 +52,7 @@
       <DropOff 
         v-if="currentStep === 2" 
         :selectedProduct="selectedProduct"
+        :user="user"
         @drop-off-confirmed="handleDropOffConfirmed"
       ></DropOff>
 

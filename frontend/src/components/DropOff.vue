@@ -14,31 +14,28 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, inject, defineProps, defineEmits } from 'vue';
+import { ref, computed, defineProps, defineEmits } from 'vue';
 import CreateItem from "../components/CreateItem.vue";
 import ItemDropdown from "../components/ItemDropdown.vue";
 import { useStore } from "vuex";
-import { useRouter } from "vue-router";
 
 // Define props and emits
 const props = defineProps({
-  selectedProduct: Object
+  selectedProduct: Object,
+  user: Object
 });
 
 const emit = defineEmits(['drop-off-confirmed']);
 
 // Use store and router
 const store = useStore();
-const router = useRouter();
-const supabase = inject('supabase');
 
 // Create refs to store selected items and new items
 const selectedItems = ref([]);
 const newCreatedItems = ref([]);
-const user = ref(null);
 const loading = ref(false);
 
-// Check if user can confirm drop-off
+// Check if s can confirm drop-off
 const canConfirm = computed(() => 
   (selectedItems.value.length > 0 || newCreatedItems.value.length > 0) && !loading.value
 );
@@ -67,7 +64,7 @@ const confirmDropOff = async () => {
   try {
     loading.value = true;
     
-    const volunteerID = user.value?.id;
+    const volunteerID = props.user.id;
     const productID = product.value?.productId;
     
     if (!volunteerID || !productID) {
