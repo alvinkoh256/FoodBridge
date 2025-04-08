@@ -112,9 +112,9 @@ const fetchHubsData = async () => {
     reservedHubs.value = resHubsResponse || [];
     
     // Filter out reserved hubs from the unreserved list
-    const reservedIds = reservedHubs.value.map(hub => hub.hubId || hub.id);
+    const reservedIds = reservedHubs.value.map(hub => hub.hubID);
     unreservedHubs.value = (hubsResponse || []).filter(
-      hub => !reservedIds.includes(hub.hubId || hub.id)
+      hub => !reservedIds.includes(hub.hubID)
     );
   } catch (error) {
     console.error('Failed to fetch hubs data:', error);
