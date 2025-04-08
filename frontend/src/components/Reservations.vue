@@ -173,7 +173,8 @@ const showRoute = async () => {
     });
     
     // Open route link on new tab
-    window.open(response.data.googleMapsLink);
+    console.log(response);
+    window.open(response.googleMapsLink);
   } catch (error) {
     console.error('Failed to fetch optimal route:', error);
   }

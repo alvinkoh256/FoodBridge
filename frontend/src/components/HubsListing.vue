@@ -2,7 +2,7 @@
   <div class="hubs-container">
     <!-- Reserved Hubs Section -->
     <section class="hub-section">
-      <h2 class="section-title">Reserved Hubs</h2>
+      <h2 class="section-title">Hubs Reserved By You</h2>
       
       <div class="hub-grid">
         <div v-if="reservedHubs.length === 0" class="empty-state">
@@ -25,11 +25,11 @@
     
     <!-- Unreserved Hubs Section -->
     <section class="hub-section">
-      <h2 class="section-title">Unreserved Hubs</h2>
+      <h2 class="section-title">Hubs Available for Reservation</h2>
       
       <div class="hub-grid">
         <div v-if="filteredUnreservedHubs.length === 0" class="empty-state">
-          No unreserved hubs available
+          No hubs available
         </div>
         
         <div 

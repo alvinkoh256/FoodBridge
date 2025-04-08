@@ -21,7 +21,7 @@
               <CreateItem @new-items-added="updateNewItems" :showWeight="false"/>
             
               <div class="flex-1">
-                <label class="text-gray-700 font-medium text-sm text-left uppercase tracking-wider block mb-2">Location</label>
+                <label class="text-gray-700 font-medium text-sm text-left uppercase tracking-wider block mb-2">Enter Your Location:</label>
                 <AutoComplete ref="locationAutocomplete" @location-selected="updateLocation" />
               </div>
             </div>
