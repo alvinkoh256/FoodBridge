@@ -68,8 +68,8 @@ const confirmDelivery = async () => {
   try {
     store.dispatch('apiRequest', {
       method: 'put',
-      endpoint: 'http://localhost:8000/product',
-      data: {
+        endpoint: `http://localhost:8000/product/`,      
+        data: {
         productId: props.selectedProduct.productId,
         productStatus: "completed"
       }

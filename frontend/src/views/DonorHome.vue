@@ -17,7 +17,7 @@
 </template>
 
 <script setup>
-import { ref, inject, onMounted, computed } from 'vue';
+import { ref, inject, onMounted, computed, watch } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import Navbar from '../components/Navbar.vue';
@@ -48,7 +48,9 @@ const handleListingPosted = (response) => {
 
 // Function to fetch posted listings and filter by hub ID
 const fetchPostedListings = async () => {
-  try{
+  if (!user.value?.id) return;
+  
+  try {
     const response = await store.dispatch('apiRequest', {
       method: 'get',
       endpoint: `http://localhost:8000/product/${user.value.id}`
@@ -62,57 +64,54 @@ const fetchPostedListings = async () => {
   }
 };
 
-// Check authentication on component mount
+// Check role and access on component mount
 onMounted(async () => {
-  await checkAuth();
-  // Only fetch listings after authentication is confirmed
-  if (user.value) {
-    await fetchPostedListings();
-
-  }
+  await checkAuthAndAccess();
 });
 
-// Authentication management
-const checkAuth = async () => {
-  // First check the current session
-  const { data: { session }, error } = await supabase.auth.getSession();
-  if (error) {
-    console.error("Error checking session:", error);
-    router.push("/");
+// Watch for role changes
+watch(
+  () => store.getters.userRole,
+  (newRole) => {
+    if (store.getters.isAuthInitialized) {
+      checkRole(newRole);
+    }
+  }
+);
+
+const checkAuthAndAccess = async () => {
+  if (!store.getters.isAuthInitialized) {
+    await store.dispatch('initializeAuth');
+  }
+  
+  // Update local user object
+  user.value = store.state.user;
+  
+  // Check role
+  checkRole(store.getters.userRole);
+  
+  // Fetch listings if we have a valid user
+  if (user.value) {
+    await fetchPostedListings();
+  }
+};
+
+const checkRole = (role) => {
+  // Only allow access if role is 'D' (Donor)
+  if (role !== 'D') {
+    console.log('Unauthorized role for DonorHome:', role);
+    router.push('/');
     return;
   }
   
-  if (session?.user && session.user?.user_metadata?.role === "D") {
-    user.value = session.user;
-    console.log("User authenticated:", user.value);
-  } else {
-    user.value = null;
-    router.push("/");
-  }
-  
-  // Then set up the listener for future changes
-  const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-    if (session?.user && session.user?.user_metadata?.role === "D") {
-      user.value = session.user;
-      console.log("Auth state changed - user authenticated:", user.value);
-      // Refresh listings when user changes
-      fetchPostedListings();
-    } else {
-      user.value = null;
-      router.push("/");
-    }
-  });
-  
-  // Return the unsubscribe function
-  return () => {
-    authListener?.unsubscribe();
-  };
+  // Update local user reference
+  user.value = store.state.user;
+  console.log("User authenticated in DonorHome:", user.value);
 };
 
 // Logout function
 const signOut = async () => {
   await store.dispatch('logout');
-  router.push('/');
 };
 </script>
 

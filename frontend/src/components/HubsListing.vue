@@ -2,7 +2,7 @@
   <div class="hubs-container">
     <!-- Reserved Hubs Section -->
     <section class="hub-section">
-      <h2 class="section-title">Reserved Hubs</h2>
+      <h2 class="section-title">Hubs Reserved By You</h2>
       
       <div class="hub-grid">
         <div v-if="reservedHubs.length === 0" class="empty-state">
@@ -25,11 +25,11 @@
     
     <!-- Unreserved Hubs Section -->
     <section class="hub-section">
-      <h2 class="section-title">Unreserved Hubs</h2>
+      <h2 class="section-title">Hubs Available for Reservation</h2>
       
       <div class="hub-grid">
         <div v-if="filteredUnreservedHubs.length === 0" class="empty-state">
-          No unreserved hubs available
+          No hubs available
         </div>
         
         <div 
@@ -112,9 +112,9 @@ const fetchHubsData = async () => {
     reservedHubs.value = resHubsResponse || [];
     
     // Filter out reserved hubs from the unreserved list
-    const reservedIds = reservedHubs.value.map(hub => hub.hubId || hub.id);
+    const reservedIds = reservedHubs.value.map(hub => hub.hubID);
     unreservedHubs.value = (hubsResponse || []).filter(
-      hub => !reservedIds.includes(hub.hubId || hub.id)
+      hub => !reservedIds.includes(hub.hubID)
     );
   } catch (error) {
     console.error('Failed to fetch hubs data:', error);
@@ -148,19 +148,19 @@ const updateHubStatus = async (updatedStatus) => {
   isReserved.value = updatedStatus;
   
   // Get the hub ID
-  const hubId = selectedHub.value.hubId || selectedHub.value.id;
+  const hubId = selectedHub.value.hubID;
   
   if (updatedStatus) {
-    const hubToMove = unreservedHubs.value.find(hub => (hub.hubId || hub.id) === hubId);
+    const hubToMove = unreservedHubs.value.find(hub => (hub.hubID) === hubId);
     if (hubToMove) {
       reservedHubs.value.push(hubToMove);
-      unreservedHubs.value = unreservedHubs.value.filter(hub => (hub.hubId || hub.id) !== hubId);
+      unreservedHubs.value = unreservedHubs.value.filter(hub => (hub.hubID) !== hubId);
     }
   } else {
-    const hubToMove = reservedHubs.value.find(hub => (hub.hubId || hub.id) === hubId);
+    const hubToMove = reservedHubs.value.find(hub => (hub.hubID) === hubId);
     if (hubToMove) {
       unreservedHubs.value.push(hubToMove);
-      reservedHubs.value = reservedHubs.value.filter(hub => (hub.hubId || hub.id) !== hubId);
+      reservedHubs.value = reservedHubs.value.filter(hub => (hub.hubID) !== hubId);
     }
   }
   

@@ -22,24 +22,25 @@ load_dotenv(env_path)
 # Environment variables
 HUB_SERVICE_URL = os.getenv("HUB_SERVICE_URL", "http://hub:5010")
 ROUTE_SERVICE_URL = os.getenv("ROUTE_SERVICE_URL", "http://route:5011")
-FOODBANK_ID = "1921634f-92f9-4ef5-af7a-23daa634e4cd"   # <-- your constant foodbank ID
 
-@app.route('/get-optimal-route', methods=['GET'])
-def get_optimal_route():
+@app.route('/get-optimal-route/<foodbank_id>', methods=['GET'])
+def get_optimal_route(foodbank_id):
     try:
+        if not foodbank_id:
+            return jsonify({"error": "foodbankId is required"}), 400
+        
         # Step 1: Retrieve food bank data from Hub microservice
-        hub_url = f"{HUB_SERVICE_URL}/internal/hub/foodbank/{FOODBANK_ID}"
+        hub_url = f"{HUB_SERVICE_URL}/internal/hub/foodbank/{foodbank_id}"
         hub_response = requests.get(hub_url)
         
         if hub_response.status_code != 200:
             return jsonify({"error": "Failed to retrieve food bank data"}), 500
 
         foodbank_data = hub_response.json()
-        foodbank_id = foodbank_data.get("foodbankID")
         foodbank_name = foodbank_data.get("foodbankName")
         foodbank_address = foodbank_data.get("foodbankAddress")
 
-        if not all([foodbank_id, foodbank_name, foodbank_address]):
+        if not all([foodbank_name, foodbank_address]):
             return jsonify({"error": "Invalid data received from Hub service"}), 400
 
         # Step 2: Store in cache for temporary reference

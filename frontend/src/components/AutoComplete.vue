@@ -6,23 +6,33 @@
       type="text"
       class="autocomplete-input text-black"
       placeholder="Enter an address"
-      @input="getSuggestions"
+      v-model="inputValue"
     />
   </div>
 </template>
 
 <script>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 
 export default {
   name: 'Autocomplete',
-  setup() {
+  emits: ['location-selected'],
+  setup(props, { emit }) {
     const address = ref('');
     const autocompleteInput = ref(null);
-
+    const inputValue = ref('');
+    
+    // Watch for changes to inputValue and emit location-selected event
+    watch(inputValue, (newValue) => {
+      if (newValue && newValue.trim() !== '') {
+        emit('location-selected', newValue);
+      }
+    });
+    
     return {
       address,
-      autocompleteInput
+      autocompleteInput,
+      inputValue
     };
   },
   data() {
@@ -41,40 +51,35 @@ export default {
           resolve();
           return;
         }
-
         const script = document.createElement('script');
         script.src = `https://maps.googleapis.com/maps/api/js?key=${this.apiKey}&libraries=places`;
         script.async = true;
         script.defer = true;
-        
         script.onload = () => {
           this.initAutoComplete();
           resolve();
         };
-        
         script.onerror = () => {
           reject(new Error('Google Maps API failed to load.'));
         };
-        
         document.head.appendChild(script);
       });
     },
     initAutoComplete() {
       if (!this.$refs.autocompleteInput) return;
-
       const autocomplete = new google.maps.places.Autocomplete(this.$refs.autocompleteInput, {
         types: ['geocode'],
         componentRestrictions: { country: 'sg' }
       });
-
       autocomplete.addListener('place_changed', () => {
         const place = autocomplete.getPlace();
         if (place && place.formatted_address) {
           this.address = place.formatted_address;
+          this.inputValue = place.formatted_address;
           this.$emit('location-selected', place.formatted_address);
         }
       });
-    }
+    },
   }
 };
 </script>

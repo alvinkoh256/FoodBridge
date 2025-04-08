@@ -32,6 +32,7 @@
       <p class="route-caption">Ready to collect your reservations?</p>
       <Button 
         label="Show me the best route" 
+        :disabled="disableButton"
         @click="showRoute" 
         severity="warning" 
         class="route-button"
@@ -68,7 +69,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, defineProps } from 'vue';
+import { ref, onMounted, defineProps, computed } from 'vue';
 import { useStore } from 'vuex';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
@@ -78,6 +79,15 @@ const store = useStore();
 const visible = ref(false);
 const loading = ref(false);
 const selectedHub = ref(null);
+
+const disableButton = computed(() => {
+  if (reservedHubs.value.length > 0) return true;
+
+  // Check if there is at least one uncollected hub
+  const hasUncollectedHub = reservedHubs.value.some(hub => !hub.isCollected);
+
+  return !hasUncollectedHub;
+});
 
 const props = defineProps({
   userId: String
@@ -159,11 +169,12 @@ const showRoute = async () => {
     // Call the API to get the optimal route
     const response = await store.dispatch('apiRequest', {
       method: 'get',
-      endpoint: `http://localhost:5016/getOptimalRoute/${props.userId}/getRoute`
+      endpoint: `http://localhost:8000/get-optimal-route/${props.userId}`
     });
     
     // Open route link on new tab
-    window.open(response.data.googleMapsLink);
+    console.log(response);
+    window.open(response.googleMapsLink);
   } catch (error) {
     console.error('Failed to fetch optimal route:', error);
   }

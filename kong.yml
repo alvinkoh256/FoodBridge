@@ -109,13 +109,13 @@ services:
         strip_path: true
 
   # Get Optimal Route
-  - name: optimal-route-service #not sure
-    url: http://host.docker.internal:5016/getOptimalRoute
+  - name: optimal-route-service
+    url: http://host.docker.internal:5016
     routes:
       - name: optimal-route
         paths:
-          - /optimal-route
-        strip_path: true
+          - /get-optimal-route/[0-9a-zA-Z-]+
+        strip_path: false
 
 plugins:
   - name: cors

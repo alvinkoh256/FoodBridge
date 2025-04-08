@@ -15,8 +15,8 @@
           </div>
         </div>
         <div class="location-info">
+          <p><span class="text-bold">Pick-up Location:</span> {{ product?.productAddress }}</p>
           <p><span class="text-bold">Drop-off Location:</span> {{ product?.productCCDetails?.hubName }}</p>
-          <p><span class="text-bold">Address:</span> {{ product?.productAddress }}</p>
         </div>
       </div>
     </div>
@@ -66,7 +66,7 @@ const acceptDropOff = async () => {
   try {
     await store.dispatch('apiRequest', {
       method: 'put',
-      endpoint: 'http://localhost:8000/product',
+      endpoint: 'http://localhost:8000/product/',
       data: {
         productId: props.product.productId,
         productStatus: 'on-going'
