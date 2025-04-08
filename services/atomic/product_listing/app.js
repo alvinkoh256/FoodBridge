@@ -8,7 +8,16 @@ import { swaggerUi, specs } from './swagger.js'
 
 const app = express()
 app.use(express.json())
-app.use(cors({ origin: '*' }))
+// app.use(cors({ origin: '*' }))
+// replaced with
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
+  }));
+
+app.options('*', cors()); // Enable preflight requests for all routes
+
 const PORT = process.env.PORT || 5005
 
 // Swagger UI setup
