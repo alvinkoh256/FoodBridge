@@ -51,7 +51,7 @@ const fetchPostedListings = async () => {
   try{
     const response = await store.dispatch('apiRequest', {
       method: 'get',
-      endpoint: `http://localhost:5005/product/${user.value.id}`
+      endpoint: `http://localhost:8000/product/${user.value.id}`
     });
 
     if (response && Array.isArray(response)) {

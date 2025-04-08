@@ -87,7 +87,7 @@ const fetchReservedHubs = async () => {
   try {
     const reservedHubsResponse = await store.dispatch('apiRequest', { 
       method: 'get', 
-      endpoint: `http://localhost:5010/public/hub/${props.userId}/reservedInventories` 
+      endpoint: `http://localhost:8000/hub/reservedInventories/${props.userId}` 
     });
     reservedHubs.value = reservedHubsResponse || [];
     
@@ -134,7 +134,7 @@ const confirmCollection = async () => {
 
     await store.dispatch('apiRequest', { 
       method: 'post', 
-      endpoint: 'http://localhost:5010/public/hub/collectionComplete', 
+      endpoint: 'http://localhost:8000/hub/collection-complete', 
       data: payload 
     });
 

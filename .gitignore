@@ -27,6 +27,7 @@ virtualenv
 
 # env
 .env
+frontend/env
 
 # image folder
 sample_pics

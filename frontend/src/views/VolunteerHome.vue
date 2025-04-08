@@ -115,7 +115,7 @@ onMounted(async () => {
   try {
     const response = await store.dispatch("apiRequest", {
       method: "get",
-      endpoint: "http://localhost:5005/products",
+      endpoint: "http://localhost:8000/products",
     });
     //filterProducts(response)
     products.value = response;

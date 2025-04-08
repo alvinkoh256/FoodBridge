@@ -66,7 +66,7 @@ const acceptDropOff = async () => {
   try {
     await store.dispatch('apiRequest', {
       method: 'put',
-      endpoint: 'http://localhost:5005/product',
+      endpoint: 'http://localhost:8000/product',
       data: {
         productId: props.product.productId,
         productStatus: 'on-going'

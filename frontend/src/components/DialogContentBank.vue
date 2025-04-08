@@ -71,7 +71,7 @@ const handleReserve = async () => {
   try {
     await store.dispatch("apiRequest", {
       method: "POST",
-      endpoint: "http://localhost:5015/reserveHub/reserve",
+      endpoint: "http://localhost:8000/reserve-hub",
       data: {
         hubID: props.hub.hubID,
         foodbankID: props.foodbankId,
@@ -96,7 +96,7 @@ const handleUnreserve = async () => {
   try {
     await store.dispatch("apiRequest", {
       method: "POST",
-      endpoint: "http://localhost:5015/reserveHub/unreserve",
+      endpoint: "http://localhost:8000/unreserve-hub",
       data: {
         hubID: props.hub.hubID,
         foodbankID: props.foodbankId,

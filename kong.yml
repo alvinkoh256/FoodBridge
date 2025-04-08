@@ -20,14 +20,13 @@ services:
           - /hub/hubs-data
         strip_path: true
 
-# Hub Service - check reserved inventories
   - name: hub-reserved-inventory-service
-    url: http://host.docker.internal:5010/public/hub
+    url: http://host.docker.internal:5010/public
     routes:
       - name: hub-reserved-inventory
         paths:
-          - /hub/reservedInventories/[0-9]+
-        strip_path: true
+          - /hub/reservedInventories/[0-9a-zA-Z-]+
+        strip_path: false
         
   # Hub Service - Create Foodbank
   - name: hub-service-foodbank
@@ -48,13 +47,13 @@ services:
         strip_path: true
         
   # Product
-  - name: product #not sure
-    url: http://host.docker.internal:5005/product
+  - name: product
+    url: http://host.docker.internal:5005
     routes:
       - name: product
         paths:
-          - /product
-        strip_path: true
+          - /product/[0-9a-zA-Z-]+
+        strip_path: false
         
   # Products
   - name: products
@@ -65,7 +64,7 @@ services:
           - /products
         strip_path: true
         
-  - name: confirm-delivery-service #not working
+  - name: confirm-delivery-service
     url: http://host.docker.internal:5009/confirmDelivery/drop-off
     routes:
       - name: confirm-drop-off

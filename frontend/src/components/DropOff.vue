@@ -109,7 +109,7 @@ const confirmDropOff = async () => {
     
     await store.dispatch('apiRequest', {
       method: 'post',
-      endpoint: 'http://localhost:5009/confirmDelivery/drop-off',
+      endpoint: 'http://localhost:8000/confirm-drop-off',
       data: payload
     });
     

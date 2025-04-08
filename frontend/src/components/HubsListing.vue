@@ -99,13 +99,13 @@ const fetchHubsData = async () => {
     // Fetch reserved inventories
     const resHubsResponse = await store.dispatch('apiRequest', {
       method: 'get',
-      endpoint: `http://localhost:5010/public/hub/${props.userId}/reservedInventories`
+      endpoint: `http://localhost:8000/hub/reservedInventories/${props.userId}`
     });
     
     // Fetch unreserved hubs data
     const hubsResponse = await store.dispatch('apiRequest', {
       method: 'get',
-      endpoint: `http://localhost:5010/public/hub/hubsData`
+      endpoint: `http://localhost:8000/hub/hubs-data`
     });
     
     // Update the data
