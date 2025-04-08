@@ -196,6 +196,7 @@ const filterProducts = (productList) => {
 
 const signOut = async () => {
   await store.dispatch("logout");
+  store.commit('setAuthInitialized', false);
 };
 
 // Handle product selection from the ProductListing component

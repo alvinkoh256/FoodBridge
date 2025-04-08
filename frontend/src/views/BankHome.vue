@@ -84,6 +84,7 @@ const checkRole = (role) => {
 // Logout function
 const signOut = async () => {
   await store.dispatch('logout');
+  store.commit('setAuthInitialized', false);
 };
 
 // Handle new listing posted

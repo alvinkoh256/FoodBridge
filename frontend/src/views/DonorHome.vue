@@ -69,7 +69,7 @@ onMounted(async () => {
   await checkAuthAndAccess();
 });
 
-// Watch for role changes
+//Watch for role changes
 watch(
   () => store.getters.userRole,
   (newRole) => {
@@ -89,7 +89,7 @@ const checkAuthAndAccess = async () => {
   
   // Check role
   checkRole(store.getters.userRole);
-  
+
   // Fetch listings if we have a valid user
   if (user.value) {
     await fetchPostedListings();
@@ -112,6 +112,7 @@ const checkRole = (role) => {
 // Logout function
 const signOut = async () => {
   await store.dispatch('logout');
+  store.commit('setAuthInitialized', false);
 };
 </script>
 
