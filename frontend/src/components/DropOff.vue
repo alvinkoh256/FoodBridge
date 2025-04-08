@@ -51,32 +51,6 @@ const product = computed(() => {
   return JSON.parse(localStorage.getItem('savedProduct'));
 });
 
-onMounted(async () => {
-  await checkAuth();
-});
-
-const checkAuth = async () => {
-  const { data: { session }, error } = await supabase.auth.getSession();
-  
-  if (error || !session?.user || session.user?.user_metadata?.role !== "V") {
-    router.push("/");
-    return;
-  }
-  
-  user.value = session.user;
-  
-  // Set up auth state listener
-  const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-    if (session?.user && session.user?.user_metadata?.role === "V") {
-      user.value = session.user;
-    } else {
-      router.push("/");
-    }
-  });
-  
-  return () => authListener?.unsubscribe();
-};
-
 // Update functions to receive data from child components
 const updateSelectedItems = (items) => {
   selectedItems.value = items;

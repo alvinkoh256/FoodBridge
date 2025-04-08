@@ -132,7 +132,7 @@ onMounted(async () => {
         );
         if (index !== -1) {
           products.value[index] = newProduct;
-        } else {
+        } else if(newProduct.productUserList && newProduct.productUserList.includes(user.value.id)) {
           products.value.push(newProduct);
         }
       });
