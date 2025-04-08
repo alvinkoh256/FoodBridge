@@ -14,6 +14,7 @@
           placeholder="Select a Food Item"
           class="w-full dropdown-styled"
           @change="updateSelection"
+          editable
         />
       </div>
       <div class="text-left w-full md:w-auto">
