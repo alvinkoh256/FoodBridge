@@ -150,7 +150,7 @@ const confirmCollection = async () => {
 
     // Update local state
     const hubIndex = reservedHubs.value.findIndex(
-      hub => (hub.hubId || hub.name) === (selectedHub.value.hubId || selectedHub.value.name)
+      hub => (hub.hubID || hub.name) === (selectedHub.value.hubID || selectedHub.value.name)
     );
     
     if (hubIndex !== -1) {
