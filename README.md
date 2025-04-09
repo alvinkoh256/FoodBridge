@@ -51,7 +51,7 @@ Docker <br>
 ### API Gateway
 <div align="center">
   <img src="https://konghq.com/wp-content/uploads/2018/08/kong-combination-mark-color-256px.png" alt="Kong API Gateway" width="88"/> <br>
-  <i>CORS</i>
+  <i>Kong</i>
 </div>
 
 
