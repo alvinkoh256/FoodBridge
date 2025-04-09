@@ -1,0 +1,188 @@
+networks:
+  esd-net:
+    driver: bridge
+
+services:
+  # RabbitMQ Service
+  rabbitmq:
+    image: "rabbitmq:3-management"
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - esd-net
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # AMQP Setup Service
+  amqp-setup:
+    build:
+      context: .
+      dockerfile: rabbitmq/Dockerfile
+    container_name: amqp-setup
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - esd-net
+    restart: "no"
+
+  hub:
+    build:
+      context: ./services/atomic/hub
+      dockerfile: Dockerfile
+    container_name: hub
+    ports:
+      - 5010:5010
+    env_file:
+      - .env
+    depends_on:
+      amqp-setup:
+        condition: service_completed_successfully
+    networks:
+      - esd-net
+  
+  confirm-delivery:
+    build:
+      context: ./services/composite/confirmDelivery
+      dockerfile: Dockerfile
+    container_name: confirm-delivery
+    ports:
+      - 5009:5009
+    environment:
+      - HUB_SERVICE_URL=http://hub:5010
+      - ACCOUNT_SERVICE_URL=https://personal-tdqpornm.outsystemscloud.com/FoodBridge/rest/AccountInfoAPI
+      - PRODUCT_LISTING_URL=http://product_listing:5005
+
+    depends_on:
+      hub:
+        condition: service_started
+      amqp-setup:
+        condition: service_completed_successfully
+    networks:
+      - esd-net
+
+  reserve-hub:
+    build:
+      context: ./services/composite/reserveHub
+      dockerfile: Dockerfile
+    container_name: reserve-hub
+    ports:
+      - 5015:5015
+    environment:
+      - HUB_SERVICE_URL=http://hub:5010
+      - ACCOUNT_INFO_API_URL=https://personal-tdqpornm.outsystemscloud.com/FoodBridge/rest/AccountInfoAPI
+      - AMQP_HOST=rabbitmq
+      - AMQP_PORT=5672
+      - AMQP_EXCHANGE=notificationsS3
+      - AMQP_EXCHANGE_TYPE=direct
+      - AMQP_ROUTING_KEY=reservation
+    networks:
+      - esd-net
+    depends_on:
+      - hub
+      - rabbitmq
+
+  route:
+    build:
+      context: ./services/atomic/route
+      dockerfile: Dockerfile
+    container_name: route
+    ports:
+      - 5011:5011
+    env_file:
+      - .env
+    networks:
+      - esd-net
+
+  get-optimal-route:
+    build:
+      context: ./services/composite/getOptimalRoute
+      dockerfile: Dockerfile
+    container_name: get-optimal-route
+    ports:
+      - 5016:5016
+    environment:
+      - HUB_SERVICE_URL=http://hub:5010
+      - ROUTE_SERVICE_URL=http://route:5011
+    networks:
+      - esd-net
+    depends_on:
+      - hub
+      - route
+
+  redis:
+    image: redis:6
+    restart: always
+    ports:
+      - 6379:6379
+    networks:
+      - esd-net
+
+    # Add this to your existing docker-compose.yml file
+  kong:
+    image: kong/kong-gateway:3.9
+    platform: linux/amd64  # Only needed for Mac M1/M2 chips
+    restart: always
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /etc/kong/kong.yml
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+    volumes:
+      - ./kong.yml:/etc/kong/kong.yml:ro
+    ports:
+      - "8000:8000"  # API Gateway
+      - "8001:8001"  # Admin API
+    networks:
+      # Make sure to use your existing network name here
+      - esd-net  # Replace with your actual network name
+
+    # # PostgreSQL Service
+  # postgres:
+  #   image: postgres:13
+  #   environment:
+  #     POSTGRES_USER: postgres         
+  #     POSTGRES_PASSWORD: postgres
+  #     POSTGRES_DB: postgres           
+  #   volumes:
+  #     - postgres-data:/var/lib/postgresql/data
+  #   networks:
+  #     - esd-net
+  #   ports:
+  #     - "5432:5432"
+
+    # publisher:
+  #   build:
+  #     context: ./services/atomic/testPublisher
+  #     dockerfile: Dockerfile
+  #   container_name: publisher
+  #   depends_on:
+  #     - amqp-setup
+  #   networks:
+  #     - esd-net
+
+  # subscriber:
+  #   build:
+  #     context: ./services/atomic/testSubscriber
+  #     dockerfile: Dockerfile
+  #   container_name: subscriber
+  #   depends_on:
+  #     - amqp-setup
+  #   networks:
+  #     - esd-net
+
+
+
+volumes:
+  rabbitmq_data:
+    external: false

@@ -1,11 +1,12 @@
-networks:
-  esd-net:
-    driver: bridge
+version: "3.8"
 
 services:
-  # RabbitMQ Service
+  # ---------------------------
+  # RabbitMQ & AMQP Setup
+  # ---------------------------
   rabbitmq:
     image: "rabbitmq:3-management"
+    container_name: rabbitmq
     restart: always
     ports:
       - "5672:5672"
@@ -20,115 +21,24 @@ services:
       timeout: 5s
       retries: 5
 
-  # AMQP Setup Service
   amqp-setup:
     build:
       context: .
       dockerfile: rabbitmq/Dockerfile
     container_name: amqp-setup
+    restart: "no"
     depends_on:
       rabbitmq:
         condition: service_healthy
     networks:
       - esd-net
-    restart: "no"
 
-  hub:
-    build:
-      context: ./services/atomic/hub
-      dockerfile: Dockerfile
-    container_name: hub
-    ports:
-      - 5010:5010
-    env_file:
-      - .env
-    depends_on:
-      amqp-setup:
-        condition: service_completed_successfully
-    networks:
-      - esd-net
-  
-  confirm-delivery:
-    build:
-      context: ./services/composite/confirmDelivery
-      dockerfile: Dockerfile
-    container_name: confirm-delivery
-    ports:
-      - 5009:5009
-    environment:
-      - HUB_SERVICE_URL=http://hub:5010
-      - ACCOUNT_SERVICE_URL=https://personal-tdqpornm.outsystemscloud.com/FoodBridge/rest/AccountInfoAPI
-      - PRODUCT_LISTING_URL=http://product_listing:5005
-
-    depends_on:
-      hub:
-        condition: service_started
-      amqp-setup:
-        condition: service_completed_successfully
-    networks:
-      - esd-net
-
-  reserve-hub:
-    build:
-      context: ./services/composite/reserveHub
-      dockerfile: Dockerfile
-    container_name: reserve-hub
-    ports:
-      - 5015:5015
-    environment:
-      - HUB_SERVICE_URL=http://hub:5010
-      - ACCOUNT_INFO_API_URL=https://personal-tdqpornm.outsystemscloud.com/FoodBridge/rest/AccountInfoAPI
-      - AMQP_HOST=rabbitmq
-      - AMQP_PORT=5672
-      - AMQP_EXCHANGE=notificationsS3
-      - AMQP_EXCHANGE_TYPE=direct
-      - AMQP_ROUTING_KEY=reservation
-    networks:
-      - esd-net
-    depends_on:
-      - hub
-      - rabbitmq
-
-  route:
-    build:
-      context: ./services/atomic/route
-      dockerfile: Dockerfile
-    container_name: route
-    ports:
-      - 5011:5011
-    env_file:
-      - .env
-    networks:
-      - esd-net
-
-  get-optimal-route:
-    build:
-      context: ./services/composite/getOptimalRoute
-      dockerfile: Dockerfile
-    container_name: get-optimal-route
-    ports:
-      - 5016:5016
-    environment:
-      - HUB_SERVICE_URL=http://hub:5010
-      - ROUTE_SERVICE_URL=http://route:5011
-    networks:
-      - esd-net
-    depends_on:
-      - hub
-      - route
-
-  redis:
-    image: redis:6
-    restart: always
-    ports:
-      - 6379:6379
-    networks:
-      - esd-net
-
-    # Add this to your existing docker-compose.yml file
+  # ---------------------------
+  # Kong / API Gateway (Optional)
+  # ---------------------------
   kong:
     image: kong/kong-gateway:3.9
-    platform: linux/amd64  # Only needed for Mac M1/M2 chips
+    container_name: kong
     restart: always
     environment:
       KONG_DATABASE: "off"
@@ -141,48 +51,233 @@ services:
     volumes:
       - ./kong.yml:/etc/kong/kong.yml:ro
     ports:
-      - "8000:8000"  # API Gateway
-      - "8001:8001"  # Admin API
+      - "8000:8000"
+      - "8001:8001"
     networks:
-      # Make sure to use your existing network name here
-      - esd-net  # Replace with your actual network name
+      - esd-net
 
-    # # PostgreSQL Service
-  # postgres:
-  #   image: postgres:13
-  #   environment:
-  #     POSTGRES_USER: postgres         
-  #     POSTGRES_PASSWORD: postgres
-  #     POSTGRES_DB: postgres           
-  #   volumes:
-  #     - postgres-data:/var/lib/postgresql/data
-  #   networks:
-  #     - esd-net
-  #   ports:
-  #     - "5432:5432"
+  # ---------------------------
+  # Core Services
+  # ---------------------------
+  hub:
+    build:
+      context: ./services/atomic/hub
+      dockerfile: Dockerfile
+    image: wongyh01/hub:1.0
+    container_name: hub
+    ports:
+      - "5010:5010"
+    networks:
+      - esd-net
 
-    # publisher:
-  #   build:
-  #     context: ./services/atomic/testPublisher
-  #     dockerfile: Dockerfile
-  #   container_name: publisher
-  #   depends_on:
-  #     - amqp-setup
-  #   networks:
-  #     - esd-net
+  product_validation:
+    build:
+      context: ./services/atomic/product_validation
+      dockerfile: Dockerfile
+    image: wongyh01/product_validation:1.0
+    container_name: product_validation
+    env_file:
+      - .env
+    ports:
+      - "5004:5004"
+    networks:
+      - esd-net
 
-  # subscriber:
-  #   build:
-  #     context: ./services/atomic/testSubscriber
-  #     dockerfile: Dockerfile
-  #   container_name: subscriber
-  #   depends_on:
-  #     - amqp-setup
-  #   networks:
-  #     - esd-net
+  product_listing:
+    build:
+      context: ./services/atomic/product_listing
+      dockerfile: Dockerfile
+    image: wongyh01/product_listing:1.0
+    container_name: product_listing
+    env_file:
+      - .env
+    environment:
+      - WEBSOCKET_URL=http://websocket:5014
+    ports:
+      - "5005:5005"
+    depends_on:
+      - websocket
+    networks:
+      - esd-net
 
+  locating:
+    build:
+      context: ./services/atomic/locating
+      dockerfile: Dockerfile
+    image: wongyh01/locating:1.0
+    container_name: locating
+    env_file:
+      - .env
+    environment:
+      - GRPC_PORT=5006
+    ports:
+      - "5006:5006"
+    networks:
+      - esd-net
 
+  # ---------------------------
+  # Composite Services
+  # ---------------------------
+  find_volunteers:
+    build:
+      context: ./services/composite/findVolunteers
+      dockerfile: Dockerfile
+    image: wongyh01/find_volunteers:1.0
+    container_name: find_volunteers
+    depends_on:
+      - product_listing
+      - product_validation
+      - locating
+      - amqp-setup
+      - hub
+    env_file:
+      - .env
+    environment:
+      - PRODUCT_VALIDATION_URL=http://product_validation:5004
+      - PRODUCT_LISTING_URL=http://product_listing:5005
+      - LOCATING_SERVICE_URL=locating:5006
+      - ACCOUNT_SERVICE_URL=https://personal-tdqpornm.outsystemscloud.com/FoodBridge/rest/AccountInfoAPI
+      - RABBIT_HOST=rabbitmq
+      - RABBIT_PORT=5672
+      - SCENARIO12_RABBIT_EXCHANGE=scenario12Exchange
+      - SCENARIO12_EXCHANGE_TYPE=fanout
+      - HUB_SERVICE_URL=http://hub:5010
+    ports:
+      - "5001:5001"
+    networks:
+      - esd-net
+
+  notify_volunteers:
+    build:
+      context: ./services/composite/notifyVolunteers
+      dockerfile: Dockerfile
+    container_name: notify_volunteers
+    restart: always
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      amqp-setup:
+        condition: service_healthy
+    environment:
+      - RABBIT_HOST=rabbitmq
+      - RABBIT_PORT=5672
+      - SCENARIO12_RABBIT_EXCHANGE=scenario12Exchange
+      - SCENARIO12_EXCHANGE_TYPE=fanout
+      - SCENARIO2_RABBIT_EXCHANGE=scenario2NotifyExchange
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_CACHE_TTL=1800
+    networks:
+      - esd-net
+
+  notification_service:
+    build:
+      context: ./services/atomic/notification
+      dockerfile: Dockerfile
+    image: wongyh01/notification_service:1.0
+    container_name: notification_service
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASS=guest
+    networks:
+      - esd-net
+
+  confirm_delivery:
+    build:
+      context: ./services/composite/confirmDelivery
+      dockerfile: Dockerfile
+    container_name: confirm-delivery
+    image: wongyh01/confirm-delivery:1.0
+    env_file:
+      - .env
+    environment:
+      - HUB_SERVICE_URL=http://hub:5010
+      - ACCOUNT_SERVICE_URL=https://personal-tdqpornm.outsystemscloud.com/FoodBridge/rest/AccountInfoAPI
+      - PRODUCT_LISTING_URL=http://product_listing:5005
+    depends_on:
+      - hub
+      - amqp-setup
+    ports:
+      - "5009:5009"
+    networks:
+      - esd-net
+
+  reserve_hub:
+    build:
+      context: ./services/composite/reserveHub
+      dockerfile: Dockerfile
+    container_name: reserve-hub
+    image: wongyh01/reserve-hub:1.0
+    environment:
+      - HUB_SERVICE_URL=http://hub:5010
+    ports:
+      - "5015:5015"
+    networks:
+      - esd-net
+
+  route:
+    build:
+      context: ./services/atomic/route
+      dockerfile: Dockerfile
+    container_name: route
+    image: wongyh01/route:1.0
+    env_file:
+      - .env
+    ports:
+      - "5011:5011"
+    networks:
+      - esd-net
+
+  get_optimal_route:
+    build:
+      context: ./services/composite/getOptimalRoute
+      dockerfile: Dockerfile
+    container_name: get-optimal-route
+    image: wongyh01/get-optimal-route:1.0
+    environment:
+      - HUB_SERVICE_URL=http://hub:5010
+      - ROUTE_SERVICE_URL=http://route:5011
+    ports:
+      - "5016:5016"
+    networks:
+      - esd-net
+
+  # ---------------------------
+  # Other Services
+  # ---------------------------
+  redis:
+    image: redis:6
+    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - esd-net
+
+  websocket:
+    build:
+      context: ./websocket
+      dockerfile: Dockerfile
+    image: wongyh01/websocket:1.0
+    container_name: websocket
+    ports:
+      - "5014:5014"
+    networks:
+      - esd-net
 
 volumes:
   rabbitmq_data:
     external: false
+
+networks:
+  esd-net:
+    driver: bridge
