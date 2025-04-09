@@ -32,7 +32,7 @@
       <p class="route-caption">Ready to collect your reservations?</p>
       <Button 
         label="Show me the best route" 
-        :disabled="disableButton"
+        
         @click="showRoute" 
         severity="warning" 
         class="route-button"

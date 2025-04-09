@@ -54,6 +54,15 @@ services:
         paths:
           - /product/[0-9a-zA-Z-]+
         strip_path: false
+
+    # Update Product
+  - name: updateProduct
+    url: http://host.docker.internal:5005
+    routes:
+      - name: updateProduct
+        paths:
+          - /updateProduct
+        strip_path: false
         
   # Products
   - name: products

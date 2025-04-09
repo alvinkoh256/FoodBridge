@@ -263,6 +263,17 @@ app.post('/product', upload.single('productPic'), async (req, res)=>{
     }
 })
 
+app.post('/updateProduct', async (req,res)=>{
+    const body = req.body
+    try {
+        const result = await updateProduct(body)
+        res.status(200).json(result[0])
+    } catch (error) {
+        res.status(500).json({ error: error.message })
+    }
+    await sendToWebSocket()
+})
+
 /**
  * @swagger
  * /product:

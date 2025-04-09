@@ -67,8 +67,8 @@ const handleImageUpload = (event) => {
 const confirmDelivery = async () => {
   try {
     store.dispatch('apiRequest', {
-      method: 'put',
-        endpoint: `http://localhost:8000/product/`,      
+      method: 'post',
+        endpoint: `http://localhost:8000/updateProduct`,      
         data: {
         productId: props.selectedProduct.productId,
         productStatus: "completed"

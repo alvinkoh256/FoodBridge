@@ -33,14 +33,10 @@ def send_volunteer_notification(message):
     try:
         volunteer_name = message.get("volunteerName")
         volunteer_mobile = message.get("volunteerMobile")
-
-        # Placeholder for the application link
-        # 6 Apr call 
-        app_link = "https://www.youtube.com/c/ISHOWSPEED"
         
         # Send SMS via Twilio
         sms = client.messages.create(
-            body=f"Hello {volunteer_name}! There is a new pickup available, check FoodBridge for more details.\nAccess the link here: {app_link}",
+            body=f"Hello {volunteer_name}! There is a new pickup available, check FoodBridge for more details.",
             from_=twilio_number,
             to=volunteer_mobile
         )

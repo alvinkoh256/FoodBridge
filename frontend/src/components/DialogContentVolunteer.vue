@@ -65,8 +65,8 @@ const acceptDropOff = async () => {
   loading.value = true;
   try {
     await store.dispatch('apiRequest', {
-      method: 'put',
-      endpoint: 'http://localhost:8000/product/',
+      method: 'post',
+      endpoint: 'http://localhost:8000/updateProduct',
       data: {
         productId: props.product.productId,
         productStatus: 'on-going'
