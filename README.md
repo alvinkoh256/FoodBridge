@@ -10,11 +10,11 @@ Docker <br>
 
 ## Instructions
 1. Clone the repo
-2. Run `compose.bat` to start the docker containers
+2. Run `docker compose up -d` to start the docker containers
 3. Navigate to the front-end with `cd frontend`
 4. Start the frontend with `npm run`
 5. Visit `localhost:3000` to access the UI.
-6. Run `remove_compose.bat` to remove docker containers
+6. Run `docker compose down -v` to remove docker containers
 
 
 ## Technical Architecture Diagram
