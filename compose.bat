@@ -1,0 +1,1 @@
+docker-compose -f docker-compose.yml -f docker-compose-amqp.yaml -f docker-compose-scenario1.yaml up --build
