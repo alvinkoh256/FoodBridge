@@ -1,7 +1,18 @@
 # FoodBridge Project
 
 ## Description
-A platform for managing food donations from donors such as restaurants and individuals to food banks.
+Singapore generated over 755,000 tonnes of food waste in 2023—more than 10% of total national waste—while many citizens continue to face food insecurity. <br><br>
+FoodBridge is a microservices platform that connects restaurants, volunteers, and food banks to address this crisis. By leveraging community center networks and geolocation services, the platform enables real-time coordination of food donations across the island.<br><br>
+Foodbridge’s core goals:
+<ul>
+	<li>Simplify the process of donating non-perishables to encourage more donations</li>
+	<li>Give volunteers the opportunity to give back to society in a new way</li>
+	<li>Provides an avenue for food banks to receive food donations islandwide</li>
+	
+</ul>
+
+
+
 
 ## Prerequisites
 IDE (Any) <br>
@@ -9,12 +20,14 @@ Node Package Manager <br>
 Docker <br>
 
 ## Instructions
-1. Clone the repo
-2. Run `docker compose up -d` to start the docker containers
-3. Navigate to the front-end with `cd frontend`
-4. Start the frontend with `npm run`
-5. Visit `localhost:3000` to access the UI.
-6. Run `docker compose down -v` to remove docker containers
+1. Insert `frontend.env` to the `/frontend` directory and `backend.env` in the main `/FoodBridge` directory
+2. Rename both files back to `.env`
+3. Clone the repo
+4. Run `docker-compose -f docker-compose.yml -f docker-compose-amqp.yaml -f docker-compose-scenario1.yaml up --build -d` to start the docker containers
+5. Navigate to the front-end with `cd frontend`
+6. Start the frontend with `npm run`
+7. Visit `localhost:3000` to access the UI.
+8. Run `docker-compose -f docker-compose.yml -f docker-compose-amqp.yaml -f docker-compose-scenario1.yaml down -v` to remove docker containers
 
 
 ## Technical Architecture Diagram
