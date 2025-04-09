@@ -20,14 +20,14 @@ Node Package Manager <br>
 Docker <br>
 
 ## Instructions
-1. Insert `frontend.env` to the `/frontend` directory and `backend.env` in the main `/FoodBridge` directory
-2. Rename both files back to `.env`
-3. Clone the repo
-4. Run `docker-compose -f docker-compose.yml -f docker-compose-amqp.yaml -f docker-compose-scenario1.yaml up --build -d` to start the docker containers
-5. Navigate to the front-end with `cd frontend`
-6. Start the frontend with `npm run`
-7. Visit `localhost:3000` to access the UI.
-8. Run `docker-compose -f docker-compose.yml -f docker-compose-amqp.yaml -f docker-compose-scenario1.yaml down -v` to remove docker containers
+1. Clone the repo
+2. Insert `frontend.env` to the `/frontend` directory and `backend.env` in the main `/FoodBridge` directory
+3. Rename both files back to `.env`
+6. Run `docker-compose -f docker-compose.yml -f docker-compose-amqp.yaml -f docker-compose-scenario1.yaml up --build -d` to start the docker containers
+7. Navigate to the front-end with `cd frontend`
+8. Start the frontend with `npm run`
+9. Visit `localhost:3000` to access the UI.
+10. Run `docker-compose -f docker-compose.yml -f docker-compose-amqp.yaml -f docker-compose-scenario1.yaml down -v` to remove docker containers
 
 
 ## Technical Architecture Diagram
