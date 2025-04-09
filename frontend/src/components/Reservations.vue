@@ -90,14 +90,14 @@ const disableButton = computed(() => {
 });
 
 const props = defineProps({
-  userId: String
+  user: Object
 });
 
 const fetchReservedHubs = async () => {
   try {
     const reservedHubsResponse = await store.dispatch('apiRequest', { 
       method: 'get', 
-      endpoint: `http://localhost:8000/hub/reservedInventories/${props.userId}` 
+      endpoint: `http://localhost:8000/hub/reservedInventories/${props.user.id}` 
     });
     reservedHubs.value = reservedHubsResponse || [];
     
@@ -113,7 +113,7 @@ const fetchReservedHubs = async () => {
 };
 
 onMounted(() => {
-  if (props.userId) {
+  if (props.user) {
     fetchReservedHubs();
   }
 });
@@ -139,7 +139,7 @@ const confirmCollection = async () => {
   try {
     const payload = {
       hubID: selectedHub.value.hubID,
-      foodbankID: props.userId,
+      foodbankID: props.user.id,
     };
 
     await store.dispatch('apiRequest', { 
@@ -169,7 +169,7 @@ const showRoute = async () => {
     // Call the API to get the optimal route
     const response = await store.dispatch('apiRequest', {
       method: 'get',
-      endpoint: `http://localhost:8000/get-optimal-route/${props.userId}`
+      endpoint: `http://localhost:8000/get-optimal-route/${props.user.id}`
     });
     
     // Open route link on new tab

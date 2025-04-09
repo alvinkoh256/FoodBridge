@@ -57,7 +57,7 @@
       <DialogContentBank
         :hub="selectedHub"
         :isReserved="isReserved"
-        :foodbankId="props.userId"
+        :foodbankId="props.user.id"
         @close="visible = false"
         @update:isReserved="updateHubStatus"
       />
@@ -81,7 +81,7 @@ const unreservedHubs = ref([]);
 const loading = ref(true);
 
 const props = defineProps({
-  userId: String
+  user: Object
 });
 
 const filteredUnreservedHubs = computed(() => {
@@ -94,12 +94,12 @@ const filteredUnreservedHubs = computed(() => {
 // Function to fetch all hubs data
 const fetchHubsData = async () => {
   loading.value = true;
-  
+
   try {
     // Fetch reserved inventories
     const resHubsResponse = await store.dispatch('apiRequest', {
       method: 'get',
-      endpoint: `http://localhost:8000/hub/reservedInventories/${props.userId}`
+      endpoint: `http://localhost:8000/hub/reservedInventories/${props.user.id}`
     });
     
     // Fetch unreserved hubs data
@@ -107,6 +107,8 @@ const fetchHubsData = async () => {
       method: 'get',
       endpoint: `http://localhost:8000/hub/hubs-data`
     });
+
+    console.log(hubsResponse);
     
     // Update the data
     reservedHubs.value = resHubsResponse || [];
@@ -124,14 +126,14 @@ const fetchHubsData = async () => {
 };
 
 // Watch for userId changes to refetch data
-watch(() => props.userId, () => {
-  if (props.userId) {
+watch(() => props.user, () => {
+  if (props.user) {
     fetchHubsData();
   }
 }, { immediate: false });
 
 onMounted(() => {
-  if (props.userId) {
+  if (props.user) {
     fetchHubsData();
   }
 });
