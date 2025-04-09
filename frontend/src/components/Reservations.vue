@@ -32,7 +32,7 @@
       <p class="route-caption">Ready to collect your reservations?</p>
       <Button 
         label="Show me the best route" 
-        
+        :disabled="disableButton"
         @click="showRoute" 
         severity="warning" 
         class="route-button"
@@ -81,7 +81,7 @@ const loading = ref(false);
 const selectedHub = ref(null);
 
 const disableButton = computed(() => {
-  if (reservedHubs.value.length > 0) return true;
+  if (reservedHubs.value.length === 0) return true;
 
   // Check if there is at least one uncollected hub
   const hasUncollectedHub = reservedHubs.value.some(hub => !hub.isCollected);

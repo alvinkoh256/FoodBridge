@@ -7,7 +7,7 @@
           <img src="../assets/Foodbridge.png" alt="Profile" class="logo-image">
         </div>
         <div class="tabs-section">
-          <div class="nav-tab">Food Bridge</div>
+          <div class="nav-tab">Hi, {{ user?.user_metadata?.username }} !</div>
         </div>
         <div class="logout-section">
           <button class="logout-button" @click="signOut">
@@ -122,7 +122,8 @@ const fetchProducts = async () => {
 // Check role and access on component mount
 onMounted(async () => {
   await checkAuthAndAccess();
-  
+  // localStorage.removeItem('savedProduct');
+  // localStorage.removeItem('deliveryConfirmed');
   // Socket setup
   socket.on("productListingRoom", (data) => {
     console.log("Received data from productListingRoom:", data);

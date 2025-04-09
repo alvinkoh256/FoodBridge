@@ -45,7 +45,7 @@
 </template>
 
 <script setup>
-import { ref, defineProps, defineEmits, computed } from "vue";
+import { ref, defineProps, defineEmits, computed, watch } from "vue";
 import Dialog from "primevue/dialog";
 import DialogContentVolunteer from "../components/DialogContentVolunteer.vue";
 
@@ -59,6 +59,22 @@ const props = defineProps({
 const emit = defineEmits(['product-selected']);
 const visible = ref(false);
 const selectedProduct = ref(null);
+
+watch(() => props.products, (newProducts) => {
+  // If there's a selected product and the dialog is open
+  if (selectedProduct.value && visible.value) {
+    // Find the updated version of the selected product
+    const updatedProduct = newProducts.find(p => p.productId === selectedProduct.value.productId);
+    
+    // If the product exists and its status has changed to 'on-going'
+    if (updatedProduct && updatedProduct.productStatus === 'on-going') {
+      // Update the selected product reference
+      selectedProduct.value = null;
+      // Close the dialog
+      visible.value = false;
+    }
+  }
+}, { deep: true }); 
 
 // Filter out completed products
 const filteredProducts = computed(() => {
