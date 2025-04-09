@@ -76,12 +76,12 @@ Docker <br>
 
 ### Other Technologies
 <div align="center">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/7/7e/Twilio-logo-red.svg" alt="Docker" height="40"/>
-  
+<img src="https://upload.wikimedia.org/wikipedia/commons/7/7e/Twilio-logo-red.svg" alt="Twilio" height="40"/>
 <img src="https://upload.wikimedia.org/wikipedia/commons/4/4e/Docker_%28container_engine%29_logo.svg" alt="Docker" height="30"/>
   <img src="https://upload.wikimedia.org/wikipedia/commons/4/4d/OpenAI_Logo.svg" alt="OpenAI" height="40"/>
-  <img src="https://upload.wikimedia.org/wikipedia/commons/9/96/Socket-io.svg" alt="Socket.io" height="40"/><br>
-  <i>Twilio · Docker Compose · OpenAI · Socket.io </i>
+  <img src="https://upload.wikimedia.org/wikipedia/commons/9/96/Socket-io.svg" alt="Socket.io" height="40"/>
+  <img src="https://upload.wikimedia.org/wikipedia/commons/6/64/Logo-redis.svg" alt="Redis" height="40"/><br>
+  <i>Twilio · Docker Compose · OpenAI · Socket.io · Redis</i>
 </div>
 <!-- ## UI
 donor-ui
